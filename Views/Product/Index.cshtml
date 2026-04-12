@@ -1,0 +1,204 @@
+@using RevenueAccountingMVC.Models
+@model IEnumerable<Product>
+
+@{
+    ViewData["Title"] = "Quản lý danh mục sản phẩm";
+    Layout = "~/Views/Shared/_Layout.cshtml"; 
+
+    // Báo cho Partial View biết đây là tab Product
+    ViewData["ActiveTab"] = "Product";
+    ViewData["CurrentCount"] = Model?.Count() ?? 0;
+}
+
+<div class="p-8">
+    <div>
+        <h2 class="text-[22px] font-bold text-gray-900">Quản lý danh mục</h2>
+        <p class="text-[14px] text-gray-500 mt-1">Quản lý dữ liệu danh mục hệ thống</p>
+    </div>
+
+    <partial name="_CategoryTabs" />
+
+    <div class="mt-6 bg-white border border-gray-200 rounded-xl p-3 flex items-center gap-3 shadow-sm">
+        <a asp-controller="Product" asp-action="Create" class="bg-[#0f172a] hover:bg-gray-800 text-white px-4 py-2.5 rounded-lg text-[14px] font-medium inline-flex items-center gap-2 transition-colors shadow-sm active:scale-95">
+            <i data-lucide="plus" class="w-4 h-4"></i> Thêm mới
+        </a>
+
+        <form asp-controller="Product" asp-action="Index" method="get" class="flex items-center gap-3 flex-1">
+            <div class="relative w-[360px]">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i data-lucide="search" class="w-4 h-4 text-gray-400"></i>
+                </div>
+                <input type="text" name="searchString" value="@ViewData["CurrentSearch"]" class="w-full bg-gray-50 border border-transparent focus:bg-white focus:border-gray-300 rounded-lg pl-9 pr-4 py-2.5 text-[14px] text-gray-900 placeholder-gray-400 outline-none transition-all" placeholder="Tìm theo mã, tên...">
+            </div>
+
+            <div class="relative w-[140px]">
+                <select name="productType" class="appearance-none w-full bg-gray-50 border border-transparent rounded-lg pl-4 pr-10 py-2.5 text-[14px] text-gray-700 focus:outline-none focus:border-gray-300 focus:bg-white cursor-pointer transition-all">
+                    <option value="">Tất cả</option>
+                    <option value="1" selected="@(Context.Request.Query["productType"] == "1")">Hàng hóa</option>
+                    <option value="2" selected="@(Context.Request.Query["productType"] == "2")">Dịch vụ</option>
+                </select>
+                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400"></i>
+                </div>
+            </div>
+
+            <button type="submit" class="hidden"></button>
+
+            <a asp-action="Index" class="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-4 py-2.5 rounded-lg text-[14px] font-medium flex items-center gap-2 transition-colors ml-auto cursor-pointer shadow-sm">
+                <i data-lucide="refresh-cw" class="w-4 h-4 text-gray-600"></i> Làm mới
+            </a>
+        </form>
+    </div>
+
+    <div class="mt-6 bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+        <table class="w-full text-left text-[14px]">
+            <thead class="border-b border-gray-200 bg-white">
+                <tr>
+                    <th class="py-3.5 px-5 font-semibold text-gray-800 w-[15%]">Mã sản phẩm</th>
+                    <th class="py-3.5 px-5 font-semibold text-gray-800 w-[25%]">Tên sản phẩm</th>
+                    <th class="py-3.5 px-5 font-semibold text-gray-800 w-[15%]">Loại sản phẩm</th>
+                    <th class="py-3.5 px-5 font-semibold text-gray-800 w-[15%]">Đơn vị tính</th>
+                    <th class="py-3.5 px-5 font-semibold text-gray-800 w-[15%]">Trạng thái</th>
+                    <th class="py-3.5 px-5 font-semibold text-gray-800 text-right w-[15%]">Hành động</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                
+                @if (Model != null && Model.Any())
+                {
+                    foreach (var item in Model)
+                    {
+                        string statusBadgeClass = "";
+                        string statusName = "";
+                        bool isToggleOn = item.Status == ProductStatus.Active;
+                        string typeName = item.ProductType == ProductType.Goods ? "Hàng hóa" : "Dịch vụ";
+                        
+                        switch (item.Status)
+                        {
+                            case ProductStatus.Active:
+                                statusBadgeClass = "bg-[#ecfdf5] text-[#059669]";
+                                statusName = "Đang sử dụng";
+                                break;
+                            case ProductStatus.Inactive:
+                                statusBadgeClass = "bg-gray-100 text-gray-600";
+                                statusName = "Không sử dụng";
+                                break;
+                        }
+
+                        <tr class="hover:bg-gray-50/50 transition-colors">
+                            <td class="py-4 px-5 font-medium text-gray-900">@item.ProductCode</td>
+                            <td class="py-4 px-5 text-gray-700 font-medium">@item.ProductName</td>
+                            <td class="py-4 px-5 text-gray-600">@typeName</td>
+                            <td class="py-4 px-5 text-gray-600">@item.Unit</td>
+                            <td class="py-4 px-5">
+                                <span class="status-badge inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium @statusBadgeClass">
+                                    @statusName
+                                </span>
+                            </td>
+                            <td class="py-4 px-5 flex items-center justify-end gap-3 text-gray-400">
+                                <a asp-action="Details" asp-route-id="@item.Id" class="hover:text-blue-600 transition-colors" title="Xem chi tiết">
+                                    <i data-lucide="eye" class="w-4 h-4"></i>
+                                </a>                                
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="hover:text-blue-600 transition-colors" title="Chỉnh sửa">
+                                    <i data-lucide="edit-2" class="w-4 h-4"></i>
+                                </a> 
+                                <button class="toggle-btn w-8 h-[18px] rounded-full relative transition-colors focus:outline-none border @(isToggleOn ? "bg-[#22c55e] border-transparent" : "bg-gray-200 border-gray-300")" 
+                                        data-id="@item.Id">
+                                    <div class="toggle-circle w-3.5 h-3.5 bg-white rounded-full absolute shadow-sm @(isToggleOn ? "top-[1px] left-[1px] translate-x-[12px] border-none" : "top-[0px] left-[1px] translate-x-[0px] border border-gray-300")"></div>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="6" class="py-12 px-5 text-center">
+                            <div class="flex flex-col items-center justify-center text-gray-500">
+                                <i data-lucide="package-search" class="w-12 h-12 mb-3 text-gray-300"></i>
+                                
+                                <p class="text-[15px] font-medium text-gray-900 mb-1">Không tìm thấy sản phẩm</p>
+                                
+                                @if (ViewData["CurrentSearch"] != null && !string.IsNullOrEmpty(ViewData["CurrentSearch"].ToString()))
+                                {
+                                    <p class="text-[14px]">Không có kết quả nào khớp với từ khóa "<span class="font-semibold text-gray-700">@ViewData["CurrentSearch"]</span>"</p>
+                                    <a asp-action="Index" class="mt-4 text-blue-600 hover:text-blue-700 font-medium text-[14px] inline-flex items-center gap-1">
+                                        <i data-lucide="arrow-left" class="w-4 h-4"></i> Quay lại danh sách
+                                    </a>
+                                }
+                                else
+                                {
+                                    <p class="text-[14px]">Hiện tại chưa có dữ liệu sản phẩm nào trong hệ thống.</p>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+        document.querySelector('select[name="productType"]').addEventListener('change', function() {
+            const val = this.value;
+            const url = new URL(window.location.href);
+            if (val) {
+                url.searchParams.set('productType', val);
+            } else {
+                url.searchParams.delete('productType');
+            }
+            window.location.href = url.toString();
+        });
+        // Xử lý sự kiện click Toggle Switch cho Sản phẩm
+        const toggleBtns = document.querySelectorAll('.toggle-btn');
+        toggleBtns.forEach(btn => {
+            btn.addEventListener('click', async function() {
+                const row = this.closest('tr');
+                const statusBadge = row.querySelector('.status-badge');
+                const circle = this.querySelector('.toggle-circle');
+                const productId = this.getAttribute('data-id');
+                
+                const isCurrentlyActive = this.classList.contains('bg-[#22c55e]');
+
+                try {
+                    const response = await fetch(`/Product/ToggleStatus/${productId}`, {
+                        method: 'POST'
+                    });
+                    const result = await response.json();
+
+                    if(result.success) {
+                        if (isCurrentlyActive) {
+                            this.classList.remove('bg-[#22c55e]', 'border-transparent');
+                            this.classList.add('bg-gray-200', 'border', 'border-gray-300');
+                            circle.style.transform = 'translateX(0px)';
+                            circle.classList.add('border', 'border-gray-300');
+                            circle.style.top = '0px';
+
+                            statusBadge.textContent = 'Không sử dụng';
+                            statusBadge.className = 'status-badge inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium bg-gray-100 text-gray-600';
+                        } else {
+                            this.classList.remove('bg-gray-200', 'border', 'border-gray-300');
+                            this.classList.add('bg-[#22c55e]', 'border-transparent');
+                            circle.style.transform = 'translateX(12px)';
+                            circle.classList.remove('border', 'border-gray-300');
+                            circle.style.top = '1px';
+
+                            statusBadge.textContent = 'Đang sử dụng';
+                            statusBadge.className = 'status-badge inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium bg-[#ecfdf5] text-[#059669]';
+                        }
+                    } else {
+                        alert('Có lỗi xảy ra: ' + result.message);
+                    }
+                } catch (error) {
+                    console.error('Lỗi gọi API:', error);
+                    alert('Không thể kết nối đến máy chủ!');
+                }
+            });
+        });
+    </script>
+}

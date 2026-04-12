@@ -1,0 +1,43 @@
+@{
+    // Nhận giá trị từ trang chính truyền vào để biết đang ở tab nào
+    var activeTab = ViewData["ActiveTab"]?.ToString();
+    var currentCount = ViewData["CurrentCount"] ?? 0;
+}
+
+<div class="mt-8 border-b border-gray-200 flex gap-8" id="tab-container">
+    @* Tab Sản phẩm *@
+    <a asp-controller="Product" asp-action="Index" 
+       class="pb-3 border-b-2 font-medium flex items-center text-[14px] transition-colors @(activeTab == "Product" ? "border-blue-600 text-blue-600 active" : "border-transparent text-gray-500 hover:text-gray-700")">
+        Sản phẩm
+        @if(activeTab == "Product") {
+            <span class="w-[18px] h-[18px] rounded-full bg-blue-50 ml-1.5 inline-block text-center text-[11px] leading-[18px]">@currentCount</span>
+        }
+    </a>
+
+    @* Tab Khách hàng *@
+    <a asp-controller="Customer" asp-action="Index" 
+       class="pb-3 border-b-2 font-medium flex items-center text-[14px] transition-colors @(activeTab == "Customer" ? "border-blue-600 text-blue-600 active" : "border-transparent text-gray-500 hover:text-gray-700")">
+        Khách hàng
+        @if(activeTab == "Customer") {
+            <span class="w-[18px] h-[18px] rounded-full bg-blue-50 ml-1.5 inline-block text-center text-[11px] leading-[18px]">@currentCount</span>
+        }
+    </a>
+
+    @* Tab Tài khoản *@
+    <a asp-controller="Account" asp-action="Index" 
+    class="pb-3 border-b-2 font-medium flex items-center text-[14px] transition-colors @(activeTab == "Account" ? "border-blue-600 text-blue-600 active" : "border-transparent text-gray-500 hover:text-gray-700")">
+        Tài khoản
+        @if(activeTab == "Account") {
+            <span class="w-[18px] h-[18px] rounded-full bg-blue-50 ml-1.5 inline-block text-center text-[11px] leading-[18px]">@currentCount</span>
+        }
+    </a>
+
+    @* Tab Thuế *@
+    <a asp-controller="Tax" asp-action="Index" 
+    class="pb-3 border-b-2 font-medium flex items-center text-[14px] transition-colors @(activeTab == "Tax" ? "border-blue-600 text-blue-600 active" : "border-transparent text-gray-500 hover:text-gray-700")">
+        Thuế
+        @if(activeTab == "Tax") {
+            <span class="w-[18px] h-[18px] rounded-full bg-blue-50 ml-1.5 inline-block text-center text-[11px] leading-[18px]">@currentCount</span>
+        }
+    </a>
+</div>

@@ -1,0 +1,97 @@
+@using RevenueAccountingMVC.Models
+@model IEnumerable<SalesVoucher>
+
+@{
+    ViewData["Title"] = "Quản lý doanh thu";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="p-8">
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h2 class="text-[22px] font-bold text-gray-900">Danh sách chứng từ bán hàng</h2>
+            <p class="text-[14px] text-gray-500 mt-1">Quản lý hóa đơn và ghi nhận doanh thu</p>
+        </div>
+    </div>
+
+    <div class="bg-white border border-gray-200 rounded-xl p-4 flex items-center gap-3 shadow-sm mb-6">
+        <a asp-action="Create" class="bg-[#0f172a] hover:bg-gray-800 text-white px-5 py-2.5 rounded-lg text-[14px] font-medium inline-flex items-center gap-2 transition-colors active:scale-95 shadow-md">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i> Ghi nhận mới
+        </a>
+
+        <form method="get" class="flex items-center gap-3 flex-1 ml-4">
+            <div class="relative w-[350px]">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i data-lucide="search" class="w-4 h-4 text-gray-400"></i>
+                </div>
+                <input type="text" name="searchString" value="@ViewData["CurrentSearch"]" class="w-full bg-gray-50 border border-gray-300 focus:border-black rounded-lg pl-9 pr-4 py-2.5 text-[14px] outline-none transition-all" placeholder="Tìm số chứng từ, khách hàng...">
+            </div>
+            <button type="submit" class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2.5 rounded-lg text-[14px] font-medium flex items-center gap-2 shadow-sm">
+                Tìm kiếm
+            </button>
+        </form>
+    </div>
+
+    <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+        <table class="w-full text-left text-[14px]">
+            <thead class="border-b border-gray-200 bg-gray-50">
+                <tr>
+                    <th class="py-3.5 px-5 font-semibold text-gray-800">Ngày HT</th>
+                    <th class="py-3.5 px-5 font-semibold text-gray-800">Số CT</th>
+                    <th class="py-3.5 px-5 font-semibold text-gray-800">Khách hàng</th>
+                    <th class="py-3.5 px-5 font-semibold text-gray-800">Diễn giải</th>
+                    <th class="py-3.5 px-5 font-semibold text-gray-800 text-right">Tổng thanh toán</th>
+                    <th class="py-3.5 px-5 font-semibold text-gray-800 text-center">Trạng thái</th>
+                    <th class="py-3.5 px-5 font-semibold text-gray-800 text-center">Hành động</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                @if (Model != null && Model.Any())
+                {
+                    foreach (var item in Model)
+                    {
+                        <tr class="hover:bg-gray-50/50 transition-colors">
+                            <td class="py-4 px-5 text-gray-600 font-medium">@item.AccountingDate.ToString("dd/MM/yyyy")</td>
+                            <td class="py-4 px-5 font-bold text-blue-700">@item.VoucherCode</td>
+                            <td class="py-4 px-5 text-gray-900 font-medium">@item.CustomerNameSnapshot</td>
+                            <td class="py-4 px-5 text-gray-500 truncate max-w-[200px]" title="@item.Description">@item.Description</td>
+                            <td class="py-4 px-5 text-right font-bold text-gray-900">@item.TotalPayment.ToString("N0") đ</td>
+                            <td class="py-4 px-5 text-center">
+                                @if (item.Status == VoucherStatus.Draft)
+                                {
+                                    <span class="bg-yellow-100 text-yellow-700 px-2.5 py-1 rounded-full text-[12px] font-semibold">Bản nháp</span>
+                                }
+                                else
+                                {
+                                    <span class="bg-green-100 text-green-700 px-2.5 py-1 rounded-full text-[12px] font-semibold">Đã ghi sổ</span>
+                                }
+                            </td>
+                            <td class="py-4 px-5 flex items-center justify-center gap-3">
+                                <a href="#" class="text-gray-400 hover:text-blue-600 transition-colors"><i data-lucide="eye" class="w-4 h-4"></i></a>
+                                <button type="button" onclick="deleteVoucher(@item.Id)" class="text-gray-400 hover:text-red-600 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr><td colspan="7" class="py-10 text-center text-gray-500">Chưa có chứng từ nào.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        lucide.createIcons();
+        function deleteVoucher(id) {
+            if(confirm('Bạn có chắc chắn muốn xóa chứng từ này? Dữ liệu không thể khôi phục.')) {
+                $.post(`/SalesVoucher/Delete/${id}`, function(res) {
+                    if(res.success) location.reload();
+                    else alert(res.message);
+                });
+            }
+        }
+    </script>
+}

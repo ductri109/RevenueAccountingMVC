@@ -1,0 +1,157 @@
+@using RevenueAccountingMVC.Models
+@model Account
+
+@{
+    ViewData["Title"] = "Chỉnh sửa tài khoản";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="p-8">
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h2 class="text-[22px] font-bold text-gray-900">Chỉnh sửa thông tin tài khoản</h2>
+            <p class="text-[14px] text-gray-500 mt-1">Cập nhật thông tin chi tiết cho tài khoản @Model.AccountNumber</p>
+        </div>
+        <a asp-action="Index" class="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-4 py-2.5 rounded-lg text-[14px] font-medium flex items-center gap-2 transition-colors shadow-sm">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i> Quay lại danh sách
+        </a>
+    </div>
+
+    <div class="bg-white border border-gray-100 rounded-xl shadow-sm p-6">
+        <form asp-action="Edit" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-red-500 text-sm mb-4"></div>
+            
+            <input type="hidden" asp-for="Id" />
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                <div>
+                    <label asp-for="AccountNumber" class="block text-[14px] font-medium text-gray-700 mb-1.5">
+                        Số tài khoản <span class="text-red-500">*</span>
+                    </label>
+                    <input asp-for="AccountNumber" type="text" 
+                           readonly 
+                           class="w-full bg-[#fef9c3] border border-gray-200 rounded-lg px-4 py-2.5 text-[14px] text-gray-800 font-bold cursor-not-allowed outline-none shadow-sm" />
+                    <p class="text-[11px] text-gray-400 mt-1 italic flex items-center gap-1">
+                        <i data-lucide="lock" class="w-3 h-3 inline mr-0.5"></i> Số tài khoản kế toán không thể thay đổi sau khi tạo.
+                    </p>
+                    <span asp-validation-for="AccountNumber" class="text-red-500 text-[12px] mt-1 block"></span>
+                </div>
+
+                <div>
+                    <label asp-for="AccountName" class="block text-[14px] font-medium text-gray-700 mb-1.5">
+                        Tên tài khoản <span class="text-red-500">*</span>
+                    </label>
+                    <input asp-for="AccountName" class="w-full bg-gray-50 border border-gray-300 focus:bg-white focus:border-black focus:ring-1 focus:ring-black rounded-lg px-4 py-2.5 text-[14px] text-gray-900 outline-none transition-all" />
+                    <span asp-validation-for="AccountName" class="text-red-500 text-[12px] mt-1 block"></span>
+                </div>
+
+                <div>
+                    <label asp-for="Category" class="block text-[14px] font-medium text-gray-700 mb-1.5">
+                        Phân loại <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <select asp-for="Category" asp-items="Html.GetEnumSelectList<AccountCategory>()" class="appearance-none w-full bg-gray-50 border border-gray-300 focus:bg-white focus:border-black focus:ring-1 focus:ring-black rounded-lg pl-4 pr-10 py-2.5 text-[14px] text-gray-900 cursor-pointer outline-none transition-all">
+                        </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400"></i>
+                        </div>
+                    </div>
+                    <span asp-validation-for="Category" class="text-red-500 text-[12px] mt-1 block"></span>
+                </div>
+
+                <div>
+                    <label asp-for="Nature" class="block text-[14px] font-medium text-gray-700 mb-1.5">
+                        Tính chất tài khoản <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <select asp-for="Nature" asp-items="Html.GetEnumSelectList<AccountNature>()" class="appearance-none w-full bg-gray-50 border border-gray-300 focus:bg-white focus:border-black focus:ring-1 focus:ring-black rounded-lg pl-4 pr-10 py-2.5 text-[14px] text-gray-900 cursor-pointer outline-none transition-all">
+                        </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400"></i>
+                        </div>
+                    </div>
+                    <span asp-validation-for="Nature" class="text-red-500 text-[12px] mt-1 block"></span>
+                </div>
+
+                <div>
+                    <label asp-for="ParentAccountId" class="block text-[14px] font-medium text-gray-700 mb-1.5">
+                        Tài khoản mẹ (Nếu có)
+                    </label>
+                    <div class="relative">
+                        <select asp-for="ParentAccountId" asp-items="ViewBag.ParentAccounts" class="appearance-none w-full bg-gray-50 border border-gray-300 focus:bg-white focus:border-black focus:ring-1 focus:ring-black rounded-lg pl-4 pr-10 py-2.5 text-[14px] text-gray-900 cursor-pointer outline-none transition-all">
+                            <option value="">-- Không có tài khoản mẹ (Cấp 1) --</option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label asp-for="Status" class="block text-[14px] font-medium text-gray-700 mb-1.5">
+                        Trạng thái <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <select asp-for="Status" asp-items="Html.GetEnumSelectList<AccountStatus>()" 
+                                class="appearance-none w-full bg-gray-50 border border-gray-300 focus:bg-white focus:border-black focus:ring-1 focus:ring-black rounded-lg pl-4 pr-10 py-2.5 text-[14px] text-gray-900 cursor-pointer outline-none transition-all">
+                        </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400"></i>
+                        </div>
+                    </div>
+                    <span asp-validation-for="Status" class="text-red-500 text-[12px] mt-1 block"></span>
+                </div>
+
+                <div class="md:col-span-2 flex items-center mt-2 mb-2">
+                    <input asp-for="IsDetail" type="checkbox" class="w-4 h-4 text-black bg-gray-50 border-gray-300 rounded focus:ring-black cursor-pointer" />
+                    <label asp-for="IsDetail" class="ml-2 text-[14px] font-medium text-gray-800 cursor-pointer">
+                        Là tài khoản chi tiết (Được phép hạch toán trực tiếp)
+                    </label>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 md:col-span-2">
+                    <div>
+                        <label class="block text-[14px] font-medium text-gray-700 mb-1.5">Ngày tạo</label>
+                        <div class="relative">
+                            <input type="text" readonly value="@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")" 
+                                   class="w-full bg-[#fef9c3] border border-gray-200 rounded-lg pl-4 pr-10 py-2.5 text-[14px] text-gray-800 cursor-not-allowed outline-none shadow-sm" />
+                            <i data-lucide="calendar" class="absolute right-3 top-3.5 w-4 h-4 text-gray-500 pointer-events-none inline-block"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[14px] font-medium text-gray-700 mb-1.5">Cập nhật gần nhất</label>
+                        <div class="relative">
+                            <input type="text" readonly value="@(Model.UpdatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa có cập nhật")" 
+                                   class="w-full bg-[#fef9c3] border border-gray-200 rounded-lg pl-4 pr-10 py-2.5 text-[14px] text-gray-800 cursor-not-allowed outline-none shadow-sm" />
+                            <i data-lucide="history" class="absolute right-3 top-3.5 w-4 h-4 text-gray-500 pointer-events-none inline-block"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="md:col-span-2">
+                    <label asp-for="Description" class="block text-[14px] font-medium text-gray-700 mb-1.5">Mô tả chi tiết</label>
+                    <textarea asp-for="Description" rows="3" class="w-full bg-gray-50 border border-gray-300 focus:bg-white focus:border-black focus:ring-1 focus:ring-black rounded-lg px-4 py-2.5 text-[14px] text-gray-900 outline-none transition-all resize-none"></textarea>
+                    <span asp-validation-for="Description" class="text-red-500 text-[12px] mt-1 block"></span>
+                </div>
+            </div>
+
+            <div class="mt-8 border-t border-gray-100 pt-5 flex items-center justify-end gap-3">
+                <a asp-action="Index" class="px-5 py-2.5 text-[14px] font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
+                    Huỷ bỏ
+                </a>
+                <button type="submit" class="bg-black hover:bg-gray-800 text-white px-8 py-2.5 rounded-lg text-[14px] font-bold flex items-center gap-2 transition-all shadow-md active:scale-95">
+                    <i data-lucide="save" class="w-4 h-4"></i> Lưu thay đổi
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    </script>
+}

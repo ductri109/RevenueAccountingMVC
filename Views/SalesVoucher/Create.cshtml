@@ -1,0 +1,419 @@
+@using RevenueAccountingMVC.Models
+@using System.Text.Json
+@model SalesVoucher
+
+@{
+    ViewData["Title"] = "Ghi nhận doanh thu";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    // CHUẨN BỊ DỮ LIỆU TỪ CONTROLLER SANG JAVASCRIPT
+    var customersJson = "{}";
+    if (ViewBag.CustomersData != null)
+    {
+        customersJson = JsonSerializer.Serialize(ViewBag.CustomersData);
+    }
+
+    var productsJson = "{}";
+    if (ViewBag.ProductsData != null)
+    {
+        productsJson = JsonSerializer.Serialize(ViewBag.ProductsData);
+    }
+}
+
+@* SỬ DỤNG TEMPLATE ĐỂ RENDER HTML AN TOÀN TRÁNH CRASH JAVASCRIPT *@
+<template id="tpl-products">
+    @foreach (var item in (SelectList)ViewBag.Products) { <option value="@item.Value">@item.Text</option> }
+</template>
+<template id="tpl-accounts">
+    @foreach (var item in (SelectList)ViewBag.Accounts) { <option value="@item.Value">@item.Text</option> }
+</template>
+<template id="tpl-taxes">
+    @foreach (var item in (SelectList)ViewBag.Taxes) { <option value="@item.Value">@item.Text</option> }
+</template>
+
+<div class="p-6 md:p-10 bg-[#f8fafc] min-h-screen">
+    
+    @* HEADER *@
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h2 class="text-[24px] font-bold text-gray-900">Ghi nhận doanh thu bán hàng</h2>
+            <p class="text-[14px] text-gray-500 mt-1">Lập chứng từ hạch toán doanh thu và công nợ</p>
+        </div>
+        <a asp-action="Index" class="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-4 py-2.5 rounded-lg text-[14px] font-medium flex items-center gap-2 transition-colors shadow-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+            Quay lại
+        </a>
+    </div>
+
+    <form asp-action="Create" method="post" id="voucherForm">
+        <div asp-validation-summary="ModelOnly" class="text-red-500 text-sm mb-4"></div>
+
+        @* THÔNG TIN CHUNG *@
+        <div class="bg-white rounded-[16px] shadow-sm p-8 mb-6 border border-gray-100">
+            <div class="flex justify-between items-start mb-6">
+                <h3 class="text-[18px] font-bold text-gray-900">Thông tin chung</h3>
+                <div class="bg-gray-100 text-gray-600 px-4 py-2 rounded-md text-[13px] font-medium">
+                    Chứng từ: tự động
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
+                @* Cột Trái *@
+                <div class="space-y-6">
+                    <div>
+                        <label asp-for="AccountingDate" class="block text-[14px] font-semibold text-gray-800 mb-2">Ngày hạch toán <span class="text-red-500">*</span></label>
+                        <input asp-for="AccountingDate" type="date" id="txtAccountingDate" value="@DateTime.Now.ToString("yyyy-MM-dd")" class="w-full bg-[#f3f4f6] border border-transparent focus:border-gray-400 focus:bg-white rounded-lg px-4 py-3 text-[14px] text-gray-800 outline-none transition-all" />
+                    </div>
+
+                    <div>
+                        <label class="block text-[14px] font-semibold text-gray-800 mb-2">Tên khách hàng</label>
+                        <input type="text" id="txtCustomerName" readonly class="w-full bg-[#f3f4f6] border border-transparent rounded-lg px-4 py-3 text-[14px] text-gray-800 outline-none cursor-not-allowed" />
+                    </div>
+
+                    <div>
+                        <label asp-for="Description" class="block text-[14px] font-semibold text-gray-800 mb-2">Diễn giải</label>
+                        <textarea asp-for="Description" rows="4" class="w-full bg-[#f3f4f6] border border-transparent focus:border-gray-400 focus:bg-white rounded-lg px-4 py-3 text-[14px] text-gray-800 outline-none transition-all resize-none" placeholder="Mô tả giao dịch..."></textarea>
+                    </div>
+                </div>
+
+                @* Cột Phải *@
+                <div class="space-y-6">
+                    <div>
+                        <label asp-for="CustomerId" class="block text-[14px] font-semibold text-gray-800 mb-2">Mã khách hàng <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <select asp-for="CustomerId" asp-items="ViewBag.Customers" id="cboCustomer" class="appearance-none w-full bg-[#f3f4f6] border border-transparent focus:border-gray-400 focus:bg-white rounded-lg px-4 py-3 text-[14px] text-gray-800 outline-none transition-all cursor-pointer">
+                                <option value="">Chọn khách hàng</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-500"><path d="m6 9 6 6 6-6"/></svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[14px] font-semibold text-gray-800 mb-2">Địa chỉ</label>
+                        <input type="text" id="txtAddress" readonly class="w-full bg-[#f3f4f6] border border-transparent rounded-lg px-4 py-3 text-[14px] text-gray-800 outline-none cursor-not-allowed" />
+                    </div>
+
+                    <div>
+                        <label asp-for="DebtDays" class="block text-[14px] font-semibold text-gray-800 mb-2">Số ngày nợ</label>
+                        <input asp-for="DebtDays" type="number" id="txtDebtDays" value="0" class="w-full bg-[#f3f4f6] border border-transparent focus:border-gray-400 focus:bg-white rounded-lg px-4 py-3 text-[14px] text-gray-800 outline-none transition-all" />
+                    </div>
+
+                    <div>
+                        <label class="block text-[14px] font-semibold text-gray-800 mb-2">Ngày đáo hạn</label>
+                        <input type="text" id="txtDueDate" readonly class="w-full bg-[#f3f4f6] border border-transparent rounded-lg px-4 py-3 text-[14px] text-gray-500 outline-none cursor-not-allowed" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* CHI TIẾT HÀNG HÓA *@
+        <div class="bg-white rounded-[16px] shadow-sm overflow-hidden mb-6 border border-gray-100">
+            <div class="p-6 flex justify-between items-center">
+                <h3 class="text-[18px] font-bold text-gray-900">Chi tiết hàng hóa</h3>
+                <div class="flex gap-2">
+                    <button type="button" id="btnRefresh" title="Tải lại trang" class="bg-white border border-gray-200 text-gray-600 px-4 py-2.5 rounded-lg text-[13px] font-semibold flex items-center gap-2 hover:bg-gray-50 transition-colors shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                        Làm mới
+                    </button>
+                    <button type="button" id="btnAddRow" class="bg-[#0f172a] text-white px-5 py-2.5 rounded-lg text-[13px] font-semibold flex items-center gap-2 hover:bg-gray-800 transition-colors shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                        Thêm dòng
+                    </button>
+                </div>
+            </div>
+            <div class="overflow-x-auto px-6 pb-6">
+                <table class="w-full text-left text-[13px] border-t border-gray-100" id="detailsTable">
+                    <thead class="bg-[#f9fafb] text-gray-600 border-b border-gray-100">
+                        <tr>
+                            <th class="py-4 px-3 font-semibold w-[18%]">Mã sản phẩm <span class="text-red-500">*</span></th>
+                            <th class="py-4 px-3 font-semibold w-[15%]">Tên sản phẩm</th>
+                            <th class="py-4 px-2 font-semibold w-[6%]">ĐVT</th>
+                            <th class="py-4 px-2 font-semibold w-[8%]">TK Nợ</th>
+                            <th class="py-4 px-2 font-semibold w-[8%]">TK Có</th>
+                            <th class="py-4 px-2 font-semibold w-[7%] text-center">Số lượng</th>
+                            <th class="py-4 px-2 font-semibold w-[10%] text-right">Đơn giá</th>
+                            <th class="py-4 px-2 font-semibold w-[6%] text-center">CK (%)</th>
+                            <th class="py-4 px-2 font-semibold w-[10%] text-right">Thành tiền</th>
+                            <th class="py-4 px-2 font-semibold w-[8%]">Loại thuế</th>
+                            <th class="py-4 px-2 font-semibold w-[8%]">TK thuế</th>
+                            <th class="py-4 px-2 font-semibold w-[8%] text-right">Tiền thuế</th>
+                            <th class="py-4 px-2 font-semibold w-[2%] text-center"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="divide-y divide-gray-100">
+                        <tr id="emptyStateRow">
+                            <td colspan="13" class="py-8 text-center text-gray-500">Chưa có hàng hóa. Nhấn "Thêm dòng" để bắt đầu.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        @* TỔNG HỢP THANH TOÁN *@
+        <div class="flex justify-end mb-8">
+            <div class="w-full md:w-[400px] bg-white rounded-[16px] shadow-sm p-6 border border-gray-100">
+                <h3 class="text-[16px] font-bold text-gray-900 mb-6">Tổng hợp thanh toán</h3>
+                
+                <div class="flex justify-between items-center mb-4 text-[14px]">
+                    <span class="text-gray-500 font-medium">Tổng thành tiền:</span>
+                    <span class="font-bold text-gray-900"><span id="lblTotalAmount">0</span> <span class="text-[12px] underline ml-1">đ</span></span>
+                </div>
+                
+                <div class="flex justify-between items-center mb-6 text-[14px]">
+                    <span class="text-gray-500 font-medium">Tổng thuế GTGT:</span>
+                    <span class="font-bold text-gray-900"><span id="lblTotalTax">0</span> <span class="text-[12px] underline ml-1">đ</span></span>
+                </div>
+                
+                <div class="flex justify-between items-center bg-[#eff6ff] p-4 rounded-xl text-[15px]">
+                    <span class="text-gray-900 font-bold">Tổng thanh toán:</span>
+                    <span class="font-bold text-[#1d4ed8] text-[18px]"><span id="lblTotalPayment">0</span> <span class="text-[14px] underline ml-1">đ</span></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pb-10">
+            <a asp-action="Index" class="px-6 py-2.5 text-[14px] font-semibold text-gray-600 hover:bg-white rounded-lg transition-colors border border-transparent hover:border-gray-200">Hủy bỏ</a>
+            <button type="submit" class="bg-black hover:bg-gray-800 text-white px-8 py-2.5 rounded-lg text-[14px] font-bold flex items-center gap-2 transition-all active:scale-95 shadow-md">
+                Lưu chứng từ
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    @* TEMPLATE ẨN ĐỂ LẤY OPTION CHO COMBOBOX (Cách an toàn tuyệt đối) *@
+    <template id="tpl-products">
+        @foreach (var item in (SelectList)ViewBag.Products) { <option value="@item.Value">@item.Text</option> }
+    </template>
+    <template id="tpl-accounts">
+        @foreach (var item in (SelectList)ViewBag.Accounts) { <option value="@item.Value">@item.Text</option> }
+    </template>
+    <template id="tpl-taxes">
+        @foreach (var item in (SelectList)ViewBag.Taxes) { <option value="@item.Value">@item.Text</option> }
+    </template>
+
+    <script>
+        $(document).ready(function () {
+            // Định nghĩa các URL an toàn
+            const customerApiUrl = '@Url.Action("GetCustomerDefaults", "SalesVoucher")';
+            const productApiUrl = '@Url.Action("GetProductDefaults", "SalesVoucher")';
+            const createProductUrl = '@Url.Action("Create", "Product")';
+
+            const productsOptionsHtml = $('#tpl-products').html();
+            const accountsOptionsHtml = $('#tpl-accounts').html();
+            const taxesOptionsHtml = $('#tpl-taxes').html();
+
+            let rowIdx = 0;
+            let globalReceivableAccount = '';
+
+            const formatMoney = (amount) => new Intl.NumberFormat('vi-VN').format(amount);
+
+            // ======================================
+            // 1. CÁC HÀM TÍNH TOÁN
+            // ======================================
+            const calculateDueDate = () => {
+                let accDateStr = $('#txtAccountingDate').val();
+                let days = parseInt($('#txtDebtDays').val()) || 0;
+                if (accDateStr) {
+                    let d = new Date(accDateStr);
+                    if(!isNaN(d.getTime())) {
+                        d.setDate(d.getDate() + days);
+                        let day = d.getDate().toString().padStart(2, '0');
+                        let month = (d.getMonth() + 1).toString().padStart(2, '0');
+                        let year = d.getFullYear();
+                        $('#txtDueDate').val(`${day}/${month}/${year}`);
+                    }
+                }
+            };
+
+            const calculateGrandTotals = () => {
+                let totalAmt = 0;
+                let totalTax = 0;
+
+                $('#tableBody tr.detail-row').each(function () {
+                    let qty = parseFloat($(this).find('.txt-qty').val()) || 0;
+                    let price = parseFloat($(this).find('.txt-price').val()) || 0;
+                    let discount = parseFloat($(this).find('.txt-discount').val()) || 0;
+
+                    let taxText = $(this).find('.cbo-tax option:selected').text() || '';
+                    let taxRate = 0;
+                    let match = taxText.match(/(\d+)%/);
+                    if (match) taxRate = parseFloat(match[1]);
+
+                    $(this).find('.hid-taxrate').val(taxRate);
+
+                    let amount = qty * price * (1 - discount / 100);
+                    let tax = amount * (taxRate / 100);
+
+                    $(this).find('.lbl-amount').val(formatMoney(amount));
+                    $(this).find('.lbl-taxamount').val(formatMoney(tax));
+
+                    totalAmt += amount;
+                    totalTax += tax;
+                });
+
+                $('#lblTotalAmount').text(formatMoney(totalAmt));
+                $('#lblTotalTax').text(formatMoney(totalTax));
+                $('#lblTotalPayment').text(formatMoney(totalAmt + totalTax));
+            };
+
+            // ======================================
+            // 2. HÀM THÊM DÒNG MỚI
+            // ======================================
+            const addRow = () => {
+                $('#emptyStateRow').remove();
+
+                const newRowHtml = `
+                    <tr class="hover:bg-gray-50/50 transition-colors detail-row group border-b border-gray-100">
+                        <td class="py-3 px-2 align-top">
+                            <div class="flex items-center gap-1">
+                                <select name="Details[${rowIdx}].ProductId" class="cbo-product flex-1 bg-[#f3f4f6] border border-transparent focus:bg-white focus:border-gray-300 rounded px-2 py-2 outline-none text-[13px] transition-colors">
+                                    <option value="">-- Chọn --</option>
+                                    ${productsOptionsHtml}
+                                </select>
+                                <button type="button" onclick="window.open('${createProductUrl}', '_blank')" class="bg-gray-100 hover:bg-gray-200 text-gray-600 p-2 rounded transition-colors border border-gray-200 shadow-sm flex-shrink-0 focus:outline-none">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                                </button>
+                            </div>
+                        </td>
+                        <td class="py-3 px-2 align-top"><input type="text" readonly class="txt-product-name w-full bg-transparent outline-none text-[13px] text-gray-700 truncate" placeholder="Tên SP..." /></td>
+                        <td class="py-3 px-2 align-top"><input type="text" readonly name="Details[${rowIdx}].UnitSnapshot" class="txt-unit w-full bg-transparent outline-none text-center text-[13px] text-gray-600" /></td>
+                        <td class="py-3 px-2 align-top">
+                            <select name="Details[${rowIdx}].DebitAccountId" class="cbo-debit w-full bg-[#f3f4f6] border border-transparent focus:bg-white focus:border-gray-300 rounded px-1 py-2 outline-none text-[12px]">
+                                <option value=""></option>
+                                ${accountsOptionsHtml}
+                            </select>
+                        </td>
+                        <td class="py-3 px-2 align-top">
+                            <select name="Details[${rowIdx}].CreditAccountId" class="cbo-credit w-full bg-[#f3f4f6] border border-transparent focus:bg-white focus:border-gray-300 rounded px-1 py-2 outline-none text-[12px]">
+                                <option value=""></option>
+                                ${accountsOptionsHtml}
+                            </select>
+                        </td>
+                        <td class="py-3 px-2 align-top"><input type="number" min="1" step="any" name="Details[${rowIdx}].Quantity" class="txt-qty w-full bg-white border border-gray-200 focus:border-gray-400 rounded px-2 py-2 outline-none text-center text-[13px]" value="1" /></td>
+                        <td class="py-3 px-2 align-top"><input type="number" min="0" step="any" name="Details[${rowIdx}].UnitPrice" class="txt-price w-full bg-white border border-gray-200 focus:border-gray-400 rounded px-2 py-2 outline-none text-right text-[13px]" value="0" /></td>
+                        <td class="py-3 px-2 align-top"><input type="number" min="0" max="100" name="Details[${rowIdx}].DiscountRate" class="txt-discount w-full bg-white border border-gray-200 focus:border-gray-400 rounded px-2 py-2 outline-none text-center text-[13px]" value="0" /></td>
+                        <td class="py-3 px-2 align-top"><input type="text" readonly class="lbl-amount w-full bg-transparent text-right font-bold text-gray-900 outline-none text-[13px]" value="0" /></td>
+                        <td class="py-3 px-2 align-top">
+                            <select name="Details[${rowIdx}].TaxId" class="cbo-tax w-full bg-[#f3f4f6] border border-transparent focus:bg-white focus:border-gray-300 rounded px-1 py-2 outline-none text-[12px]">
+                                <option value="">-</option>
+                                ${taxesOptionsHtml}
+                            </select>
+                            <input type="hidden" class="hid-taxrate" name="Details[${rowIdx}].TaxRateSnapshot" value="0" />
+                        </td>
+                        <td class="py-3 px-2 align-top">
+                            <select name="Details[${rowIdx}].TaxAccountId" class="cbo-taxaccount w-full bg-[#f3f4f6] border border-transparent focus:bg-white focus:border-gray-300 rounded px-1 py-2 outline-none text-[12px]">
+                                <option value=""></option>
+                                ${accountsOptionsHtml}
+                            </select>
+                        </td>
+                        <td class="py-3 px-2 align-top"><input type="text" readonly class="lbl-taxamount w-full bg-transparent text-right font-semibold text-gray-600 outline-none text-[13px]" value="0" /></td>
+                        <td class="py-3 px-2 text-center align-top">
+                            <button type="button" class="btn-remove text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded focus:outline-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+
+                $('#tableBody').append(newRowHtml);
+                let newRow = $('#tableBody').find('tr.detail-row').last();
+
+                if (globalReceivableAccount) {
+                    newRow.find('.cbo-debit').val(globalReceivableAccount);
+                }
+
+                bindRowEvents(newRow);
+                rowIdx++;
+            };
+
+            // ======================================
+            // 3. SỰ KIỆN TƯƠNG TÁC GIAO DIỆN
+            // ======================================
+            const bindRowEvents = (row) => {
+                row.find('.txt-qty, .txt-price, .txt-discount, .cbo-tax').on('input change', calculateGrandTotals);
+
+                // KHI CHỌN SẢN PHẨM -> GỌI AJAX VỀ SERVER
+                row.find('.cbo-product').on('change', function () {
+                    let pId = $(this).val();
+                    
+                    if (pId) {
+                        $.get(`${productApiUrl}/${pId}`, function(data) {
+                            row.find('.txt-product-name').val(data.productName || '');
+                            row.find('.txt-unit').val(data.unit || '');
+                            row.find('.txt-price').val(data.defaultPrice || 0);
+
+                            if (data.revenueAccountId) row.find('.cbo-credit').val(data.revenueAccountId);
+                            if (data.taxId) row.find('.cbo-tax').val(data.taxId);
+                            if (data.taxAccountId) row.find('.cbo-taxaccount').val(data.taxAccountId);
+                            
+                            calculateGrandTotals();
+                        }).fail(function() {
+                            alert("Không thể lấy dữ liệu sản phẩm từ máy chủ.");
+                        });
+                    } else {
+                        row.find('.txt-product-name').val('');
+                        row.find('.txt-unit').val('');
+                        row.find('.txt-price').val('0');
+                        calculateGrandTotals();
+                    }
+                });
+
+                // KHI XÓA DÒNG
+                row.find('.btn-remove').on('click', function () {
+                    $(this).closest('tr').remove();
+                    if ($('#tableBody tr.detail-row').length === 0) {
+                        $('#tableBody').html('<tr id="emptyStateRow"><td colspan="13" class="py-8 text-center text-gray-500">Chưa có hàng hóa. Nhấn "Thêm dòng" để bắt đầu.</td></tr>');
+                    }
+                    calculateGrandTotals();
+                });
+            };
+
+            // KHI CHỌN KHÁCH HÀNG -> GỌI AJAX VỀ SERVER
+            $('#cboCustomer').on('change', function () {
+                let cId = $(this).val();
+
+                if (cId) {
+                    $.get(`${customerApiUrl}/${cId}`, function(data) {
+                        $('#txtCustomerName').val(data.customerName || '');
+                        $('#txtAddress').val(data.address || '');
+                        $('#txtDebtDays').val(data.maxDebtDays || 0);
+
+                        globalReceivableAccount = data.receivableAccountId || '';
+                        $('.cbo-debit').val(globalReceivableAccount);
+                        
+                        calculateDueDate();
+                    }).fail(function() {
+                        alert("Không thể lấy thông tin khách hàng từ máy chủ.");
+                    });
+                } else {
+                    $('#txtCustomerName').val('');
+                    $('#txtAddress').val('');
+                    $('#txtDebtDays').val(0);
+                    globalReceivableAccount = '';
+                    calculateDueDate();
+                }
+            });
+
+            $('#txtAccountingDate, #txtDebtDays').on('input change', calculateDueDate);
+
+            $('#btnAddRow').on('click', function(e) {
+                e.preventDefault();
+                addRow();
+            });
+
+            $('#btnRefresh').on('click', function (e) {
+                e.preventDefault();
+                location.reload();
+            });
+
+            // KHỞI ĐỘNG FORM
+            calculateDueDate();
+            addRow(); 
+        });
+    </script>
+}

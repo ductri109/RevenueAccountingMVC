@@ -1,0 +1,139 @@
+@using RevenueAccountingMVC.Models
+@model Account
+
+@{
+    ViewData["Title"] = "Chi tiết tài khoản";
+
+    string categoryDisplay = Model.Category switch
+    {
+        AccountCategory.Asset => "Tài sản",
+        AccountCategory.LiabilityAndEquity => "Nguồn vốn",
+        AccountCategory.Revenue => "Doanh thu",
+        AccountCategory.Expense => "Chi phí",
+        _ => "Không xác định"
+    };
+
+    string natureDisplay = Model.Nature switch
+    {
+        AccountNature.Debit => "Dư Nợ",
+        AccountNature.Credit => "Dư Có",
+        AccountNature.Both => "Lưỡng tính",
+        AccountNature.None => "Không có số dư",
+        _ => "Không xác định"
+    };
+
+    string statusDisplay = Model.Status == AccountStatus.Active ? "Hoạt động" : "Ngừng sử dụng";
+}
+
+<div class="p-8">
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h2 class="text-[22px] font-bold text-gray-900">Xem chi tiết tài khoản</h2>
+            <p class="text-[14px] text-gray-500 mt-1">Thông tin chi tiết của tài khoản @Model.AccountNumber (@Model.AccountName)</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="bg-black hover:bg-gray-800 text-white px-5 py-2.5 rounded-lg text-[14px] font-bold flex items-center gap-2 transition-all shadow-md active:scale-95">
+                <i data-lucide="pencil" class="w-4 h-4"></i> Chỉnh sửa
+            </a>
+            <a asp-action="Index" class="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-4 py-2.5 rounded-lg text-[14px] font-medium flex items-center gap-2 transition-colors shadow-sm">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i> Quay lại
+            </a>
+        </div>
+    </div>
+
+    <div class="bg-white border border-gray-100 rounded-xl shadow-sm p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 border-transparent">
+            
+            @* Số tài khoản *@
+            <div>
+                <label class="block text-[13px] font-semibold text-gray-700 mb-1.5">Số tài khoản</label>
+                <input type="text" readonly value="@Model.AccountNumber" 
+                       class="w-full bg-[#fef9c3] border border-transparent rounded-lg px-4 py-2.5 text-[14px] text-gray-800 cursor-not-allowed outline-none font-bold" />
+            </div>
+
+            @* Tên tài khoản *@
+            <div>
+                <label class="block text-[13px] font-semibold text-gray-700 mb-1.5">Tên tài khoản</label>
+                <input type="text" readonly value="@Model.AccountName" 
+                       class="w-full bg-[#fef9c3] border border-transparent rounded-lg px-4 py-2.5 text-[14px] text-gray-800 cursor-not-allowed outline-none font-semibold" />
+            </div>
+
+            @* Phân loại & Tính chất (Gộp chung 1 dòng) *@
+            <div class="flex gap-4">
+                <div class="flex-1">
+                    <label class="block text-[13px] font-semibold text-gray-700 mb-1.5">Phân loại</label>
+                    <input type="text" readonly value="@categoryDisplay" 
+                           class="w-full bg-[#fef9c3] border border-transparent rounded-lg px-4 py-2.5 text-[14px] text-gray-800 cursor-not-allowed outline-none font-medium" />
+                </div>
+                <div class="flex-1">
+                    <label class="block text-[13px] font-semibold text-gray-700 mb-1.5">Tính chất</label>
+                    <input type="text" readonly value="@natureDisplay" 
+                           class="w-full bg-[#fef9c3] border border-transparent rounded-lg px-4 py-2.5 text-[14px] text-gray-800 text-center cursor-not-allowed outline-none font-medium" />
+                </div>
+            </div>
+
+            @* Tài khoản mẹ & Check chi tiết (Gộp chung) *@
+            <div class="flex gap-4">
+                <div class="flex-1">
+                    <label class="block text-[13px] font-semibold text-gray-700 mb-1.5">Tài khoản mẹ</label>
+                    <input type="text" readonly value="@(Model.ParentAccount != null ? $"{Model.ParentAccount.AccountNumber} - {Model.ParentAccount.AccountName}" : "Không có (Đây là TK Cấp 1)")" 
+                           class="w-full bg-[#fef9c3] border border-transparent rounded-lg px-4 py-2.5 text-[14px] text-gray-800 cursor-not-allowed outline-none font-medium" />
+                </div>
+                <div class="w-[140px]">
+                    <label class="block text-[13px] font-semibold text-gray-700 mb-1.5">Chi tiết hạch toán</label>
+                    <input type="text" readonly value="@(Model.IsDetail ? "Có" : "Không")" 
+                           class="w-full @(Model.IsDetail ? "bg-[#dcfce7] text-[#166534]" : "bg-[#fee2e2] text-[#991b1b]") border border-transparent rounded-lg px-4 py-2.5 text-[14px] text-center cursor-not-allowed outline-none font-bold" />
+                </div>
+            </div>
+
+            @* Hàng thời gian và trạng thái *@
+            <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                <div>
+                    <label class="block text-[13px] font-semibold text-gray-700 mb-1.5">Trạng thái sử dụng</label>
+                    <input type="text" readonly value="@statusDisplay" 
+                           class="w-full bg-[#fef9c3] border border-transparent rounded-lg px-4 py-2.5 text-[14px] text-gray-800 cursor-not-allowed outline-none" />
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[13px] font-semibold text-gray-700 mb-1.5">Ngày tạo</label>
+                        <div class="relative">
+                            <input type="text" readonly value="@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")" 
+                                   class="w-full bg-[#fef9c3] border border-transparent rounded-lg pl-4 pr-10 py-2.5 text-[14px] text-gray-800 cursor-not-allowed outline-none font-medium" />
+                            <i data-lucide="calendar" class="absolute right-3 top-3.5 w-4 h-4 text-gray-500 pointer-events-none inline-block"></i>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[13px] font-semibold text-gray-700 mb-1.5">Cập nhật gần nhất</label>
+                        <div class="relative">
+                            <input type="text" readonly value="@(Model.UpdatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa có cập nhật")" 
+                                   class="w-full bg-[#fef9c3] border border-transparent rounded-lg pl-4 pr-10 py-2.5 text-[14px] text-gray-800 cursor-not-allowed outline-none font-medium" />
+                            <i data-lucide="history" class="absolute right-3 top-3.5 w-4 h-4 text-gray-500 pointer-events-none inline-block"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @* Mô tả chi tiết *@
+            <div class="md:col-span-2">
+                <label class="block text-[13px] font-semibold text-gray-700 mb-1.5">Mô tả chi tiết</label>
+                <textarea readonly rows="3" class="w-full bg-[#fef9c3] border border-transparent rounded-lg px-4 py-2.5 text-[14px] text-gray-800 cursor-not-allowed outline-none resize-none font-medium">@(string.IsNullOrEmpty(Model.Description) ? "Không có mô tả" : Model.Description)</textarea>
+            </div>
+        </div>
+
+        <div class="mt-8 pt-5 border-t border-gray-100 flex justify-end gap-3">
+             <a asp-action="Index" class="bg-white border border-gray-300 hover:bg-gray-50 text-black px-6 py-2 rounded-lg text-[13px] font-bold transition-all shadow-sm active:scale-95">
+                Đóng
+            </a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    </script>
+}

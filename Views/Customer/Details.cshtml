@@ -1,0 +1,138 @@
+@using RevenueAccountingMVC.Models
+@model Customer
+
+@{
+    ViewData["Title"] = "Chi tiết khách hàng";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    string typeDisplay = Model.CustomerType switch
+    {
+        CustomerType.Personal => "Cá nhân",
+        CustomerType.Business => "Doanh nghiệp",
+        _ => "Không xác định"
+    };
+    string statusDisplay = Model.Status switch
+    {
+        CustomerStatus.Active => "Hoạt động",
+        CustomerStatus.Inactive => "Ngừng sử dụng",
+        _ => "Không xác định"
+    };
+}
+
+<div class="p-8">
+    <div class="flex flex-col gap-4 mb-6">
+        @* Nút Quay lại nằm trên *@
+        <div>
+            <a asp-action="Index" class="inline-flex items-center gap-2 text-[14px] font-medium text-gray-500 hover:text-black transition-colors group">
+                <i data-lucide="arrow-left" class="w-4 h-4 transition-transform group-hover:-translate-x-1"></i> 
+                Quay lại
+            </a>
+        </div>
+
+        @* Tiêu đề nằm dưới *@
+        <div>
+            <h2 class="text-[24px] font-bold text-gray-900">Xem chi tiết khách hàng</h2>
+        </div>
+    </div>
+
+    <div class="bg-white border border-gray-100 rounded-xl shadow-sm p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 border-transparent">
+            
+            @* --- THÔNG TIN CHUNG --- *@
+            <div>
+                <label class="block text-[13px] font-semibold text-gray-700 mb-1.5">Mã khách hàng</label>
+                <input type="text" readonly value="@Model.CustomerCode" 
+                       class="w-full bg-[#fef9c3] border border-transparent rounded-lg px-4 py-2.5 text-[14px] text-gray-800 cursor-not-allowed outline-none font-bold" />
+            </div>
+
+            <div>
+                <label class="block text-[13px] font-semibold text-gray-700 mb-1.5">Tên khách hàng</label>
+                <input type="text" readonly value="@Model.CustomerName" 
+                       class="w-full bg-[#fef9c3] border border-transparent rounded-lg px-4 py-2.5 text-[14px] text-gray-800 cursor-not-allowed outline-none font-semibold" />
+            </div>
+
+            <div>
+                <label class="block text-[13px] font-semibold text-gray-700 mb-1.5">Loại khách hàng</label>
+                <input type="text" readonly value="@typeDisplay" 
+                       class="w-full bg-[#fef9c3] border border-transparent rounded-lg px-4 py-2.5 text-[14px] text-gray-800 cursor-not-allowed outline-none" />
+            </div>
+
+            <div>
+                <label class="block text-[13px] font-semibold text-gray-700 mb-1.5">Số điện thoại</label>
+                <input type="text" readonly value="@(string.IsNullOrEmpty(Model.PhoneNumber) ? "Chưa có thông tin" : Model.PhoneNumber)" 
+                       class="w-full bg-[#fef9c3] border border-transparent rounded-lg px-4 py-2.5 text-[14px] text-gray-800 cursor-not-allowed outline-none font-medium" />
+            </div>
+
+            <div>
+                <label class="block text-[13px] font-semibold text-gray-700 mb-1.5">Email</label>
+                <input type="text" readonly value="@(string.IsNullOrEmpty(Model.Email) ? "Chưa có thông tin" : Model.Email)" 
+                       class="w-full bg-[#fef9c3] border border-transparent rounded-lg px-4 py-2.5 text-[14px] text-gray-800 cursor-not-allowed outline-none font-medium" />
+            </div>
+
+            <div>
+                <label class="block text-[13px] font-semibold text-gray-700 mb-1.5">Mã số thuế</label>
+                <input type="text" readonly value="@(Model.CustomerType == CustomerType.Business ? Model.TaxCode : "Áp dụng cho doanh nghiệp")" 
+                       class="w-full bg-[#fef9c3] border border-transparent rounded-lg px-4 py-2.5 text-[14px] text-gray-800 cursor-not-allowed outline-none font-medium" />
+            </div>
+
+            @* --- Dòng Trạng thái và Thông tin thời gian --- *@
+            <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-x-8 pt-5 border-t border-gray-100 mt-1">
+                
+                @* Cột bên trái: Trạng thái *@
+                <div>                               
+                    <label class="block text-[13px] font-semibold text-gray-700 mb-1.5">Trạng thái sử dụng</label>
+                    <input type="text" readonly value="@statusDisplay" 
+                        class="w-full bg-[#fef9c3] border border-transparent rounded-lg px-4 py-2.5 text-[14px] text-gray-800 cursor-not-allowed outline-none" />
+                </div>
+
+                @* Cột bên phải: Chia đôi cho Ngày tạo và Cập nhật *@
+                <div class="grid grid-cols-2 gap-4">
+                    @* Ngày tạo *@
+                    <div>
+                        <label class="block text-[13px] font-semibold text-gray-700 mb-1.5">Ngày tạo</label>
+                        <div class="relative">
+                            <input type="text" readonly value="@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")" 
+                                class="w-full bg-[#fef9c3] border border-gray-200 rounded-lg pl-4 pr-10 py-2.5 text-[14px] text-gray-500 cursor-default outline-none font-medium" />
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                <i data-lucide="calendar" class="w-4 h-4 text-gray-400"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    @* Cập nhật gần nhất *@
+                    <div>
+                        <label class="block text-[13px] font-semibold text-gray-700 mb-1.5">Cập nhật gần nhất</label>
+                        <div class="relative">
+                            <input type="text" readonly value="@(Model.UpdatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa có cập nhật")" 
+                                class="w-full bg-[#fef9c3] border border-gray-200 rounded-lg pl-4 pr-10 py-2.5 text-[14px] text-gray-500 cursor-default outline-none font-medium" />
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                <i data-lucide="history" class="w-4 h-4 text-gray-400"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="md:col-span-2">
+                <label class="block text-[13px] font-semibold text-gray-700 mb-1.5">Địa chỉ</label>
+                <textarea readonly rows="2" class="w-full bg-[#fef9c3] border border-transparent rounded-lg px-4 py-2.5 text-[14px] text-gray-800 cursor-not-allowed outline-none resize-none font-medium">@(string.IsNullOrEmpty(Model.Address) ? "Chưa có thông tin" : Model.Address)</textarea>
+            </div>
+
+        </div>
+
+        <div class="mt-8 pt-5 border-t border-gray-100 flex justify-end gap-3">
+             <a asp-action="Index" class="bg-white border border-gray-300 hover:bg-gray-50 text-black px-6 py-2 rounded-lg text-[13px] font-bold transition-all shadow-sm active:scale-95">
+                Đóng
+            </a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    </script>
+}

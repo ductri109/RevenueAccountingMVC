@@ -1,0 +1,203 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"] - Kế toán Doanh thu</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #d1d5db; }
+        
+        /* Transition mượt mà cho Toggle Switch */
+        .toggle-circle { transition: transform 0.2s ease-in-out; }
+    </style>
+</head>
+<body class="bg-[#f4f7f9] text-gray-800 h-screen flex overflow-hidden">
+
+    <aside class="w-[260px] bg-white border-r border-gray-200 flex flex-col flex-shrink-0 z-10">
+        <div class="h-16 flex items-center px-6 border-b border-gray-100 flex-shrink-0">
+            <h1 class="text-[17px] font-bold text-gray-900 tracking-tight">Kế toán Doanh thu</h1>
+        </div>
+        @{
+            var controller = ViewContext.RouteData.Values["Controller"]?.ToString();
+            
+            // Hàm phụ trợ để trả về class active
+            string GetActiveClass(string targetController) 
+            {
+                return controller == targetController ? "bg-[#eff6ff] text-blue-600 active-menu" : "text-gray-600 hover:bg-gray-50";
+            }
+        }
+        <nav class="flex-1 px-4 py-5 space-y-1.5 overflow-y-auto" id="sidebar-menu">
+            <a href="#" class="menu-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                <span class="text-[14px] font-medium">Dashboard</span>
+            </a>
+
+            <a asp-controller="Product" asp-action="Index" 
+                class="menu-item flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors @GetActiveClass("Product")">
+                <i data-lucide="list" class="w-5 h-5"></i>
+                <span class="text-[14px] font-medium">Quản lý danh mục</span>
+            </a>
+
+            <a asp-controller="SalesVoucher" asp-action="Index" 
+                class="menu-item flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors @GetActiveClass("SalesVoucher")">
+                <i data-lucide="circle-dollar-sign" class="w-5 h-5"></i>
+                <span class="text-[14px] font-medium">Quản lý doanh thu</span>
+            </a>
+
+            <a asp-controller="RevenueAdjustment" asp-action="Index" 
+                class="menu-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">
+                <i data-lucide="file-sliders" class="w-5 h-5"></i>
+                <span class="text-[14px] font-medium leading-tight">Quản lý điều chỉnh doanh thu</span>
+            </a>
+
+            <a href="#" class="menu-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">
+                <i data-lucide="file-text" class="w-5 h-5"></i>
+                <span class="text-[14px] font-medium">Quản lý chứng từ</span>
+            </a>
+
+            <a href="#" class="menu-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">
+                <i data-lucide="bar-chart-2" class="w-5 h-5"></i>
+                <span class="text-[14px] font-medium">Báo cáo & sổ sách</span>
+            </a>
+
+            <a href="#" class="menu-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">
+                <i data-lucide="settings" class="w-5 h-5"></i>
+                <span class="text-[14px] font-medium">Quản trị hệ thống</span>
+            </a>
+        </nav>
+
+        @{
+            // Lấy thông tin từ Cookie Đăng nhập
+            var userName = User.Identity?.Name ?? "Khách";
+            var userEmail = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Email)?.Value ?? "";
+            var roleString = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+
+            // Dịch chức vụ sang tiếng Việt
+            string roleDisplay = roleString switch
+            {
+                "Admin" => "Quản trị viên",
+                "Accountant" => "Kế toán",
+                "Leader" => "Lãnh đạo",
+                _ => "Nhân viên"
+            };
+
+            // Tạo Avatar chữ cái đầu (VD: Nguyễn Văn A -> NA)
+            string initials = "U";
+            if (!string.IsNullOrEmpty(userName) && userName != "Khách")
+            {
+                var parts = userName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length >= 2)
+                {
+                    initials = (parts[0][0].ToString() + parts[^1][0].ToString()).ToUpper();
+                }
+                else if (parts.Length == 1)
+                {
+                    initials = parts[0][..Math.Min(2, parts[0].Length)].ToUpper();
+                }
+            }
+        }
+
+        <div class="border-t border-gray-200 p-4 relative hover:bg-gray-50 transition-colors" id="user-profile-container">
+            
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-[13px] tracking-wide flex-shrink-0 shadow-sm">
+                    @initials
+                </div>
+                <div class="flex flex-col flex-1 overflow-hidden">
+                    <span class="text-[14px] font-semibold text-gray-900 truncate" title="@userName">@userName</span>
+                    <span class="text-[11px] font-medium text-blue-600">@roleDisplay</span>
+                </div>
+                <button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors focus:outline-none" id="user-menu-button">
+                    <i data-lucide="more-vertical" class="w-4 h-4 text-gray-400"></i>
+                </button>
+            </div>
+
+            <div class="absolute bottom-full left-2 right-2 mb-2 bg-white border border-gray-100 rounded-xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] transition-all duration-200 z-50 transform translate-y-2 opacity-0 invisible" id="user-menu-dropdown">
+                <div class="p-1.5">
+                    <div class="px-3 py-2 text-xs text-gray-500 border-b border-gray-50 mb-1 truncate">
+                        @userEmail
+                    </div>
+                    
+                    <a href="#" class="flex items-center gap-2.5 px-3 py-2 text-[13px] font-medium text-gray-700 hover:bg-gray-50 hover:text-blue-600 rounded-lg transition-colors">
+                        <i data-lucide="user-cog" class="w-4 h-4"></i> Hồ sơ cá nhân
+                    </a>
+                    
+                    <div class="h-px bg-gray-100 my-1"></div>
+                    
+                    <a asp-controller="Auth" asp-action="Logout" class="flex items-center gap-2.5 px-3 py-2 text-[13px] font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                        <i data-lucide="log-out" class="w-4 h-4"></i> Đăng xuất
+                    </a>
+                </div>
+            </div>
+        </div>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const userMenuButton = document.getElementById('user-menu-button');
+                const userMenuDropdown = document.getElementById('user-menu-dropdown');
+                const userProfileContainer = document.getElementById('user-profile-container');
+
+                // Hàm ẩn/hiện menu
+                function toggleMenu() {
+                    const isVisible = !userMenuDropdown.classList.contains('invisible');
+                    if (isVisible) {
+                        userMenuDropdown.classList.add('opacity-0', 'invisible', 'translate-y-2');
+                        userMenuDropdown.classList.remove('opacity-100', 'translate-y-0');
+                    } else {
+                        userMenuDropdown.classList.remove('opacity-0', 'invisible', 'translate-y-2');
+                        userMenuDropdown.classList.add('opacity-100', 'translate-y-0');
+                    }
+                }
+
+                // Sự kiện click vào nút 3 chấm
+                userMenuButton.addEventListener('click', function(event) {
+                    event.stopPropagation(); // Ngăn chặn sự kiện click lan ra ngoài
+                    toggleMenu();
+                });
+
+                // Ẩn menu khi click ra ngoài vùng profile
+                document.addEventListener('click', function(event) {
+                    if (!userProfileContainer.contains(event.target)) {
+                        userMenuDropdown.classList.add('opacity-0', 'invisible', 'translate-y-2');
+                        userMenuDropdown.classList.remove('opacity-100', 'translate-y-0');
+                    }
+                });
+            });
+        </script>
+    </aside>
+
+    <main class="flex-1 flex flex-col overflow-y-auto">
+        @RenderBody()
+    </main>
+
+    <script>
+        // Khởi tạo thư viện Icon Lucide
+        lucide.createIcons();
+
+        // Xử lý sự kiện click cho Sidebar Menu
+        const menuItems = document.querySelectorAll('.menu-item');
+        menuItems.forEach(item => {
+            item.addEventListener('click', function(e) {
+                // Tạm thời bỏ e.preventDefault() để các link thật vẫn hoạt động được trong ASP.NET
+                menuItems.forEach(m => {
+                    m.classList.remove('bg-[#eff6ff]', 'text-blue-600', 'active-menu');
+                    m.classList.add('text-gray-600');
+                });
+                this.classList.remove('text-gray-600');
+                this.classList.add('bg-[#eff6ff]', 'text-blue-600', 'active-menu');
+            });
+        });
+    </script>
+    
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

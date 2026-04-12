@@ -1,0 +1,98 @@
+@using RevenueAccountingMVC.Models
+@model IEnumerable<Account>
+
+@{
+    ViewData["Title"] = "Quản lý danh mục tài khoản";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["ActiveTab"] = "Account";
+
+    // Hàm đệ quy tính cấp độ tài khoản
+    int GetAccountLevel(Account account)
+    {
+        int level = 1;
+        var parent = account.ParentAccount;
+        while (parent != null)
+        {
+            level++;
+            parent = parent.ParentAccount;
+        }
+        return level;
+    }
+}
+
+<div class="p-8">
+    <div>
+        <h2 class="text-[22px] font-bold text-gray-900">Quản lý danh mục</h2>
+        <p class="text-[14px] text-gray-500 mt-1">Quản lý dữ liệu danh mục hệ thống</p>
+    </div>
+
+    <partial name="_CategoryTabs" />
+
+    @* --- THANH CÔNG CỤ --- *@
+    <div class="mt-6 bg-white border border-gray-200 rounded-xl p-3 flex items-center gap-3 shadow-sm">
+        <a asp-action="Create" class="bg-[#0f172a] hover:bg-gray-800 text-white px-4 py-2.5 rounded-lg text-[14px] font-medium inline-flex items-center gap-2 transition-colors active:scale-95">
+            <i data-lucide="plus" class="w-4 h-4"></i> Thêm mới
+        </a>
+
+        <form asp-action="Index" method="get" class="flex items-center gap-3 flex-1">
+            <div class="relative w-[360px]">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i data-lucide="search" class="w-4 h-4 text-gray-400"></i>
+                </div>
+                <input type="text" name="searchString" value="@ViewData["CurrentSearch"]" class="w-full bg-gray-50 border border-transparent focus:bg-white focus:border-gray-300 rounded-lg pl-9 pr-4 py-2.5 text-[14px] outline-none transition-all" placeholder="Tìm theo mã, tên...">
+            </div>
+            <a asp-action="Index" class="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-4 py-2.5 rounded-lg text-[14px] font-medium flex items-center gap-2 transition-colors ml-auto">
+                <i data-lucide="refresh-cw" class="w-4 h-4"></i> Làm mới
+            </a>
+        </form>
+    </div>
+
+    @* --- BẢNG DỮ LIỆU (Theo đúng ảnh mẫu) --- *@
+    <div class="mt-6 bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+        <table class="w-full text-left text-[14px]">
+            <thead class="border-b border-gray-200 bg-gray-50/50">
+                <tr>
+                    <th class="py-3.5 px-5 font-semibold text-gray-800">Mã tài khoản</th>
+                    <th class="py-3.5 px-5 font-semibold text-gray-800">Tên tài khoản</th>
+                    <th class="py-3.5 px-5 font-semibold text-gray-800 text-center">Cấp tài khoản</th>
+                    <th class="py-3.5 px-5 font-semibold text-gray-800 text-center">Tài khoản cha</th>
+                    <th class="py-3.5 px-5 font-semibold text-gray-800">Trạng thái</th>
+                    <th class="py-3.5 px-5 font-semibold text-gray-800 text-right">Hành động</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                @foreach (var item in Model)
+                {
+                    int level = GetAccountLevel(item);
+                    string statusBadge = item.Status == AccountStatus.Active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600";
+                    string statusText = item.Status == AccountStatus.Active ? "Hoạt động" : "Ngừng dùng";
+
+                    <tr class="hover:bg-gray-50/50 transition-colors">
+                        <td class="py-4 px-5 text-gray-900 font-medium">@item.AccountNumber</td>
+                        <td class="py-4 px-5 text-gray-700">
+                            @* Thụt đầu dòng dựa trên cấp độ để tạo hiệu ứng cây *@
+                            <span style="padding-left: @((level - 1) * 20)px">
+                                @item.AccountName
+                            </span>
+                        </td>
+                        <td class="py-4 px-5 text-center text-gray-600">@level</td>
+                        <td class="py-4 px-5 text-center text-gray-500">@(item.ParentAccount?.AccountNumber ?? "-")</td>
+                        <td class="py-4 px-5">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-medium @statusBadge">
+                                @statusText
+                            </span>
+                        </td>
+                        <td class="py-4 px-5 text-right flex items-center justify-end gap-3 text-gray-400">
+                            <a asp-action="Details" asp-route-id="@item.Id" class="hover:text-gray-900"><i data-lucide="eye" class="w-4 h-4"></i></a>
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="hover:text-gray-900"><i data-lucide="edit-2" class="w-4 h-4"></i></a>
+                            <button class="toggle-status" data-id="@item.Id">
+                                <i data-lucide="@(item.Status == AccountStatus.Active ? "toggle-right" : "toggle-left")" 
+                                   class="w-5 h-5 @(item.Status == AccountStatus.Active ? "text-green-500" : "text-gray-300")"></i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,145 @@
+@using RevenueAccountingMVC.Models
+@model Tax
+
+@{
+    ViewData["Title"] = "Chỉnh sửa loại thuế";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="p-8">
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h2 class="text-[22px] font-bold text-gray-900">Chỉnh sửa thông tin thuế</h2>
+            <p class="text-[14px] text-gray-500 mt-1">Cập nhật thông tin chi tiết cho loại thuế @Model.TaxCode</p>
+        </div>
+        <a asp-action="Index" class="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-4 py-2.5 rounded-lg text-[14px] font-medium flex items-center gap-2 transition-colors shadow-sm">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i> Quay lại danh sách
+        </a>
+    </div>
+
+    <div class="bg-white border border-gray-100 rounded-xl shadow-sm p-6">
+        <form asp-action="Edit" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-red-500 text-sm mb-4"></div>
+            
+            <input type="hidden" asp-for="Id" />
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                @* Mã thuế *@
+                <div>
+                    <label asp-for="TaxCode" class="block text-[14px] font-medium text-gray-700 mb-1.5">
+                        Mã thuế <span class="text-red-500">*</span>
+                    </label>
+                    <input asp-for="TaxCode" type="text" 
+                           readonly 
+                           class="w-full bg-[#fef9c3] border border-gray-200 rounded-lg px-4 py-2.5 text-[14px] text-gray-800 font-bold cursor-not-allowed outline-none shadow-sm" />
+                    <p class="text-[11px] text-gray-400 mt-1 italic flex items-center gap-1">
+                        <i data-lucide="lock" class="w-3 h-3 inline mr-0.5"></i> Mã thuế do hệ thống tự sinh, không thể chỉnh sửa.
+                    </p>
+                    <span asp-validation-for="TaxCode" class="text-red-500 text-[12px] mt-1 block"></span>
+                </div>
+
+                @* Tên thuế *@
+                <div>
+                    <label asp-for="TaxName" class="block text-[14px] font-medium text-gray-700 mb-1.5">
+                        Tên loại thuế <span class="text-red-500">*</span>
+                    </label>
+                    <input asp-for="TaxName" class="w-full bg-gray-50 border border-gray-300 focus:bg-white focus:border-black focus:ring-1 focus:ring-black rounded-lg px-4 py-2.5 text-[14px] text-gray-900 outline-none transition-all" />
+                    <span asp-validation-for="TaxName" class="text-red-500 text-[12px] mt-1 block"></span>
+                </div>
+
+                @* Tên thứ 2 *@
+                <div>
+                    <label asp-for="SecondaryName" class="block text-[14px] font-medium text-gray-700 mb-1.5">Tên thứ 2</label>
+                    <input asp-for="SecondaryName" class="w-full bg-gray-50 border border-gray-300 focus:bg-white focus:border-black focus:ring-1 focus:ring-black rounded-lg px-4 py-2.5 text-[14px] text-gray-900 outline-none transition-all" />
+                </div>
+
+                @* Thuế suất và Khấu trừ *@
+                <div class="flex gap-4 items-start">
+                    <div class="flex-1">
+                        <label asp-for="TaxRate" class="block text-[14px] font-medium text-gray-700 mb-1.5">Thuế suất (%) <span class="text-red-500">*</span></label>
+                        <input asp-for="TaxRate" type="number" step="0.01" class="w-full bg-gray-50 border border-gray-300 focus:bg-white focus:border-black focus:ring-1 focus:ring-black rounded-lg px-4 py-2.5 text-[14px] text-gray-900 outline-none transition-all" />
+                        <span asp-validation-for="TaxRate" class="text-red-500 text-[12px] block mt-1"></span>
+                    </div>
+                    <div class="mt-9 flex items-center gap-2 px-2">
+                        <input asp-for="IsDeductible" type="checkbox" class="w-4 h-4 text-black border-gray-300 rounded focus:ring-black cursor-pointer">
+                        <label asp-for="IsDeductible" class="text-[14px] font-medium text-gray-700 cursor-pointer">Tính khấu trừ</label>
+                    </div>
+                </div>
+
+                @* Tài khoản thuế *@
+                <div>
+                    <label asp-for="TaxAccountId" class="block text-[14px] font-medium text-gray-700 mb-1.5">
+                        Tài khoản hạch toán <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <select asp-for="TaxAccountId" asp-items="ViewBag.Accounts" class="appearance-none w-full bg-gray-50 border border-gray-300 focus:bg-white focus:border-black focus:ring-1 focus:ring-black rounded-lg pl-4 pr-10 py-2.5 text-[14px] text-gray-900 cursor-pointer outline-none transition-all">
+                            <option value="">-- Chọn tài khoản --</option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400"></i>
+                        </div>
+                    </div>
+                    <span asp-validation-for="TaxAccountId" class="text-red-500 text-[12px] mt-1 block"></span>
+                </div>
+
+                @* Cụm trạng thái và thời gian *@
+                <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                    @* Trạng thái *@
+                    <div>
+                        <label asp-for="Status" class="block text-[14px] font-medium text-gray-700 mb-1.5">
+                            Trạng thái <span class="text-red-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <select asp-for="Status" asp-items="Html.GetEnumSelectList<TaxStatus>()" 
+                                    class="appearance-none w-full bg-gray-50 border border-gray-300 focus:bg-white focus:border-black focus:ring-1 focus:ring-black rounded-lg pl-4 pr-10 py-2.5 text-[14px] text-gray-900 cursor-pointer outline-none transition-all">
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400"></i>
+                            </div>
+                        </div>
+                        <span asp-validation-for="Status" class="text-red-500 text-[12px] mt-1 block"></span>
+                    </div>
+
+                    @* Thời gian (readonly) *@
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[14px] font-medium text-gray-700 mb-1.5">Ngày tạo</label>
+                            <div class="relative">
+                                <input type="text" readonly value="@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")" 
+                                       class="w-full bg-[#fef9c3] border border-gray-200 rounded-lg pl-4 pr-10 py-2.5 text-[14px] text-gray-800 cursor-not-allowed outline-none shadow-sm" />
+                                <i data-lucide="calendar" class="absolute right-3 top-3.5 w-4 h-4 text-gray-500 pointer-events-none inline-block"></i>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-[14px] font-medium text-gray-700 mb-1.5">Cập nhật gần nhất</label>
+                            <div class="relative">
+                                <input type="text" readonly value="@(Model.UpdatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa có cập nhật")" 
+                                       class="w-full bg-[#fef9c3] border border-gray-200 rounded-lg pl-4 pr-10 py-2.5 text-[14px] text-gray-800 cursor-not-allowed outline-none shadow-sm" />
+                                <i data-lucide="history" class="absolute right-3 top-3.5 w-4 h-4 text-gray-500 pointer-events-none inline-block"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 border-t border-gray-100 pt-5 flex items-center justify-end gap-3">
+                <a asp-action="Index" class="px-5 py-2.5 text-[14px] font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
+                    Huỷ bỏ
+                </a>
+                <button type="submit" class="bg-black hover:bg-gray-800 text-white px-8 py-2.5 rounded-lg text-[14px] font-bold flex items-center gap-2 transition-all shadow-md active:scale-95">
+                    <i data-lucide="save" class="w-4 h-4"></i> Lưu thay đổi
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    </script>
+}
