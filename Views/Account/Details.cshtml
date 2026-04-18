@@ -4,25 +4,9 @@
 @{
     ViewData["Title"] = "Chi tiết tài khoản";
 
-    string categoryDisplay = Model.Category switch
-    {
-        AccountCategory.Asset => "Tài sản",
-        AccountCategory.LiabilityAndEquity => "Nguồn vốn",
-        AccountCategory.Revenue => "Doanh thu",
-        AccountCategory.Expense => "Chi phí",
-        _ => "Không xác định"
-    };
-
-    string natureDisplay = Model.Nature switch
-    {
-        AccountNature.Debit => "Dư Nợ",
-        AccountNature.Credit => "Dư Có",
-        AccountNature.Both => "Lưỡng tính",
-        AccountNature.None => "Không có số dư",
-        _ => "Không xác định"
-    };
-
-    string statusDisplay = Model.Status == AccountStatus.Active ? "Hoạt động" : "Ngừng sử dụng";
+    string categoryDisplay = Model.Category.ToDisplayName();
+    string natureDisplay = Model.Nature.ToDisplayName();
+    string statusDisplay = Model.Status.ToDisplayName();
 }
 
 <div class="p-8">

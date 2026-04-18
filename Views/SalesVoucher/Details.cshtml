@@ -1,0 +1,94 @@
+@using RevenueAccountingMVC.Models
+@model SalesVoucher
+
+@{
+    ViewData["Title"] = "Chi tiết chứng từ";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="p-6 md:p-10 bg-[#f8fafc] min-h-screen">
+
+    <div class="flex justify-between mb-6">
+        <h2 class="text-[22px] font-bold">Chi tiết chứng từ</h2>
+        <a asp-action="Index" class="text-gray-600">← Quay lại</a>
+    </div>
+
+    <div class="bg-white p-6 rounded-xl shadow mb-6">
+        <div class="grid grid-cols-2 gap-6">
+
+            <div>
+                <label class="text-gray-500">Số chứng từ</label>
+                <p class="font-bold">@Model.VoucherCode</p>
+            </div>
+
+            <div>
+                <label class="text-gray-500">Ngày</label>
+                <p>@Model.AccountingDate.ToString("dd/MM/yyyy")</p>
+            </div>
+
+            <div>
+                <label class="text-gray-500">Khách hàng</label>
+                <p>@Model.CustomerNameSnapshot</p>
+            </div>
+
+            <div>
+                <label class="text-gray-500">Địa chỉ</label>
+                <p>@Model.CustomerAddressSnapshot</p>
+            </div>
+
+            <div class="col-span-2">
+                <label class="text-gray-500">Diễn giải</label>
+                <p>@Model.Description</p>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="bg-white p-6 rounded-xl shadow mb-6">
+        <h3 class="font-bold mb-4">Chi tiết hàng hóa</h3>
+
+        <table class="w-full text-sm">
+            <thead>
+                <tr>
+                    <th>Sản phẩm</th>
+                    <th>SL</th>
+                    <th>Đơn giá</th>
+                    <th>CK</th>
+                    <th>Thành tiền</th>
+                    <th>Thuế</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var d in Model.Details)
+                {
+                    <tr>
+                        <td>@d.ProductNameSnapshot</td>
+                        <td>@d.Quantity</td>
+                        <td>@d.UnitPrice</td>
+                        <td>@d.DiscountRate%</td>
+                        <td>@d.Amount.ToString("N0")</td>
+                        <td>@d.TaxAmount.ToString("N0")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="bg-white p-6 rounded-xl shadow w-[400px] ml-auto">
+        <div class="flex justify-between">
+            <span>Tổng tiền:</span>
+            <span>@Model.TotalAmount.ToString("N0")</span>
+        </div>
+
+        <div class="flex justify-between">
+            <span>Thuế:</span>
+            <span>@Model.TotalTaxAmount.ToString("N0")</span>
+        </div>
+
+        <div class="flex justify-between font-bold text-lg">
+            <span>Thanh toán:</span>
+            <span>@Model.TotalPayment.ToString("N0")</span>
+        </div>
+    </div>
+
+</div>

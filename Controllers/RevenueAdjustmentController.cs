@@ -19,27 +19,23 @@ namespace RevenueAccountingMVC.Controllers
             _context = context;
         }
 
-        // UC3: Màn hình danh sách
         public async Task<IActionResult> Index()
         {
             var data = await _context.RevenueAdjustments
                 .Include(r => r.Customer)
                 .OrderByDescending(r => r.AccountingDate)
                 .ToListAsync();
+
             return View(data);
         }
 
-        // UC3.1: Giao diện Ghi giảm
         [HttpGet]
-        public async Task<IActionResult> Create()
+        public IActionResult Create()
         {
-            // Load danh sách chứng từ đã ghi sổ để chọn
-            var postedVouchers = await _context.SalesVouchers
-                .Where(v => v.Status == VoucherStatus.Posted)
-                .Select(v => new { v.Id, v.VoucherCode })
-                .ToListAsync();
-                
-            ViewBag.SalesVouchers = new SelectList(postedVouchers, "Id", "VoucherCode");
+            ViewBag.Customers = new SelectList(_context.Customers, "Id", "CustomerName");
+
+            // FIX: tránh null dropdown
+            ViewBag.Vouchers = new SelectList(Enumerable.Empty<SelectListItem>());
 
             var model = new RevenueAdjustmentViewModel
             {
@@ -53,92 +49,186 @@ namespace RevenueAccountingMVC.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(RevenueAdjustmentViewModel model, string actionType)
+        public async Task<IActionResult> Create(RevenueAdjustmentViewModel model)
         {
-            if (ModelState.IsValid)
+            // ===== BASIC =====
+            if (model.CustomerId == 0)
+                ModelState.AddModelError("", "Vui lòng chọn khách hàng.");
+
+            if (model.OriginalSalesVoucherId == 0)
+                ModelState.AddModelError("", "Vui lòng chọn chứng từ gốc.");
+
+            // ===== FILTER DETAILS =====
+            if (model.Details != null)
             {
-                // Validate Backend
-                if (model.Details.Any(x => x.Amount >= 0))
+                model.Details = model.Details
+                    .Where(x => !string.IsNullOrEmpty(x.AdjustmentType))
+                    .ToList();
+            }
+
+            if (model.Details == null || !model.Details.Any())
+                ModelState.AddModelError("", "Phải có ít nhất 1 dòng điều chỉnh.");
+
+            // ===== LOAD CT GỐC =====
+            var originalVoucher = await _context.SalesVouchers
+                .Include(x => x.Details)
+                .FirstOrDefaultAsync(x => x.Id == model.OriginalSalesVoucherId);
+
+            if (originalVoucher == null)
+            {
+                ModelState.AddModelError("", "Không tìm thấy chứng từ gốc.");
+            }
+            else
+            {
+                if (originalVoucher.CustomerId != model.CustomerId)
+                    ModelState.AddModelError("", "Khách hàng không khớp.");
+
+                if (model.Details != null)
                 {
-                    ModelState.AddModelError("", "Tất cả các dòng ghi giảm phải có thành tiền âm.");
-                }
-                
-                if (ModelState.ErrorCount == 0)
-                {
-                    var entity = new RevenueAdjustment
+                    foreach (var d in model.Details)
                     {
-                        AdjustmentCode = model.AdjustmentCode ?? RevenueAdjustment.GenerateAdjustmentCode(_context.RevenueAdjustments.Count() + 1),
-                        AdjustmentDate = model.AdjustmentDate,
-                        AccountingDate = model.AccountingDate,
-                        CustomerId = model.CustomerId,
-                        Description = model.Description,
-                        OriginalSalesVoucherId = model.OriginalSalesVoucherId,
-                        TotalDiscountAmount = model.TotalDiscountAmount,
-                        TotalTaxAmount = model.TotalTaxAmount,
-                        TotalPayment = model.TotalPayment,
-                        Status = VoucherStatus.Draft,
-                        Details = model.Details.Select(d => new RevenueAdjustmentDetail
+                        var original = originalVoucher.Details
+                            .FirstOrDefault(x => x.ProductId == d.ProductId);
+
+                        if (original == null)
                         {
-                            ProductId = d.ProductId,
-                            AdjustmentType = d.AdjustmentType,
-                            Quantity = d.Quantity,
-                            UnitPrice = d.UnitPrice,
-                            DiscountRate = d.DiscountRate,
-                            Amount = d.Amount,
-                            TaxRateSnapshot = d.OriginalTaxRate,
-                            TaxAmount = d.Amount * (d.OriginalTaxRate / 100m) // Tính thuế
-                        }).ToList()
-                    };
+                            ModelState.AddModelError("", $"SP {d.ProductName} không tồn tại.");
+                            continue;
+                        }
 
-                    _context.RevenueAdjustments.Add(entity);
-                    await _context.SaveChangesAsync();
+                        // ===== VALIDATE THEO TYPE =====
+                        if (d.AdjustmentType == "TraLai")
+                        {
+                            if (d.Quantity <= 0)
+                                ModelState.AddModelError("", $"[{d.ProductName}] SL phải > 0");
 
-                    if (actionType == "SaveAndNew")
-                        return RedirectToAction(nameof(Create));
+                            if (d.Quantity > original.Quantity)
+                                ModelState.AddModelError("", $"[{d.ProductName}] vượt SL gốc");
+                        }
+                        else if (d.AdjustmentType == "GiamGia")
+                        {
+                            if (d.UnitPrice <= 0)
+                                ModelState.AddModelError("", $"[{d.ProductName}] giá phải > 0");
 
-                    return RedirectToAction(nameof(Index));
+                            if (d.UnitPrice > original.UnitPrice)
+                                ModelState.AddModelError("", $"[{d.ProductName}] vượt giá gốc");
+                        }
+                        else if (d.AdjustmentType == "ChietKhau")
+                        {
+                            if (d.DiscountRate <= 0 || d.DiscountRate > 100)
+                                ModelState.AddModelError("", $"[{d.ProductName}] % không hợp lệ");
+                        }
+
+                        // ===== FIX QUAN TRỌNG =====
+                        if (!string.IsNullOrEmpty(d.AdjustmentType))
+                        {
+                            if (d.Amount >= 0)
+                                ModelState.AddModelError("", $"[{d.ProductName}] Thành tiền phải âm");
+                        }
+                    }
+
+                    // ===== CHECK TOTAL =====
+                    if (model.TotalDiscountAmount == 0)
+                    {
+                        ModelState.AddModelError("", "Tổng tiền điều chỉnh phải khác 0.");
+                    }
+
+                    var totalAdjustedBefore = _context.RevenueAdjustments
+                        .Where(x => x.OriginalSalesVoucherId == model.OriginalSalesVoucherId)
+                        .Sum(x => (decimal?)x.TotalDiscountAmount) ?? 0;
+
+                    if (Math.Abs(totalAdjustedBefore + model.TotalDiscountAmount) > originalVoucher.TotalAmount)
+                    {
+                        ModelState.AddModelError("", "Vượt giá trị chứng từ gốc.");
+                    }
                 }
             }
 
-            // Nếu lỗi, load lại dropdown
-            var postedVouchers = await _context.SalesVouchers.Where(v => v.Status == VoucherStatus.Posted).ToListAsync();
-            ViewBag.SalesVouchers = new SelectList(postedVouchers, "Id", "VoucherCode", model.OriginalSalesVoucherId);
-            return View(model);
+            if (!ModelState.IsValid)
+            {
+                ViewBag.Customers = new SelectList(_context.Customers, "Id", "CustomerName", model.CustomerId);
+
+                ViewBag.Vouchers = new SelectList(
+                    _context.SalesVouchers.Where(x => x.CustomerId == model.CustomerId),
+                    "Id", "VoucherCode", model.OriginalSalesVoucherId
+                );
+
+                return View(model);
+            }
+
+            // ===== SAVE =====
+            var entity = new RevenueAdjustment
+            {
+                AdjustmentCode = model.AdjustmentCode,
+                AdjustmentDate = model.AdjustmentDate,
+                AccountingDate = model.AccountingDate,
+                CustomerId = model.CustomerId,
+                Description = model.Description,
+                OriginalSalesVoucherId = model.OriginalSalesVoucherId,
+                TotalDiscountAmount = model.TotalDiscountAmount,
+                TotalTaxAmount = model.TotalTaxAmount,
+                TotalPayment = model.TotalPayment,
+                Status = VoucherStatus.Draft,
+                Details = model.Details.Select(d => new RevenueAdjustmentDetail
+                {
+                    ProductId = d.ProductId,
+                    AdjustmentType = d.AdjustmentType,
+                    Quantity = d.Quantity,
+                    UnitPrice = d.UnitPrice,
+                    DiscountRate = d.DiscountRate,
+                    Amount = d.Amount,
+                    TaxRateSnapshot = d.OriginalTaxRate,
+                    TaxAmount = Math.Round(d.Amount * (d.OriginalTaxRate / 100m), 2)
+                }).ToList()
+            };
+
+            _context.Add(entity);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Index));
         }
 
-        // API gọi bằng AJAX để load dữ liệu CT gốc
+        // ===== API =====
+        [HttpGet]
+        public async Task<IActionResult> GetVouchersByCustomer(int customerId)
+        {
+            var data = await _context.SalesVouchers
+                .Where(x => x.CustomerId == customerId && x.Status == VoucherStatus.Posted)
+                .Select(x => new { x.Id, x.VoucherCode })
+                .ToListAsync();
+
+            return Json(data);
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetOriginalVoucher(int id)
         {
-            var voucher = await _context.SalesVouchers
-                .Include(v => v.Customer)
-                .Include(v => v.Details)
-                    .ThenInclude(d => d.Product)
-                .FirstOrDefaultAsync(v => v.Id == id);
+            var v = await _context.SalesVouchers
+                .Include(x => x.Customer)
+                .Include(x => x.Details)
+                .ThenInclude(d => d.Product)
+                .FirstOrDefaultAsync(x => x.Id == id);
 
-            if (voucher == null) return NotFound();
+            if (v == null) return NotFound();
 
-            var result = new
+            return Json(new
             {
-                customerId = voucher.CustomerId,
-                customerName = voucher.Customer!.CustomerName,
-                customerCode = voucher.Customer.CustomerCode,
-                address = voucher.Customer.Address,
-                taxCode = voucher.Customer.TaxCode,
-                voucherDate = voucher.AccountingDate.ToString("yyyy-MM-dd"),
-                totalAmount = voucher.TotalAmount,
-                totalTax = voucher.TotalTaxAmount,
-                totalPayment = voucher.TotalPayment,
-                details = voucher.Details.Select(d => new {
+                customerName = v.Customer.CustomerName,
+                customerCode = v.Customer.CustomerCode,
+                address = v.Customer.Address,
+                voucherDate = v.AccountingDate.ToString("yyyy-MM-dd"),
+                totalAmount = v.TotalAmount,
+                totalTax = v.TotalTaxAmount,
+                totalPayment = v.TotalPayment,
+                details = v.Details.Select(d => new
+                {
                     productId = d.ProductId,
-                    productName = d.Product?.ProductName ?? d.ProductNameSnapshot,
+                    productName = d.Product.ProductName,
                     originalQty = d.Quantity,
                     originalPrice = d.UnitPrice,
                     originalTaxRate = d.TaxRateSnapshot
                 })
-            };
-
-            return Json(result);
+            });
         }
     }
 }

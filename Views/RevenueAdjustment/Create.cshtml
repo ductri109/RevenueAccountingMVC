@@ -5,223 +5,401 @@
 
 <div class="min-h-screen bg-slate-50 font-['Inter'] antialiased text-slate-900 pb-20">
     <form asp-action="Create" method="post" id="frmGhiGiam">
-        <div class="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-4 mb-8">
-            <div class="max-w-7xl mx-auto d-flex justify-between items-center">
-                <div class="flex items-center gap-4">
-                    <a asp-action="Index" class="p-2 hover:bg-slate-100 rounded-full transition-colors">
-                        <i data-lucide="arrow-left" class="w-5 h-5 text-slate-500"></i>
-                    </a>
-                    <div>
-                        <h1 class="text-xl font-bold tracking-tight">Ghi giảm doanh thu</h1>
-                        <p class="text-xs text-slate-500">Tạo mới chứng từ ghi giảm doanh thu</p>
-                    </div>
-                </div>
+        
+        <div asp-validation-summary="ModelOnly" class="text-red-500 bg-red-100 p-4 mb-4 rounded mx-6 mt-4"></div>
+
+        <div class="sticky top-0 z-30 bg-white border-b px-6 py-4 mb-8">
+            <div class="flex justify-between items-center">
+                <h1 class="text-xl font-bold">Ghi giảm doanh thu</h1>
                 <div class="flex gap-3">
-                    <a asp-action="Index" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-all">Hủy bỏ</a>
-                    <button type="submit" name="actionType" value="Save" class="px-6 py-2 bg-slate-900 text-white text-sm font-semibold rounded-lg hover:bg-slate-800 shadow-sm transition-all flex items-center gap-2">
-                        <i data-lucide="save" class="w-4 h-4"></i> Lưu chứng từ
-                    </button>
+                    <a asp-action="Index" class="px-4 py-2 hover:bg-slate-100 rounded">Hủy</a>
+                    <button type="submit" class="bg-black text-white px-4 py-2 rounded">Lưu chứng từ</button>
                 </div>
             </div>
         </div>
 
-        <div class="max-w-7xl mx-auto px-6 space-y-6">
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-                    <h2 class="text-sm font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
-                        <i data-lucide="info" class="w-4 h-4 text-indigo-500"></i> Thông tin chung
-                    </h2>
-                </div>
-                <div class="p-6 grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <div class="space-y-1">
-                        <label class="text-xs font-semibold text-slate-500 uppercase">Số chứng từ</label>
-                        <input asp-for="AdjustmentCode" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-indigo-600 outline-none" readonly />
+        <div class="px-6 space-y-6">
+
+            <div class="bg-white p-6 rounded shadow-sm">
+                <h2 class="font-semibold text-lg mb-4">Thông tin chung</h2>
+                <div class="grid grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-sm text-gray-500">Mã điều chỉnh</label>
+                        <input asp-for="AdjustmentCode" class="w-full border rounded p-2 bg-gray-50" readonly />
                     </div>
-                    <div class="space-y-1">
-                        <label class="text-xs font-semibold text-slate-500 uppercase">Ngày chứng từ <span class="text-red-500">*</span></label>
-                        <input asp-for="AdjustmentDate" type="date" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all" />
+
+                    <div>
+                        <label class="block text-sm text-gray-500">Ngày chứng từ</label>
+                        <input asp-for="AdjustmentDate" type="date" class="w-full border rounded p-2" />
                     </div>
-                    <div class="space-y-1">
-                        <label class="text-xs font-semibold text-slate-500 uppercase">Ngày hạch toán <span class="text-red-500">*</span></label>
-                        <input asp-for="AccountingDate" type="date" class="w-full px-3 py-2 border border-indigo-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all bg-indigo-50/30" />
+                    
+                    <div>
+                        <label class="block text-sm text-gray-500">Ngày hạch toán</label>
+                        <input asp-for="AccountingDate" type="date" class="w-full border rounded p-2" />
                     </div>
-                    <div class="space-y-1">
-                        <label class="text-xs font-semibold text-slate-500 uppercase">Khách hàng</label>
-                        <input asp-for="CustomerName" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600" readonly id="txtCustomerName" placeholder="Tự động..." />
-                        <input type="hidden" asp-for="CustomerId" id="hdnCustomerId" />
+
+                    <div>
+                        <label class="block text-sm text-gray-500">Khách hàng</label>
+                        <select id="ddlCustomer" asp-for="CustomerId" asp-items="ViewBag.Customers" class="w-full border rounded p-2">
+                            <option value="">-- Chọn khách hàng --</option>
+                        </select>
                     </div>
-                    <div class="md:col-span-1 space-y-1">
-                        <label class="text-xs font-semibold text-slate-500 uppercase">Mã khách hàng</label>
-                        <input asp-for="CustomerCode" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm" readonly id="txtCustomerCode" />
+
+                    <div>
+                        <label class="block text-sm text-gray-500">Mã KH</label>
+                        <input asp-for="CustomerCode" readonly id="txtCustomerCode" class="w-full border rounded p-2 bg-gray-50" />
                     </div>
-                    <div class="md:col-span-3 space-y-1">
-                        <label class="text-xs font-semibold text-slate-500 uppercase">Địa chỉ</label>
-                        <input asp-for="Address" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm" readonly id="txtAddress" />
+                    
+                    <div class="col-span-3">
+                        <label class="block text-sm text-gray-500">Địa chỉ</label>
+                        <input asp-for="Address" readonly id="txtAddress" class="w-full border rounded p-2 bg-gray-50" />
                     </div>
-                    <div class="md:col-span-4 space-y-1">
-                        <label class="text-xs font-semibold text-slate-500 uppercase">Diễn giải</label>
-                        <textarea asp-for="Description" rows="2" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all" placeholder="Nhập lý do điều chỉnh..."></textarea>
+
+                    <div class="col-span-4">
+                        <label class="block text-sm text-gray-500">Lý do điều chỉnh</label>
+                        <textarea asp-for="Description" class="w-full border rounded p-2" rows="2"></textarea>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-indigo-50/50 rounded-xl border border-indigo-100 p-6 grid grid-cols-1 md:grid-cols-5 gap-6">
-                <div class="space-y-1">
-                    <label class="text-xs font-bold text-indigo-700 uppercase">Chứng từ bán hàng gốc</label>
-                    <select asp-for="OriginalSalesVoucherId" asp-items="ViewBag.SalesVouchers" class="w-full px-3 py-2 bg-white border border-indigo-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none shadow-sm" id="ddlOriginalVoucher">
-                        <option value="">-- Chọn chứng từ --</option>
-                    </select>
-                </div>
-                <div class="space-y-1">
-                    <label class="text-[10px] font-bold text-slate-400 uppercase">Ngày bán</label>
-                    <input type="date" asp-for="OriginalVoucherDate" class="w-full px-3 py-2 bg-transparent border-none text-sm text-slate-600 p-0" readonly id="txtOriginalDate" />
-                </div>
-                <div class="space-y-1">
-                    <label class="text-[10px] font-bold text-slate-400 uppercase text-right block">Tiền hàng gốc</label>
-                    <input type="number" asp-for="OriginalTotalAmount" class="w-full px-3 py-2 bg-transparent border-none text-sm text-slate-600 text-right font-medium" readonly id="txtOriginalAmount" />
-                </div>
-                <div class="space-y-1">
-                    <label class="text-[10px] font-bold text-slate-400 uppercase text-right block">Tiền thuế gốc</label>
-                    <input type="number" asp-for="OriginalTotalTax" class="w-full px-3 py-2 bg-transparent border-none text-sm text-slate-600 text-right font-medium" readonly id="txtOriginalTax" />
-                </div>
-                <div class="space-y-1">
-                    <label class="text-[10px] font-bold text-indigo-400 uppercase text-right block">Tổng thanh toán</label>
-                    <input type="number" asp-for="OriginalTotalPayment" class="w-full px-3 py-2 bg-transparent border-none text-sm text-indigo-600 text-right font-bold" readonly id="txtOriginalPayment" />
+            <div class="bg-white p-6 rounded shadow-sm">
+                <h2 class="font-semibold text-lg mb-4">Tham chiếu chứng từ</h2>
+                <div class="grid grid-cols-5 gap-4">
+                    <div class="col-span-2">
+                        <label class="block text-sm text-gray-500">Số chứng từ gốc</label>
+                        <select asp-for="OriginalSalesVoucherId" id="ddlOriginalVoucher" asp-items="ViewBag.Vouchers" class="w-full border rounded p-2">
+                            <option value="">-- Chọn chứng từ bán hàng --</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm text-gray-500">Ngày hóa đơn</label>
+                        <input asp-for="OriginalVoucherDate" type="date" id="txtOriginalDate" class="w-full border rounded p-2 bg-gray-50" readonly />
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm text-gray-500">Tổng tiền gốc</label>
+                        <input asp-for="OriginalTotalAmount" id="txtOriginalAmount" class="w-full border rounded p-2 bg-gray-50 text-right" readonly />
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm text-gray-500">Tổng thanh toán gốc</label>
+                        <input asp-for="OriginalTotalPayment" id="txtOriginalPayment" class="w-full border rounded p-2 bg-gray-50 text-right" readonly />
+                    </div>
                 </div>
             </div>
 
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-                    <h2 class="text-sm font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
-                        <i data-lucide="list" class="w-4 h-4 text-indigo-500"></i> Chi tiết ghi giảm
-                    </h2>
-                    <button type="button" class="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1">
-                        <i data-lucide="plus-circle" class="w-4 h-4"></i> Thêm dòng
-                    </button>
-                </div>
+            <div class="bg-white p-6 rounded shadow-sm">
+                <h2 class="font-semibold text-lg mb-4">Chi tiết hàng hóa điều chỉnh</h2>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse" id="tblDetails">
                         <thead>
-                            <tr class="bg-slate-50/50 text-[10px] font-bold text-slate-500 uppercase tracking-widest border-b border-slate-100">
-                                <th class="px-6 py-4 w-[18%]">Loại giảm</th>
-                                <th class="px-4 py-4 w-[22%]">Sản phẩm</th>
-                                <th class="px-4 py-4 text-center w-[10%]">Số lượng</th>
-                                <th class="px-4 py-4 text-right w-[15%]">Đơn giá</th>
-                                <th class="px-4 py-4 text-center w-[10%]">% CK</th>
-                                <th class="px-4 py-4 text-right w-[15%]">Thành tiền</th>
-                                <th class="px-6 py-4 text-center w-[10%]"></th>
+                            <tr class="bg-slate-100 text-sm">
+                                <th class="p-2 border">Loại điều chỉnh</th>
+                                <th class="p-2 border">Sản phẩm</th>
+                                <th class="p-2 border">SL Giảm/Trả</th>
+                                <th class="p-2 border">Đơn giá giảm</th>
+                                <th class="p-2 border">% CK</th>
+                                <th class="p-2 border">Thành tiền (Âm)</th>
+                                <th class="p-2 border text-center">Xóa</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-100">
-                            </tbody>
+                        <tbody>
+                            @if (Model.Details != null && Model.Details.Any())
+                            {
+                                int i = 0;
+                                foreach (var d in Model.Details)
+                                {
+                                    <tr>
+                                        <input type="hidden" name="Details.Index" value="@i" />
+                                        <td class="p-2 border">
+                                            <select name="Details[@i].AdjustmentType" class="ddl-type w-full border p-1 rounded">
+                                                <option value="" selected="@(d.AdjustmentType == "" ? "selected" : null)">--</option>
+                                                <option value="GiamGia" selected="@(d.AdjustmentType == "GiamGia" ? "selected" : null)">Giảm giá</option>
+                                                <option value="TraLai" selected="@(d.AdjustmentType == "TraLai" ? "selected" : null)">Trả lại</option>
+                                                <option value="ChietKhau" selected="@(d.AdjustmentType == "ChietKhau" ? "selected" : null)">Chiết khấu</option>
+                                            </select>
+                                        </td>
+                                        <td class="p-2 border">
+                                            @d.ProductName
+                                            <input type="hidden" name="Details[@i].ProductName" value="@d.ProductName" />
+                                            <input type="hidden" name="Details[@i].ProductId" value="@d.ProductId" />
+                                        </td>
+                                        <td class="p-2 border"><input type="number" step="any" name="Details[@i].Quantity" class="txt-qty w-full border p-1 rounded text-right" value="@d.Quantity" /></td>
+                                        <td class="p-2 border"><input type="number" step="any" name="Details[@i].UnitPrice" class="txt-price w-full border p-1 rounded text-right" value="@d.UnitPrice" /></td>
+                                        <td class="p-2 border"><input type="number" step="any" name="Details[@i].DiscountRate" class="txt-discount w-full border p-1 rounded text-right" value="@d.DiscountRate" /></td>
+                                        <td class="p-2 border"><input type="number" step="any" name="Details[@i].Amount" class="txt-amount w-full border p-1 rounded text-right bg-gray-50" value="@d.Amount" readonly /></td>
+                                        <td class="p-2 border text-center"><button type="button" class="btn-delete text-red-500 font-bold hover:text-red-700">X</button></td>
+                                        <input type="hidden" name="Details[@i].OriginalQty" class="hdn-o-qty" value="@d.OriginalQty" />
+                                        <input type="hidden" name="Details[@i].OriginalPrice" class="hdn-o-price" value="@d.OriginalPrice" />
+                                        <input type="hidden" name="Details[@i].OriginalTaxRate" class="hdn-tax-rate" value="@d.OriginalTaxRate" />
+                                    </tr>
+                                    i++;
+                                }
+                            }
+                        </tbody>
                     </table>
                 </div>
-                
-                <div class="p-6 bg-slate-50/30 border-t border-slate-100">
-                    <div class="flex flex-col items-end space-y-3">
-                        <div class="w-full md:w-80 space-y-2">
-                            <div class="flex justify-between text-sm text-slate-500">
-                                <span>Tổng tiền giảm:</span>
-                                <span class="font-semibold text-slate-700" id="lblTotalAmount">0</span>
-                                <input type="hidden" asp-for="TotalDiscountAmount" id="hdnTotalAmount" />
-                            </div>
-                            <div class="flex justify-between text-sm text-slate-500">
-                                <span>Tổng thuế giảm:</span>
-                                <span class="font-semibold text-slate-700" id="lblTotalTax">0</span>
-                                <input type="hidden" asp-for="TotalTaxAmount" id="hdnTotalTax" />
-                            </div>
-                            <div class="pt-3 border-t border-slate-200 flex justify-between items-center">
-                                <span class="text-base font-bold text-slate-900 uppercase">Tổng thanh toán:</span>
-                                <span class="text-2xl font-black text-red-600" id="lblTotalPayment">0</span>
-                                <input type="hidden" asp-for="TotalPayment" id="hdnTotalPayment" />
-                            </div>
-                        </div>
+
+                <div class="mt-6 border-t pt-4 flex flex-col items-end gap-2 text-sm">
+                    <div class="flex w-64 justify-between">
+                        <span class="font-semibold text-gray-600">Cộng tiền hàng (Giảm):</span>
+                        <span id="lblTotalAmount" class="font-bold text-red-600">@Model.TotalDiscountAmount.ToString("N0")</span>
                     </div>
+                    <div class="flex w-64 justify-between">
+                        <span class="font-semibold text-gray-600">Tiền thuế (Giảm):</span>
+                        <span id="lblTotalTax" class="font-bold text-red-600">@Model.TotalTaxAmount.ToString("N0")</span>
+                    </div>
+                    <div class="flex w-64 justify-between text-base">
+                        <span class="font-bold">Tổng cộng:</span>
+                        <span id="lblTotalPayment" class="font-bold text-red-600">@Model.TotalPayment.ToString("N0")</span>
+                    </div>
+
+                    <input type="hidden" asp-for="TotalDiscountAmount" id="hdnTotalAmount" />
+                    <input type="hidden" asp-for="TotalTaxAmount" id="hdnTotalTax" />
+                    <input type="hidden" asp-for="TotalPayment" id="hdnTotalPayment" />
                 </div>
             </div>
 
-            <div class="flex justify-end gap-3 pt-4">
-                <button type="submit" name="actionType" value="SaveAndNew" class="px-6 py-2.5 bg-white border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50 transition-all shadow-sm">Lưu và thêm mới</button>
-            </div>
         </div>
     </form>
 </div>
 
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-    <script>
-        $(document).ready(function () {
-            // Khởi tạo Lucide Icons
-            lucide.createIcons();
-            
-            // Cập nhật biến row trong JS để khớp với class Tailwind
-            window.addRowToTable = function(item, index) {
-                return `
-                    <tr class="group hover:bg-slate-50/80 transition-colors">
-                        <td class="px-6 py-4">
-                            <select class="w-full px-2 py-1.5 border border-slate-200 rounded-md text-xs focus:ring-2 focus:ring-indigo-500/20 outline-none ddl-type" name="Details[${index}].AdjustmentType" required>
-                                <option value="">-- Chọn --</option>
-                                <option value="TraLai">Hàng bán trả lại</option>
-                                <option value="GiamGia">Giảm giá hàng bán</option>
-                                <option value="ChietKhau">Chiết khấu thương mại</option>
-                            </select>
-                        </td>
-                        <td class="px-4 py-4">
-                            <input type="hidden" name="Details[${index}].ProductId" value="${item.productId}" />
-                            <div class="text-xs font-semibold text-slate-700">${item.productName}</div>
-                        </td>
-                        <td class="px-4 py-4">
-                            <input type="number" class="w-full px-2 py-1.5 border border-slate-200 rounded-md text-xs text-center txt-qty disabled:bg-slate-50 disabled:text-slate-400" name="Details[${index}].Quantity" disabled required />
-                            <input type="hidden" class="hdn-o-qty" value="${item.originalQty}" />
-                        </td>
-                        <td class="px-4 py-4">
-                            <input type="number" class="w-full px-2 py-1.5 border border-slate-200 rounded-md text-xs text-right txt-price disabled:bg-slate-50 disabled:text-slate-400" name="Details[${index}].UnitPrice" disabled required />
-                            <input type="hidden" class="hdn-o-price" value="${item.originalPrice}" />
-                        </td>
-                        <td class="px-4 py-4">
-                            <input type="number" class="w-full px-2 py-1.5 border border-slate-200 rounded-md text-xs text-center txt-discount disabled:bg-slate-50 disabled:text-slate-400" name="Details[${index}].DiscountRate" disabled />
-                            <input type="hidden" class="hdn-tax-rate" value="${item.originalTaxRate}" />
-                        </td>
-                        <td class="px-4 py-4 text-right">
-                            <input type="number" class="w-full bg-transparent border-none text-xs font-bold text-red-600 text-right outline-none txt-amount" name="Details[${index}].Amount" readonly />
-                        </td>
-                        <td class="px-6 py-4 text-center">
-                            <button type="button" class="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-md transition-all btn-delete">
-                                <i data-lucide="trash-2" class="w-4 h-4"></i>
-                            </button>
-                        </td>
-                    </tr>`;
-            };
+@section Scripts{
+<script>
+let rowIdx = @(Model.Details?.Count ?? 0);
 
-            // Override lại hàm AJAX cũ để gọi addRowToTable mới
-            $('#ddlOriginalVoucher').change(function () {
-                let voucherId = $(this).val();
-                if (!voucherId) return;
+setTimeout(() => {
+    $('#tblDetails tbody tr').each(function () {
+        calculateRow($(this));
+    });
+}, 100);
 
-                $.get('/RevenueAdjustment/GetOriginalVoucher', { id: voucherId }, function (data) {
-                    $('#hdnCustomerId').val(data.customerId);
-                    $('#txtCustomerCode').val(data.customerCode);
-                    $('#txtCustomerName').val(data.customerName);
-                    $('#txtAddress').val(data.address);
-                    $('#txtOriginalDate').val(data.voucherDate);
-                    $('#txtOriginalAmount').val(data.totalAmount);
-                    $('#txtOriginalTax').val(data.totalTax);
-                    $('#txtOriginalPayment').val(data.totalPayment);
+// Hàm chỉ chạy khi Thay đổi "Loại điều chỉnh" -> Nhiệm vụ Khóa/Mở khóa UI
+function updateRowUI(row) {
+    let type = row.find('.ddl-type').val();
+    let oQty = parseFloat(row.find('.hdn-o-qty').val()) || 0;
+    let oPrice = parseFloat(row.find('.hdn-o-price').val()) || 0;
 
-                    let tbody = $('#tblDetails tbody');
-                    tbody.empty();
-                    
-                    if(data.details) {
-                        data.details.forEach((item, index) => {
-                            tbody.append(window.addRowToTable(item, index));
-                        });
-                        lucide.createIcons(); // Re-render icons cho dòng mới
-                    }
-                    CalculateTotal();
-                });
+    // 1. Mặc định khóa tất cả và reset số về 0
+    let inputs = row.find('.txt-qty, .txt-price, .txt-discount');
+    inputs.prop('readonly', true).addClass('bg-gray-100').val(0);
+
+    // 2. Mở khóa ô tương ứng theo Loại
+    if (type === "TraLai") {
+        row.find('.txt-qty').prop('readonly', false).removeClass('bg-gray-100').val(''); // Chờ người dùng nhập
+        row.find('.txt-price').val(oPrice); 
+    } else if (type === "GiamGia") {
+        row.find('.txt-price').prop('readonly', false).removeClass('bg-gray-100').val(''); // Chờ người dùng nhập
+        row.find('.txt-qty').val(oQty); 
+    } else if (type === "ChietKhau") {
+        row.find('.txt-discount').prop('readonly', false).removeClass('bg-gray-100').val(''); // Chờ người dùng nhập
+        row.find('.txt-qty').val(oQty);
+        row.find('.txt-price').val(oPrice);
+    }
+
+    calculateRow(row);
+}
+
+// Hàm chỉ chạy khi Đang gõ phím (input) -> Chỉ tính tiền, KHÔNG can thiệp readonly
+function calculateRow(row){
+    let type = row.find('.ddl-type').val();
+    
+    let qtyInput = row.find('.txt-qty').val();
+    let priceInput = row.find('.txt-price').val();
+    let discountInput = row.find('.txt-discount').val();
+
+    let qty = parseFloat(qtyInput) || 0;
+    let price = parseFloat(priceInput) || 0;
+    let discount = parseFloat(discountInput) || 0;
+
+    let oQty = parseFloat(row.find('.hdn-o-qty').val()) || 0;
+    let oPrice = parseFloat(row.find('.hdn-o-price').val()) || 0;
+
+    if (!type) {
+        row.find('.txt-amount').val(0);
+        return;
+    }
+
+    if (type === "TraLai") {
+        if (qty > oQty) {
+            alert("Số lượng trả lại không được vượt quá số lượng mua (" + oQty + ")!");
+            qty = oQty;
+            row.find('.txt-qty').val(qty);
+        }
+        amount = -(qty * oPrice);
+    } else if (type === "GiamGia") {
+        if (price > oPrice) {
+            alert("Đơn giá giảm không được vượt quá đơn giá gốc (" + oPrice + ")!");
+            price = oPrice;
+            row.find('.txt-price').val(price);
+        }
+        amount = -(oQty * price);
+    } else if (type === "ChietKhau") {
+        if (discount > 100 || discount < 0) {
+            alert("Tỷ lệ chiết khấu không hợp lệ!");
+            discount = 0;
+            row.find('.txt-discount').val(discount);
+        }
+        amount = -(oQty * oPrice * discount / 100);
+    }
+
+    row.find('.txt-amount').val(amount.toFixed(2));
+    calculateTotal();
+}
+
+function calculateTotal(){
+    let total = 0;
+    let tax = 0;
+
+    $('#tblDetails tbody tr').each(function(){
+        let amt = parseFloat($(this).find('.txt-amount').val()) || 0;
+        let rate = parseFloat($(this).find('.hdn-tax-rate').val()) || 0;
+
+        total += amt;
+        tax += amt * rate / 100;
+    });
+
+    let payment = total + tax;
+
+    $('#lblTotalAmount').text(total.toLocaleString('vi-VN'));
+    $('#lblTotalTax').text(tax.toLocaleString('vi-VN'));
+    $('#lblTotalPayment').text(payment.toLocaleString('vi-VN'));
+
+    $('#hdnTotalAmount').val(total);
+    $('#hdnTotalTax').val(tax);
+    $('#hdnTotalPayment').val(payment);
+}
+
+// Bắt sự kiện thay đổi loại (Chạy hàm Reset UI)
+$(document).on('change','.ddl-type',function(){
+    updateRowUI($(this).closest('tr'));
+});
+
+// Bắt sự kiện gõ phím (Chạy hàm Tính toán)
+$(document).on('input','.txt-qty, .txt-price, .txt-discount',function(){
+    calculateRow($(this).closest('tr'));
+});
+
+$(document).on('click','.btn-delete',function(){
+    $(this).closest('tr').remove();
+    calculateTotal();
+});
+
+// ===== LOAD VOUCHERS =====
+$('#ddlCustomer').change(function(){
+    let id = $(this).val();
+
+    $('#ddlOriginalVoucher').empty().append('<option value="">-- Chọn chứng từ --</option>');
+
+    if(id){
+        $.get(`/RevenueAdjustment/GetVouchersByCustomer?customerId=${id}`,function(res){
+            res.forEach(v=>{
+                $('#ddlOriginalVoucher').append(`<option value="${v.id}">${v.voucherCode}</option>`);
             });
-
-            // Gắn lại các hàm CalculateRow, CalculateTotal cũ của bạn vào đây...
         });
-    </script>
+    }
+});
+
+// ===== LOAD DETAILS =====
+$('#ddlOriginalVoucher').change(function(){
+    let id = $(this).val();
+
+    if(id){
+        $.get(`/RevenueAdjustment/GetOriginalVoucher/${id}`,function(res){
+
+            $('#txtCustomerCode').val(res.customerCode);
+            $('#txtAddress').val(res.address);
+
+            $('#txtOriginalDate').val(res.voucherDate);
+            $('#txtOriginalAmount').val(res.totalAmount.toLocaleString('vi-VN'));
+            $('#txtOriginalPayment').val(res.totalPayment.toLocaleString('vi-VN'));
+
+            let tbody = $('#tblDetails tbody');
+            tbody.empty();
+            rowIdx = 0; // Reset index cho hóa đơn mới
+
+            res.details.forEach(d=>{
+                let row = `
+                <tr>
+                    <input type="hidden" name="Details.Index" value="${rowIdx}" />
+                    
+                    <td class="p-2 border">
+                        <select name="Details[${rowIdx}].AdjustmentType" class="ddl-type w-full border p-1 rounded">
+                            <option value="">--</option>
+                            <option value="GiamGia">Giảm giá</option>
+                            <option value="TraLai">Trả lại</option>
+                            <option value="ChietKhau">Chiết khấu</option>
+                        </select>
+                    </td>
+
+                    <td class="p-2 border">
+                        ${d.productName}
+                        <input type="hidden" name="Details[${rowIdx}].ProductName" value="${d.productName}" />
+                        <input type="hidden" name="Details[${rowIdx}].ProductId" value="${d.productId}" />
+                    </td>
+
+                    <td class="p-2 border">
+                        <input type="number" step="any" name="Details[${rowIdx}].Quantity" class="txt-qty w-full border p-1 rounded text-right bg-gray-100" value="0" readonly />
+                    </td>
+
+                    <td class="p-2 border">
+                        <input type="number" step="any" name="Details[${rowIdx}].UnitPrice" class="txt-price w-full border p-1 rounded text-right bg-gray-100" value="0" readonly />
+                    </td>
+
+                    <td class="p-2 border">
+                        <input type="number" step="any" name="Details[${rowIdx}].DiscountRate" class="txt-discount w-full border p-1 rounded text-right bg-gray-100" value="0" readonly />
+                    </td>
+
+                    <td class="p-2 border">
+                        <input type="number" step="any" name="Details[${rowIdx}].Amount" class="txt-amount w-full border p-1 rounded text-right bg-gray-100" value="0" readonly />
+                    </td>
+
+                    <td class="p-2 border text-center">
+                        <button type="button" class="btn-delete text-red-500 font-bold hover:text-red-700">X</button>
+                    </td>
+
+                    <input type="hidden" name="Details[${rowIdx}].OriginalQty" class="hdn-o-qty" value="${d.originalQty}" />
+                    <input type="hidden" name="Details[${rowIdx}].OriginalPrice" class="hdn-o-price" value="${d.originalPrice}" />
+                    <input type="hidden" name="Details[${rowIdx}].OriginalTaxRate" class="hdn-tax-rate" value="${d.originalTaxRate}" />
+                </tr>
+                `;
+                tbody.append(row);
+                rowIdx++;
+            });
+            calculateTotal(); 
+        });
+    }
+});
+
+// Chạy lại UI khi trang bị load lại (Submit lỗi ModelState)
+$(document).ready(function() {
+    if ($('#tblDetails tbody tr').length > 0) {
+        $('#tblDetails tbody tr').each(function() {
+            let row = $(this);
+            let type = row.find('.ddl-type').val();
+            
+            // Thiết lập trạng thái khóa/mở nhưng KHÔNG ghi đè giá trị bạn đã nhập trướ đó
+            row.find('.txt-qty, .txt-price, .txt-discount').prop('readonly', true).addClass('bg-gray-100');
+            
+            if (type === "TraLai") {
+                row.find('.txt-qty').prop('readonly', false).removeClass('bg-gray-100');
+            } else if (type === "GiamGia") {
+                row.find('.txt-price').prop('readonly', false).removeClass('bg-gray-100');
+            } else if (type === "ChietKhau") {
+                row.find('.txt-discount').prop('readonly', false).removeClass('bg-gray-100');
+            }
+            
+            calculateRow(row);
+        });
+    }
+});
+
+// FIX: scroll lên khi lỗi
+$(document).ready(function () {
+    if ($('.validation-summary-errors').length) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+});
+</script>
 }

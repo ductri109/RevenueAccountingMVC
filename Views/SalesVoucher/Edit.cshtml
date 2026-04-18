@@ -1,0 +1,90 @@
+@using RevenueAccountingMVC.Models
+@using System.Text.Json
+@model SalesVoucher
+
+@{
+    ViewData["Title"] = "Chỉnh sửa chứng từ";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var customersJson = JsonSerializer.Serialize(ViewBag.CustomersData ?? new { });
+    var productsJson = JsonSerializer.Serialize(ViewBag.ProductsData ?? new { });
+}
+
+<div class="p-6 md:p-10 bg-[#f8fafc] min-h-screen">
+    <div class="flex justify-between mb-6">
+        <h2 class="text-[22px] font-bold">Chỉnh sửa chứng từ</h2>
+        <a asp-action="Index" class="text-gray-600">← Quay lại</a>
+    </div>
+
+    <form asp-action="Edit" method="post">
+        <input type="hidden" asp-for="Id"/>
+
+        <div class="bg-white p-6 rounded-xl shadow mb-6">
+            <div class="grid grid-cols-2 gap-6">
+
+                <div>
+                    <label>Ngày hạch toán</label>
+                    <input asp-for="AccountingDate" type="date" class="form-input"/>
+                </div>
+
+                <div>
+                    <label>Khách hàng</label>
+                    <select asp-for="CustomerId" asp-items="ViewBag.Customers" class="form-input"></select>
+                </div>
+
+                <div>
+                    <label>Diễn giải</label>
+                    <textarea asp-for="Description" class="form-input"></textarea>
+                </div>
+
+                <div>
+                    <label>Số ngày nợ</label>
+                    <input asp-for="DebtDays" type="number" class="form-input"/>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow mb-6">
+            <h3 class="font-bold mb-4">Chi tiết</h3>
+
+            <table class="w-full text-sm">
+                <thead>
+                    <tr>
+                        <th>Sản phẩm</th>
+                        <th>Số lượng</th>
+                        <th>Đơn giá</th>
+                        <th>CK</th>
+                        <th>Thuế</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (int i = 0; i < Model.Details.Count; i++)
+                    {
+                        <tr>
+                            <td>
+                                <select name="Details[@i].ProductId" asp-items="ViewBag.Products"></select>
+                            </td>
+                            <td>
+                                <input name="Details[@i].Quantity" value="@Model.Details[i].Quantity"/>
+                            </td>
+                            <td>
+                                <input name="Details[@i].UnitPrice" value="@Model.Details[i].UnitPrice"/>
+                            </td>
+                            <td>
+                                <input name="Details[@i].DiscountRate" value="@Model.Details[i].DiscountRate"/>
+                            </td>
+                            <td>
+                                <select name="Details[@i].TaxId" asp-items="ViewBag.Taxes"></select>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <button type="submit" class="bg-black text-white px-6 py-2 rounded">
+            Lưu thay đổi
+        </button>
+    </form>
+</div>

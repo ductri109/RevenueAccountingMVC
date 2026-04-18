@@ -124,22 +124,20 @@
                 </div>
             </div>
             <div class="overflow-x-auto px-6 pb-6">
-                <table class="w-full text-left text-[13px] border-t border-gray-100" id="detailsTable">
+                <table class="w-full min-w-max text-left text-[13px] border-t border-gray-100" id="detailsTable">
                     <thead class="bg-[#f9fafb] text-gray-600 border-b border-gray-100">
                         <tr>
-                            <th class="py-4 px-3 font-semibold w-[18%]">Mã sản phẩm <span class="text-red-500">*</span></th>
-                            <th class="py-4 px-3 font-semibold w-[15%]">Tên sản phẩm</th>
-                            <th class="py-4 px-2 font-semibold w-[6%]">ĐVT</th>
-                            <th class="py-4 px-2 font-semibold w-[8%]">TK Nợ</th>
-                            <th class="py-4 px-2 font-semibold w-[8%]">TK Có</th>
-                            <th class="py-4 px-2 font-semibold w-[7%] text-center">Số lượng</th>
-                            <th class="py-4 px-2 font-semibold w-[10%] text-right">Đơn giá</th>
-                            <th class="py-4 px-2 font-semibold w-[6%] text-center">CK (%)</th>
-                            <th class="py-4 px-2 font-semibold w-[10%] text-right">Thành tiền</th>
-                            <th class="py-4 px-2 font-semibold w-[8%]">Loại thuế</th>
-                            <th class="py-4 px-2 font-semibold w-[8%]">TK thuế</th>
-                            <th class="py-4 px-2 font-semibold w-[8%] text-right">Tiền thuế</th>
-                            <th class="py-4 px-2 font-semibold w-[2%] text-center"></th>
+                            <th class="py-3 px-2 font-semibold w-[180px]">Mã sản phẩm <span class="text-red-500">*</span></th>
+                            <th class="py-3 px-2 font-semibold w-[150px]">Tên sản phẩm</th> <th class="py-3 px-2 font-semibold w-[60px] text-center">ĐVT</th>
+                            <th class="py-3 px-2 font-semibold w-[90px]">TK Nợ</th>
+                            <th class="py-3 px-2 font-semibold w-[90px]">TK Có</th>
+                            <th class="py-3 px-2 font-semibold w-[80px] text-center">Số lượng</th>
+                            <th class="py-3 px-2 font-semibold w-[100px] text-right">Đơn giá</th>
+                            <th class="py-3 px-2 font-semibold w-[60px] text-center">CK (%)</th>
+                            <th class="py-3 px-2 font-semibold w-[110px] text-right">Thành tiền</th>
+                            <th class="py-3 px-2 font-semibold w-[90px]">Loại thuế</th>
+                            <th class="py-3 px-2 font-semibold w-[100px]">TK thuế</th> <th class="py-3 px-2 font-semibold w-[100px] text-right">Tiền thuế</th>
+                            <th class="py-3 px-2 font-semibold w-[40px] text-center"></th>
                         </tr>
                     </thead>
                     <tbody id="tableBody" class="divide-y divide-gray-100">
@@ -269,52 +267,78 @@
 
                 const newRowHtml = `
                     <tr class="hover:bg-gray-50/50 transition-colors detail-row group border-b border-gray-100">
-                        <td class="py-3 px-2 align-top">
+                        <td class="py-2 px-2 align-middle">
                             <div class="flex items-center gap-1">
-                                <select name="Details[${rowIdx}].ProductId" class="cbo-product flex-1 bg-[#f3f4f6] border border-transparent focus:bg-white focus:border-gray-300 rounded px-2 py-2 outline-none text-[13px] transition-colors">
+                                <select name="Details[${rowIdx}].ProductId" class="cbo-product flex-1 h-9 bg-[#f3f4f6] border border-transparent focus:bg-white focus:border-gray-300 rounded px-2 outline-none text-[13px] transition-colors">
                                     <option value="">-- Chọn --</option>
                                     ${productsOptionsHtml}
                                 </select>
-                                <button type="button" onclick="window.open('${createProductUrl}', '_blank')" class="bg-gray-100 hover:bg-gray-200 text-gray-600 p-2 rounded transition-colors border border-gray-200 shadow-sm flex-shrink-0 focus:outline-none">
+                                <button type="button" onclick="window.open('${createProductUrl}', '_blank')" class="w-9 h-9 flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-600 rounded transition-colors border border-gray-200 shadow-sm flex-shrink-0 focus:outline-none">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
                                 </button>
                             </div>
                         </td>
-                        <td class="py-3 px-2 align-top"><input type="text" readonly class="txt-product-name w-full bg-transparent outline-none text-[13px] text-gray-700 truncate" placeholder="Tên SP..." /></td>
-                        <td class="py-3 px-2 align-top"><input type="text" readonly name="Details[${rowIdx}].UnitSnapshot" class="txt-unit w-full bg-transparent outline-none text-center text-[13px] text-gray-600" /></td>
-                        <td class="py-3 px-2 align-top">
-                            <select name="Details[${rowIdx}].DebitAccountId" class="cbo-debit w-full bg-[#f3f4f6] border border-transparent focus:bg-white focus:border-gray-300 rounded px-1 py-2 outline-none text-[12px]">
+                        
+                        <td class="py-2 px-2 align-middle">
+                            <input type="text" readonly class="txt-product-name w-full h-9 px-1 bg-transparent border-transparent outline-none text-[13px] text-gray-700 truncate" placeholder="Tên SP..." />
+                        </td>
+                        
+                        <td class="py-2 px-2 align-middle">
+                            <input type="text" readonly name="Details[${rowIdx}].UnitSnapshot" class="txt-unit w-full h-9 px-1 bg-transparent border-transparent outline-none text-center text-[13px] text-gray-600" />
+                        </td>
+                        
+                        <td class="py-2 px-2 align-middle">
+                            <select name="Details[${rowIdx}].DebitAccountId" class="cbo-debit w-full h-9 bg-[#f3f4f6] border border-transparent focus:bg-white focus:border-gray-300 rounded px-1 outline-none text-[12px]">
                                 <option value=""></option>
                                 ${accountsOptionsHtml}
                             </select>
                         </td>
-                        <td class="py-3 px-2 align-top">
-                            <select name="Details[${rowIdx}].CreditAccountId" class="cbo-credit w-full bg-[#f3f4f6] border border-transparent focus:bg-white focus:border-gray-300 rounded px-1 py-2 outline-none text-[12px]">
+                        
+                        <td class="py-2 px-2 align-middle">
+                            <select name="Details[${rowIdx}].CreditAccountId" class="cbo-credit w-full h-9 bg-[#f3f4f6] border border-transparent focus:bg-white focus:border-gray-300 rounded px-1 outline-none text-[12px]">
                                 <option value=""></option>
                                 ${accountsOptionsHtml}
                             </select>
                         </td>
-                        <td class="py-3 px-2 align-top"><input type="number" min="1" step="any" name="Details[${rowIdx}].Quantity" class="txt-qty w-full bg-white border border-gray-200 focus:border-gray-400 rounded px-2 py-2 outline-none text-center text-[13px]" value="1" /></td>
-                        <td class="py-3 px-2 align-top"><input type="number" min="0" step="any" name="Details[${rowIdx}].UnitPrice" class="txt-price w-full bg-white border border-gray-200 focus:border-gray-400 rounded px-2 py-2 outline-none text-right text-[13px]" value="0" /></td>
-                        <td class="py-3 px-2 align-top"><input type="number" min="0" max="100" name="Details[${rowIdx}].DiscountRate" class="txt-discount w-full bg-white border border-gray-200 focus:border-gray-400 rounded px-2 py-2 outline-none text-center text-[13px]" value="0" /></td>
-                        <td class="py-3 px-2 align-top"><input type="text" readonly class="lbl-amount w-full bg-transparent text-right font-bold text-gray-900 outline-none text-[13px]" value="0" /></td>
-                        <td class="py-3 px-2 align-top">
-                            <select name="Details[${rowIdx}].TaxId" class="cbo-tax w-full bg-[#f3f4f6] border border-transparent focus:bg-white focus:border-gray-300 rounded px-1 py-2 outline-none text-[12px]">
+                        
+                        <td class="py-2 px-2 align-middle">
+                            <input type="number" min="1" step="any" name="Details[${rowIdx}].Quantity" class="txt-qty w-full h-9 bg-white border border-gray-200 focus:border-gray-400 rounded px-2 outline-none text-center text-[13px]" value="1" />
+                        </td>
+                        
+                        <td class="py-2 px-2 align-middle">
+                            <input type="number" min="0" step="any" name="Details[${rowIdx}].UnitPrice" class="txt-price w-full h-9 bg-white border border-gray-200 focus:border-gray-400 rounded px-2 outline-none text-right text-[13px]" value="0" />
+                        </td>
+                        
+                        <td class="py-2 px-2 align-middle">
+                            <input type="number" min="0" max="100" name="Details[${rowIdx}].DiscountRate" class="txt-discount w-full h-9 bg-white border border-gray-200 focus:border-gray-400 rounded px-2 outline-none text-center text-[13px]" value="0" />
+                        </td>
+                        
+                        <td class="py-2 px-2 align-middle">
+                            <input type="text" readonly class="lbl-amount w-full h-9 px-1 bg-transparent border-transparent text-right font-bold text-gray-900 outline-none text-[13px]" value="0" />
+                        </td>
+                        
+                        <td class="py-2 px-2 align-middle">
+                            <select name="Details[${rowIdx}].TaxId" class="cbo-tax w-full h-9 bg-[#f3f4f6] border border-transparent focus:bg-white focus:border-gray-300 rounded px-1 outline-none text-[12px]">
                                 <option value="">-</option>
                                 ${taxesOptionsHtml}
                             </select>
                             <input type="hidden" class="hid-taxrate" name="Details[${rowIdx}].TaxRateSnapshot" value="0" />
                         </td>
-                        <td class="py-3 px-2 align-top">
-                            <select name="Details[${rowIdx}].TaxAccountId" class="cbo-taxaccount w-full bg-[#f3f4f6] border border-transparent focus:bg-white focus:border-gray-300 rounded px-1 py-2 outline-none text-[12px]">
+                        
+                        <td class="py-2 px-2 align-middle">
+                            <select name="Details[${rowIdx}].TaxAccountId" class="cbo-taxaccount w-full h-9 bg-[#f3f4f6] border border-transparent focus:bg-white focus:border-gray-300 rounded px-1 outline-none text-[12px]">
                                 <option value=""></option>
                                 ${accountsOptionsHtml}
                             </select>
                         </td>
-                        <td class="py-3 px-2 align-top"><input type="text" readonly class="lbl-taxamount w-full bg-transparent text-right font-semibold text-gray-600 outline-none text-[13px]" value="0" /></td>
-                        <td class="py-3 px-2 text-center align-top">
-                            <button type="button" class="btn-remove text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded focus:outline-none">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                        
+                        <td class="py-2 px-2 align-middle">
+                            <input type="text" readonly class="lbl-taxamount w-full h-9 px-1 bg-transparent border-transparent text-right font-semibold text-gray-600 outline-none text-[13px]" value="0" />
+                        </td>
+                        
+                        <td class="py-2 px-2 text-center align-middle">
+                            <button type="button" class="btn-remove text-red-400 hover:text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all p-1.5 rounded focus:outline-none flex items-center justify-center w-full">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                             </button>
                         </td>
                     </tr>

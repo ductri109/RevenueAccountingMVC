@@ -14,6 +14,7 @@ namespace RevenueAccountingMVC.ViewModels
         [Required(ErrorMessage = "Vui lòng chọn ngày hạch toán")]
         public DateTime AccountingDate { get; set; } = DateTime.Now.Date;
 
+        [Required(ErrorMessage = "Vui lòng chọn khách hàng")]
         public int CustomerId { get; set; }
         public string? CustomerName { get; set; }
         public string? CustomerCode { get; set; }
@@ -41,15 +42,15 @@ namespace RevenueAccountingMVC.ViewModels
     {
         public int ProductId { get; set; }
         public string? ProductName { get; set; }
+        
         public decimal Quantity { get; set; }
         public decimal UnitPrice { get; set; }
         public decimal DiscountRate { get; set; }
         public decimal Amount { get; set; }
         
-        [Required]
-        public string AdjustmentType { get; set; } // GiamGia, TraLai, ChietKhau
+        public string? AdjustmentType { get; set; } // GiamGia, TraLai, ChietKhau
         
-        // Dữ liệu ẩn để JS Validate không vượt quá số lượng/đơn giá gốc
+        // Dữ liệu ẩn để JS Validate và Postback
         public decimal OriginalQty { get; set; } 
         public decimal OriginalPrice { get; set; }
         public decimal OriginalTaxRate { get; set; }
