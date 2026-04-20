@@ -437,3 +437,4 @@ D:\Tri\RevenueAccountingMVC\obj\Debug\net9.0\refint\RevenueAccountingMVC.dll
 D:\Tri\RevenueAccountingMVC\obj\Debug\net9.0\RevenueAccountingMVC.pdb
 D:\Tri\RevenueAccountingMVC\obj\Debug\net9.0\RevenueAccountingMVC.genruntimeconfig.cache
 D:\Tri\RevenueAccountingMVC\obj\Debug\net9.0\ref\RevenueAccountingMVC.dll
+F:\DemoKimChi\RevenueAccountingMVC\obj\Debug\net9.0\RevenueAccountingMVC.sourcelink.json
