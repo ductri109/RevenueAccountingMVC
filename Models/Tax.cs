@@ -7,7 +7,9 @@ namespace RevenueAccountingMVC.Models
 {
     public enum TaxStatus
     {
+        [Display(Name = "Hoạt động")]
         Active = 1,
+        [Display(Name = "Không hoạt động")]
         Inactive = 2
     }
 

@@ -4,7 +4,9 @@ using Microsoft.EntityFrameworkCore;
 using RevenueAccountingMVC.Data;
 using RevenueAccountingMVC.Models;
 using RevenueAccountingMVC.ViewModels;
+using RevenueAccountingMVC.Services; // BỔ SUNG THÊM THƯ VIỆN NÀY
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -13,10 +15,13 @@ namespace RevenueAccountingMVC.Controllers
     public class RevenueAdjustmentController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly JournalEntryService _journalService; // Bổ sung Service sinh bút toán
 
-        public RevenueAdjustmentController(ApplicationDbContext context)
+        // Khởi tạo thêm JournalEntryService
+        public RevenueAdjustmentController(ApplicationDbContext context, JournalEntryService journalService)
         {
             _context = context;
+            _journalService = journalService; 
         }
 
         public async Task<IActionResult> Index()
@@ -29,17 +34,23 @@ namespace RevenueAccountingMVC.Controllers
             return View(data);
         }
 
+        // ===================== GET CREATE =====================
         [HttpGet]
         public IActionResult Create()
         {
             ViewBag.Customers = new SelectList(_context.Customers, "Id", "CustomerName");
-
-            // FIX: tránh null dropdown
             ViewBag.Vouchers = new SelectList(Enumerable.Empty<SelectListItem>());
+            ViewBag.Accounts = new SelectList(
+                _context.Accounts.Where(a => a.IsDetail).ToList(),
+                "Id",
+                "AccountNumber"
+            );
 
             var model = new RevenueAdjustmentViewModel
             {
-                AdjustmentCode = RevenueAdjustment.GenerateAdjustmentCode(_context.RevenueAdjustments.Count() + 1),
+                AdjustmentCode = RevenueAdjustment.GenerateAdjustmentCode(
+                    _context.RevenueAdjustments.Count() + 1
+                ),
                 AdjustmentDate = DateTime.Now,
                 AccountingDate = DateTime.Now
             };
@@ -47,148 +58,175 @@ namespace RevenueAccountingMVC.Controllers
             return View(model);
         }
 
+        // ===================== POST CREATE =====================
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(RevenueAdjustmentViewModel model)
         {
-            // ===== BASIC =====
-            if (model.CustomerId == 0)
-                ModelState.AddModelError("", "Vui lòng chọn khách hàng.");
+            // ================= VALIDATION =================
+            if (model.CustomerId <= 0)
+                ModelState.AddModelError("", "Vui lòng chọn khách hàng");
 
-            if (model.OriginalSalesVoucherId == 0)
-                ModelState.AddModelError("", "Vui lòng chọn chứng từ gốc.");
+            if (model.OriginalSalesVoucherId <= 0)
+                ModelState.AddModelError("", "Vui lòng chọn chứng từ gốc");
 
-            // ===== FILTER DETAILS =====
+            if (model.Details == null || model.Details.Count == 0)
+                ModelState.AddModelError("", "Chưa có chi tiết điều chỉnh");
+
+            // KIỂM TRA LỊCH SỬ TRẢ LẠI TRONG DATABASE
+            List<RevenueAdjustmentDetail> prevDetails = new List<RevenueAdjustmentDetail>();
+            SalesVoucher originalVoucher = null;
+
+            if (model.OriginalSalesVoucherId > 0)
+            {
+                originalVoucher = await _context.SalesVouchers
+                    .Include(v => v.Details)
+                    .FirstOrDefaultAsync(v => v.Id == model.OriginalSalesVoucherId);
+
+                // Lấy tất cả các lần điều chỉnh trước đó của chứng từ này
+                var previousAdjustments = await _context.RevenueAdjustments
+                    .Include(a => a.Details)
+                    .Where(a => a.OriginalSalesVoucherId == model.OriginalSalesVoucherId)
+                    .ToListAsync();
+
+                prevDetails = previousAdjustments.SelectMany(a => a.Details).ToList();
+            }
+
             if (model.Details != null)
             {
-                model.Details = model.Details
-                    .Where(x => !string.IsNullOrEmpty(x.AdjustmentType))
-                    .ToList();
-            }
-
-            if (model.Details == null || !model.Details.Any())
-                ModelState.AddModelError("", "Phải có ít nhất 1 dòng điều chỉnh.");
-
-            // ===== LOAD CT GỐC =====
-            var originalVoucher = await _context.SalesVouchers
-                .Include(x => x.Details)
-                .FirstOrDefaultAsync(x => x.Id == model.OriginalSalesVoucherId);
-
-            if (originalVoucher == null)
-            {
-                ModelState.AddModelError("", "Không tìm thấy chứng từ gốc.");
-            }
-            else
-            {
-                if (originalVoucher.CustomerId != model.CustomerId)
-                    ModelState.AddModelError("", "Khách hàng không khớp.");
-
-                if (model.Details != null)
+                for (int i = 0; i < model.Details.Count; i++)
                 {
-                    foreach (var d in model.Details)
+                    var d = model.Details[i];
+
+                    if (string.IsNullOrEmpty(d.AdjustmentType))
                     {
-                        var original = originalVoucher.Details
-                            .FirstOrDefault(x => x.ProductId == d.ProductId);
+                        ModelState.AddModelError("", $"Dòng {i + 1}: Vui lòng chọn loại giảm");
+                        continue;
+                    }
 
-                        if (original == null)
+                    // Validate số lượng/đơn giá chống vượt quá mức CÒN LẠI
+                    if (originalVoucher != null)
+                    {
+                        var origLine = originalVoucher.Details.FirstOrDefault(x => x.ProductId == d.ProductId);
+                        if (origLine != null)
                         {
-                            ModelState.AddModelError("", $"SP {d.ProductName} không tồn tại.");
-                            continue;
-                        }
+                            if (d.AdjustmentType == "TraLai")
+                            {
+                                if (d.Quantity >= 0)
+                                    ModelState.AddModelError("", $"Dòng {i + 1}: Số lượng trả lại phải là số âm");
 
-                        // ===== VALIDATE THEO TYPE =====
-                        if (d.AdjustmentType == "TraLai")
-                        {
-                            if (d.Quantity <= 0)
-                                ModelState.AddModelError("", $"[{d.ProductName}] SL phải > 0");
+                                // Tính số lượng ĐÃ trả lại ở các phiếu trước
+                                var alreadyReturned = prevDetails
+                                    .Where(pd => pd.ProductId == d.ProductId && pd.AdjustmentType == "TraLai")
+                                    .Sum(pd => Math.Abs(pd.Quantity));
 
-                            if (d.Quantity > original.Quantity)
-                                ModelState.AddModelError("", $"[{d.ProductName}] vượt SL gốc");
-                        }
-                        else if (d.AdjustmentType == "GiamGia")
-                        {
-                            if (d.UnitPrice <= 0)
-                                ModelState.AddModelError("", $"[{d.ProductName}] giá phải > 0");
+                                var remainQty = origLine.Quantity - alreadyReturned;
 
-                            if (d.UnitPrice > original.UnitPrice)
-                                ModelState.AddModelError("", $"[{d.ProductName}] vượt giá gốc");
-                        }
-                        else if (d.AdjustmentType == "ChietKhau")
-                        {
-                            if (d.DiscountRate <= 0 || d.DiscountRate > 100)
-                                ModelState.AddModelError("", $"[{d.ProductName}] % không hợp lệ");
-                        }
+                                if (Math.Abs(d.Quantity) > remainQty)
+                                    ModelState.AddModelError("", $"Dòng {i + 1}: Vượt quá số lượng gốc còn lại (Chỉ còn {remainQty})");
+                            }
 
-                        // ===== FIX QUAN TRỌNG =====
-                        if (!string.IsNullOrEmpty(d.AdjustmentType))
-                        {
-                            if (d.Amount >= 0)
-                                ModelState.AddModelError("", $"[{d.ProductName}] Thành tiền phải âm");
+                            if (d.AdjustmentType == "GiamGia")
+                            {
+                                // Tính đơn giá ĐÃ giảm ở các phiếu trước
+                                var alreadyDiscounted = prevDetails
+                                    .Where(pd => pd.ProductId == d.ProductId && pd.AdjustmentType == "GiamGia")
+                                    .Sum(pd => Math.Abs(pd.UnitPrice));
+
+                                var remainPrice = origLine.UnitPrice - alreadyDiscounted;
+
+                                if (Math.Abs(d.UnitPrice) > remainPrice)
+                                    ModelState.AddModelError("", $"Dòng {i + 1}: Giảm giá vượt quá mức cho phép (Tối đa {remainPrice})");
+                            }
                         }
                     }
 
-                    // ===== CHECK TOTAL =====
-                    if (model.TotalDiscountAmount == 0)
+                    if (d.AdjustmentType == "ChietKhau")
                     {
-                        ModelState.AddModelError("", "Tổng tiền điều chỉnh phải khác 0.");
+                        if (d.DiscountRate < 0 || d.DiscountRate > 100)
+                            ModelState.AddModelError("", $"Dòng {i + 1}: Chiết khấu 0-100%");
                     }
 
-                    var totalAdjustedBefore = _context.RevenueAdjustments
-                        .Where(x => x.OriginalSalesVoucherId == model.OriginalSalesVoucherId)
-                        .Sum(x => (decimal?)x.TotalDiscountAmount) ?? 0;
-
-                    if (Math.Abs(totalAdjustedBefore + model.TotalDiscountAmount) > originalVoucher.TotalAmount)
-                    {
-                        ModelState.AddModelError("", "Vượt giá trị chứng từ gốc.");
-                    }
+                    if (!d.DebitAccountId.HasValue || !d.CreditAccountId.HasValue)
+                        ModelState.AddModelError("", $"Dòng {i + 1}: Chưa chọn tài khoản");
                 }
             }
 
             if (!ModelState.IsValid)
             {
-                ViewBag.Customers = new SelectList(_context.Customers, "Id", "CustomerName", model.CustomerId);
-
-                ViewBag.Vouchers = new SelectList(
-                    _context.SalesVouchers.Where(x => x.CustomerId == model.CustomerId),
-                    "Id", "VoucherCode", model.OriginalSalesVoucherId
-                );
-
+                ReloadViewBag(model);
                 return View(model);
             }
 
-            // ===== SAVE =====
+            // ================= MAP TAX & CREATE ENTITY =================
+            var taxDetailMap = model.TaxDetails?.ToDictionary(t => t.RefIndex, t => t);
+
             var entity = new RevenueAdjustment
             {
-                AdjustmentCode = model.AdjustmentCode,
-                AdjustmentDate = model.AdjustmentDate,
-                AccountingDate = model.AccountingDate,
+                AdjustmentCode = model.AdjustmentCode ?? "GG-" + DateTime.Now.Ticks,
+                AdjustmentDate = model.AdjustmentDate == default ? DateTime.Now : model.AdjustmentDate,
+                AccountingDate = model.AccountingDate == default ? DateTime.Now : model.AccountingDate,
                 CustomerId = model.CustomerId,
-                Description = model.Description,
+                Description = model.Description ?? "",
                 OriginalSalesVoucherId = model.OriginalSalesVoucherId,
                 TotalDiscountAmount = model.TotalDiscountAmount,
                 TotalTaxAmount = model.TotalTaxAmount,
                 TotalPayment = model.TotalPayment,
-                Status = VoucherStatus.Draft,
-                Details = model.Details.Select(d => new RevenueAdjustmentDetail
+                // SỬA ĐỔI 1: LƯU TRỰC TIẾP VỚI TRẠNG THÁI POSTED (ĐÃ GHI SỔ)
+                Status = VoucherStatus.Posted, 
+
+                Details = model.Details.Select((d, idx) =>
                 {
-                    ProductId = d.ProductId,
-                    AdjustmentType = d.AdjustmentType,
-                    Quantity = d.Quantity,
-                    UnitPrice = d.UnitPrice,
-                    DiscountRate = d.DiscountRate,
-                    Amount = d.Amount,
-                    TaxRateSnapshot = d.OriginalTaxRate,
-                    TaxAmount = Math.Round(d.Amount * (d.OriginalTaxRate / 100m), 2)
+                    var taxInfo = (taxDetailMap != null && taxDetailMap.ContainsKey(idx)) ? taxDetailMap[idx] : null;
+
+                    var amount = -Math.Abs(d.Amount);
+                    var taxAmount = -Math.Abs(taxInfo?.TaxAmount ?? 0);
+
+                    return new RevenueAdjustmentDetail
+                    {
+                        ProductId = d.ProductId,
+                        AdjustmentType = d.AdjustmentType,
+                        Quantity = d.Quantity,
+                        UnitPrice = d.UnitPrice,
+                        DiscountRate = d.DiscountRate,
+                        Amount = amount,
+                        DebitAccountId = d.DebitAccountId,
+                        CreditAccountId = d.CreditAccountId,
+                        TaxRateSnapshot = d.OriginalTaxRate,
+                        TaxAmount = taxAmount,
+                        TaxAccountId = taxInfo?.TaxAccountId
+                    };
                 }).ToList()
             };
 
-            _context.Add(entity);
-            await _context.SaveChangesAsync();
+            try
+            {
+                _context.Add(entity);
+                await _context.SaveChangesAsync(); // Lưu chứng từ vào DB
 
-            return RedirectToAction(nameof(Index));
+                // SỬA ĐỔI 2: TỰ ĐỘNG GỌI HÀM SINH BÚT TOÁN NGAY SAU KHI LƯU
+                await _journalService.GenerateEntriesFromRevenueAdjustmentAsync(entity.Id);
+
+                TempData["SuccessMessage"] = "Lưu và ghi sổ chứng từ thành công!";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", "Lỗi khi lưu/ghi sổ: " + ex.Message);
+                ReloadViewBag(model);
+                return View(model);
+            }
         }
 
-        // ===== API =====
+        // ===================== SUPPORT =====================
+        private void ReloadViewBag(RevenueAdjustmentViewModel model)
+        {
+            ViewBag.Customers = new SelectList(_context.Customers, "Id", "CustomerName", model.CustomerId);
+            ViewBag.Vouchers = new SelectList(_context.SalesVouchers.Where(x => x.CustomerId == model.CustomerId), "Id", "VoucherCode", model.OriginalSalesVoucherId);
+            ViewBag.Accounts = new SelectList(_context.Accounts.Where(a => a.IsDetail).ToList(), "Id", "AccountNumber");
+        }
+
+        // ===================== API =====================
         [HttpGet]
         public async Task<IActionResult> GetVouchersByCustomer(int customerId)
         {
@@ -196,7 +234,6 @@ namespace RevenueAccountingMVC.Controllers
                 .Where(x => x.CustomerId == customerId && x.Status == VoucherStatus.Posted)
                 .Select(x => new { x.Id, x.VoucherCode })
                 .ToListAsync();
-
             return Json(data);
         }
 
@@ -211,6 +248,36 @@ namespace RevenueAccountingMVC.Controllers
 
             if (v == null) return NotFound();
 
+            // Tính toán trừ đi phần đã bị điều chỉnh trước đó
+            var previousAdjustments = await _context.RevenueAdjustments
+                .Include(a => a.Details)
+                .Where(a => a.OriginalSalesVoucherId == id)
+                .ToListAsync();
+
+            var prevDetails = previousAdjustments.SelectMany(a => a.Details).ToList();
+
+            var details = v.Details.Select(d =>
+            {
+                var alreadyReturned = prevDetails
+                    .Where(pd => pd.ProductId == d.ProductId && pd.AdjustmentType == "TraLai")
+                    .Sum(pd => Math.Abs(pd.Quantity));
+
+                var alreadyDiscounted = prevDetails
+                    .Where(pd => pd.ProductId == d.ProductId && pd.AdjustmentType == "GiamGia")
+                    .Sum(pd => Math.Abs(pd.UnitPrice));
+
+                return new
+                {
+                    productId = d.ProductId,
+                    productCode = d.Product.ProductCode,
+                    productName = d.Product.ProductName,
+                    // Trả về số lượng/đơn giá CÒN LẠI thay vì gốc
+                    originalQty = d.Quantity - alreadyReturned, 
+                    originalPrice = d.UnitPrice - alreadyDiscounted,
+                    originalTaxRate = d.TaxRateSnapshot
+                };
+            }).Where(d => d.originalQty > 0 || d.originalPrice > 0).ToList(); // Ẩn luôn sản phẩm đã trả sạch
+
             return Json(new
             {
                 customerName = v.Customer.CustomerName,
@@ -220,14 +287,7 @@ namespace RevenueAccountingMVC.Controllers
                 totalAmount = v.TotalAmount,
                 totalTax = v.TotalTaxAmount,
                 totalPayment = v.TotalPayment,
-                details = v.Details.Select(d => new
-                {
-                    productId = d.ProductId,
-                    productName = d.Product.ProductName,
-                    originalQty = d.Quantity,
-                    originalPrice = d.UnitPrice,
-                    originalTaxRate = d.TaxRateSnapshot
-                })
+                details = details
             });
         }
     }

@@ -7,16 +7,19 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using RevenueAccountingMVC.Data;
 using RevenueAccountingMVC.Models;
+using RevenueAccountingMVC.Services;
 
 namespace RevenueAccountingMVC.Controllers
 {
     public class SalesVoucherController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly JournalEntryService _journalService;
 
-        public SalesVoucherController(ApplicationDbContext context)
+        public SalesVoucherController(ApplicationDbContext context, JournalEntryService journalService)
         {
             _context = context;
+            _journalService = journalService;
         }
 
         // =======================
@@ -99,7 +102,9 @@ namespace RevenueAccountingMVC.Controllers
 
             model.DueDate = model.AccountingDate.AddDays(model.DebtDays);
             model.CreatedAt = DateTime.Now;
-            model.Status = VoucherStatus.Draft;
+            
+            // Bạn đang set mặc định là Posted ở đây
+            model.Status = VoucherStatus.Posted;
 
             foreach (var detail in model.Details)
             {
@@ -120,12 +125,23 @@ namespace RevenueAccountingMVC.Controllers
             model.TotalPayment = model.TotalAmount + model.TotalTaxAmount;
 
             _context.SalesVouchers.Add(model);
+            
+            // 1. Lưu vào Database để lấy được model.Id
             await _context.SaveChangesAsync();
+
+            // 2. BỔ SUNG ĐOẠN NÀY: Sinh bút toán ghi sổ cái ngay lập tức nếu Status là Posted
+            if (model.Status == VoucherStatus.Posted)
+            {
+                await _journalService.GenerateEntriesFromSalesVoucherAsync(model.Id);
+            }
 
             TempData["SuccessMessage"] = $"Ghi nhận doanh thu thành công (Số CT: {model.VoucherCode})";
             return RedirectToAction(nameof(Index));
         }
 
+        // =======================
+        // 4. DELETE
+        // =======================
         // =======================
         // 4. DELETE
         // =======================
@@ -140,9 +156,10 @@ namespace RevenueAccountingMVC.Controllers
             if (voucher == null)
                 return Json(new { success = false, message = "Không tìm thấy chứng từ." });
 
-            if (voucher.Status == VoucherStatus.Posted)
+            // THÊM ĐIỀU KIỆN CHẶN XÓA NẾU KHÔNG PHẢI LÀ DRAFT
+            if (voucher.Status != VoucherStatus.Draft)
             {
-                return Json(new { success = false, message = "Không thể xóa chứng từ đã ghi sổ!" });
+                return Json(new { success = false, message = "Chỉ được phép xóa chứng từ đang ở trạng thái Nháp!" });
             }
 
             _context.SalesVoucherDetails.RemoveRange(voucher.Details);
@@ -179,12 +196,6 @@ namespace RevenueAccountingMVC.Controllers
 
             if (voucher == null) return NotFound();
 
-            if (voucher.Status == VoucherStatus.Posted)
-            {
-                TempData["ErrorMessage"] = "Chứng từ đã ghi sổ, không thể chỉnh sửa!";
-                return RedirectToAction(nameof(Index));
-            }
-
             await LoadDropdownData();
             return View(voucher);
         }
@@ -219,12 +230,6 @@ namespace RevenueAccountingMVC.Controllers
                 .FirstOrDefaultAsync(v => v.Id == id);
 
             if (existing == null) return NotFound();
-
-            if (existing.Status == VoucherStatus.Posted)
-            {
-                TempData["ErrorMessage"] = "Không thể sửa chứng từ đã ghi sổ!";
-                return RedirectToAction(nameof(Index));
-            }
 
             // Xóa detail cũ
             _context.SalesVoucherDetails.RemoveRange(existing.Details);

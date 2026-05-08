@@ -1,0 +1,20 @@
+@{
+    // Lấy tên Action hiện tại từ URL để tự động bôi màu Tab
+    var currentAction = ViewContext.RouteData.Values["Action"]?.ToString();
+    
+    // Hàm hỗ trợ đổi class CSS
+    string GetTabClass(string actionName)
+    {
+        return currentAction == actionName 
+            ? "text-blue-600 font-semibold border-b-2 border-blue-600 py-2" 
+            : "text-gray-500 hover:text-black py-2 transition-colors";
+    }
+}
+
+<div class="flex space-x-6 mt-4">
+    <a href="@Url.Action("AccountLedger", "Ledger")" class="@GetTabClass("AccountLedger")">Sổ cái</a>
+    <a href="@Url.Action("Index", "Ledger")" class="@GetTabClass("Index")">Sổ nhật ký chung</a>
+    <a href="@Url.Action("RevenueByCustomer", "Ledger")" class="@GetTabClass("RevenueByCustomer")">Báo cáo doanh thu theo khách hàng</a>
+    <a href="@Url.Action("RevenueByProduct", "Ledger")" class="@GetTabClass("RevenueByProduct")">Báo cáo doanh thu theo mặt hàng</a>
+    <a href="@Url.Action("RevenueSummary", "Ledger")" class="@GetTabClass("RevenueSummary")">Báo cáo doanh thu tổng hợp</a>
+</div>

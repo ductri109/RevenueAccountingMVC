@@ -1,0 +1,144 @@
+@model RevenueAccountingMVC.ViewModels.ReportViewModel
+
+@{
+    ViewData["Title"] = "Sổ cái tài khoản";
+    var hasSearched = ViewBag.HasSearched as bool? ?? false;
+    var noDataMessage = ViewBag.NoDataMessage as string;
+}
+
+<div class="p-6 md:p-10 bg-[#f8fafc] min-h-screen">
+    <!-- Phần Header và Menu -->
+    <div class="mb-8 border-b border-gray-200 pb-4">
+        <h2 class="text-[24px] font-bold text-gray-900">Sổ cái tài khoản</h2>
+        <p class="text-[14px] text-gray-500 mt-1">Xem phát sinh Nợ/Có và số dư lũy kế theo tài khoản</p>
+        
+        <!-- Gọi Menu dùng chung -->
+        <partial name="_ReportTabs" />
+    </div>
+
+    <div class="flex flex-col md:flex-row gap-6">
+        <!-- Sidebar Bộ Lọc -->
+        <div class="w-full md:w-1/4 bg-white rounded-[16px] shadow-sm p-6 border border-gray-100 h-fit">
+            <h3 class="font-bold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-filter mr-2"></i> Bộ lọc báo cáo
+            </h3>
+            
+            <form asp-action="AccountLedger" method="get">
+                <div class="mb-4">
+                    <label class="block text-[13px] font-semibold text-gray-700 mb-2">Mã tài khoản</label>
+                    <input asp-for="AccountNumber" class="w-full bg-[#f3f4f6] border border-transparent focus:border-gray-400 rounded-lg px-4 py-2 text-[14px] outline-none transition-colors" placeholder="Ví dụ: 131" />
+                    <span asp-validation-for="AccountNumber" class="text-red-500 text-[12px] mt-1 block"></span>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-[13px] font-semibold text-gray-700 mb-2">Từ ngày</label>
+                    <input asp-for="FromDate" type="date" class="w-full bg-[#f3f4f6] border border-transparent focus:border-gray-400 rounded-lg px-4 py-2 text-[14px] outline-none transition-colors" />
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-[13px] font-semibold text-gray-700 mb-2">Đến ngày</label>
+                    <input asp-for="ToDate" type="date" class="w-full bg-[#f3f4f6] border border-transparent focus:border-gray-400 rounded-lg px-4 py-2 text-[14px] outline-none transition-colors" />
+                    <span asp-validation-for="ToDate" class="text-red-500 text-[12px] mt-1 block"></span>
+                </div>
+
+                @if (!ViewData.ModelState.IsValid && hasSearched)
+                {
+                    <div asp-validation-summary="All" class="text-red-500 text-sm mb-4"></div>
+                }
+
+                <div class="flex flex-col gap-2">
+                    <button type="submit" class="w-full bg-black hover:bg-gray-800 text-white py-2.5 rounded-lg text-[14px] font-bold transition-all shadow-md">
+                        Lọc / Xem báo cáo
+                    </button>
+                    
+                    @if (hasSearched && Model.Rows.Any())
+                    {
+                        <a href="@Url.Action("PrintAccountLedger", "Ledger", new { accountNumber = Model.AccountNumber, fromDate = Model.FromDate.ToString("yyyy-MM-dd"), toDate = Model.ToDate.ToString("yyyy-MM-dd") })" target="_blank" class="w-full bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-lg text-[14px] font-bold transition-all shadow-md text-center">
+                            <i class="fas fa-print mr-1"></i> Xuất PDF / In
+                        </a>
+                    }
+                </div>
+            </form>
+        </div>
+
+        <!-- Nội dung chính: Bảng Dữ Liệu -->
+        <div class="w-full md:w-3/4">
+            @if (hasSearched)
+            {
+                if (!string.IsNullOrEmpty(noDataMessage))
+                {
+                    <div class="bg-white rounded-[16px] shadow-sm p-6 text-gray-500 text-center border border-gray-100">
+                        @noDataMessage
+                    </div>
+                }
+                else if (Model.Rows.Any())
+                {
+                    <div class="bg-white rounded-[16px] shadow-sm border border-gray-100 overflow-hidden">
+                        <!-- Thông tin tóm tắt đầu kỳ -->
+                        <div class="p-5 border-b border-gray-100 bg-[#f9fafb] flex justify-between items-center">
+                            <div class="text-[14px] text-gray-700">
+                                <span class="font-bold text-gray-900">Tài khoản:</span> @Model.AccountNumber
+                            </div>
+                            <div class="text-[14px] text-gray-700">
+                                <span class="font-bold text-gray-900">Số dư đầu kỳ:</span> <span class="text-blue-600 font-bold">@Model.OpeningBalance.ToString("N0")</span>
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-[13px]">
+                                <thead class="bg-white text-gray-600 font-medium border-b border-gray-200">
+                                    <tr>
+                                        <th class="py-4 px-4 text-center">Ngày</th>
+                                        <th class="py-4 px-4">Diễn giải</th>
+                                        <th class="py-4 px-4 text-center">TK đối ứng</th>
+                                        <th class="py-4 px-4 text-right">Nợ</th>
+                                        <th class="py-4 px-4 text-right">Có</th>
+                                        <th class="py-4 px-4 text-right">Số dư lũy kế</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    @foreach (var row in Model.Rows)
+                                    {
+                                        <tr class="hover:bg-gray-50 transition-colors">
+                                            <td class="py-3 px-4 text-center text-gray-600">@row.Date.ToString("dd/MM/yyyy")</td>
+                                            <td class="py-3 px-4 text-gray-900 font-medium">
+                                                @if(!string.IsNullOrEmpty(row.VoucherCode))
+                                                {
+                                                    <span class="text-xs font-bold text-gray-500 block mb-0.5">@row.VoucherCode</span>
+                                                }
+                                                @row.Description
+                                            </td>
+                                            <td class="py-3 px-4 text-center text-gray-600">@row.CorrespondingAccount</td>
+                                            <td class="py-3 px-4 text-right font-semibold text-gray-700">@(row.Debit > 0 ? row.Debit.ToString("N0") : "")</td>
+                                            <td class="py-3 px-4 text-right font-semibold text-gray-700">@(row.Credit > 0 ? row.Credit.ToString("N0") : "")</td>
+                                            <td class="py-3 px-4 text-right font-bold text-blue-600">@row.Balance.ToString("N0")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                                <tfoot class="bg-[#f9fafb] border-t border-gray-200">
+                                    <tr>
+                                        <td colspan="3" class="py-4 px-4 font-bold text-center text-gray-900">Tổng cộng phát sinh</td>
+                                        <td class="py-4 px-4 text-right font-bold text-gray-900">@Model.TotalDebit.ToString("N0")</td>
+                                        <td class="py-4 px-4 text-right font-bold text-gray-900">@Model.TotalCredit.ToString("N0")</td>
+                                        <td class="py-4 px-4 text-right font-bold text-[#1d4ed8]">@Model.ClosingBalance.ToString("N0")</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="bg-white rounded-[16px] shadow-sm p-10 text-gray-400 text-center border border-gray-100 h-full flex flex-col justify-center items-center min-h-[300px]">
+                    <i class="fas fa-book text-4xl mb-3 text-gray-300"></i>
+                    <p>Vui lòng chọn tài khoản và nhấn "Lọc" để xem sổ cái.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

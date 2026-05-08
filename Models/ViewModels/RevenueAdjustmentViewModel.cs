@@ -6,11 +6,11 @@ namespace RevenueAccountingMVC.ViewModels
 {
     public class RevenueAdjustmentViewModel
     {
-        public string? AdjustmentCode { get; set; } 
-        
+        public string? AdjustmentCode { get; set; }
+
         [Required(ErrorMessage = "Vui lòng chọn ngày chứng từ")]
         public DateTime AdjustmentDate { get; set; } = DateTime.Now.Date;
-        
+
         [Required(ErrorMessage = "Vui lòng chọn ngày hạch toán")]
         public DateTime AccountingDate { get; set; } = DateTime.Now.Date;
 
@@ -24,7 +24,7 @@ namespace RevenueAccountingMVC.ViewModels
 
         [Required(ErrorMessage = "Vui lòng chọn chứng từ bán hàng")]
         public int OriginalSalesVoucherId { get; set; }
-        
+
         // Thông tin hiển thị của CT gốc
         public DateTime? OriginalVoucherDate { get; set; }
         public decimal OriginalTotalAmount { get; set; }
@@ -32,6 +32,7 @@ namespace RevenueAccountingMVC.ViewModels
         public decimal OriginalTotalPayment { get; set; }
 
         public List<RevenueAdjustmentDetailVM> Details { get; set; } = new List<RevenueAdjustmentDetailVM>();
+        public List<RevenueAdjustmentTaxVM> TaxDetails { get; set; } = new List<RevenueAdjustmentTaxVM>();
 
         public decimal TotalDiscountAmount { get; set; }
         public decimal TotalTaxAmount { get; set; }
@@ -42,17 +43,29 @@ namespace RevenueAccountingMVC.ViewModels
     {
         public int ProductId { get; set; }
         public string? ProductName { get; set; }
-        
+
         public decimal Quantity { get; set; }
         public decimal UnitPrice { get; set; }
         public decimal DiscountRate { get; set; }
         public decimal Amount { get; set; }
-        
+
         public string? AdjustmentType { get; set; } // GiamGia, TraLai, ChietKhau
-        
+
+        public int? DebitAccountId { get; set; }
+        public int? CreditAccountId { get; set; }
+
         // Dữ liệu ẩn để JS Validate và Postback
-        public decimal OriginalQty { get; set; } 
+        public decimal OriginalQty { get; set; }
         public decimal OriginalPrice { get; set; }
         public decimal OriginalTaxRate { get; set; }
+    }
+
+    public class RevenueAdjustmentTaxVM
+    {
+        public int ProductId { get; set; }
+        public int RefIndex { get; set; }
+        public decimal TaxRate { get; set; }
+        public decimal TaxAmount { get; set; }
+        public int? TaxAccountId { get; set; }
     }
 }

@@ -10,18 +10,18 @@
 }
 
 <div class="p-8">
-    <div class="flex items-center justify-between mb-6">
+    <div class="flex flex-col gap-3 mb-6">
+        @* Nút Quay lại nằm trên cùng, dạng text link tối giản *@
         <div>
-            <h2 class="text-[22px] font-bold text-gray-900">Xem chi tiết loại thuế</h2>
-            <p class="text-[14px] text-gray-500 mt-1">Thông tin tham số của @Model.TaxCode (@Model.TaxName)</p>
+            <a asp-action="Index" class="inline-flex items-center gap-2 text-[14px] font-medium text-gray-500 hover:text-black transition-colors group">
+                <i data-lucide="arrow-left" class="w-4 h-4 transition-transform group-hover:-translate-x-1"></i> 
+                Quay lại
+            </a>
         </div>
-        <div class="flex items-center gap-3">
-            <a asp-action="Edit" asp-route-id="@Model.Id" class="bg-black hover:bg-gray-800 text-white px-5 py-2.5 rounded-lg text-[14px] font-bold flex items-center gap-2 transition-all shadow-md active:scale-95">
-                <i data-lucide="pencil" class="w-4 h-4"></i> Chỉnh sửa
-            </a>
-            <a asp-action="Index" class="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-4 py-2.5 rounded-lg text-[14px] font-medium flex items-center gap-2 transition-colors shadow-sm">
-                <i data-lucide="arrow-left" class="w-4 h-4"></i> Quay lại
-            </a>
+
+        @* Tiêu đề và các nút chức năng (nếu có) nằm dưới *@
+        <div class="flex items-center justify-between">
+            <h2 class="text-[24px] font-bold text-gray-900">Xem chi tiết thuế</h2>
         </div>
     </div>
 

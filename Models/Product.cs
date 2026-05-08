@@ -34,7 +34,7 @@ namespace RevenueAccountingMVC.Models
         public ProductType ProductType { get; set; } // ✅ FIX
 
         [Required]
-        public string Unit { get; set; }
+        public string Unit { get; set; }    
 
         public ProductStatus Status { get; set; }
 

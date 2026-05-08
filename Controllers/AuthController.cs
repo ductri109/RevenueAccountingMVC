@@ -41,7 +41,7 @@ namespace RevenueAccountingMVC.Controllers
             }
 
             await SignInUser(user);
-            return RedirectToAction("Index", "Product"); // Chuyển hướng về trang chủ
+            return RedirectToAction("Index", "Home"); // Chuyển hướng về trang chủ
         }
 
         // --- ĐĂNG NHẬP LÃNH ĐẠO ---
@@ -62,7 +62,7 @@ namespace RevenueAccountingMVC.Controllers
             }
 
             await SignInUser(user);
-            return RedirectToAction("Index", "Product"); // Chuyển về Dashboard Lãnh đạo (Tùy bạn thiết lập)
+            return RedirectToAction("Index", "Home"); // Chuyển về Dashboard Lãnh đạo (Tùy bạn thiết lập)
         }
 
         // --- ĐĂNG KÝ (CHỈ DÀNH CHO KẾ TOÁN) ---

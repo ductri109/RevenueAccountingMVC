@@ -1,0 +1,5 @@
+TaxCode,TaxName,SecondaryName,TaxRate,IsDeductible,TaxAccountId,Status
+VAT0,Thuế GTGT 0%,VAT 0%,0,True,7,1
+VAT5,Thuế GTGT 5%,VAT 5%,5,True,7,1
+VAT8,Thuế GTGT 8%,VAT 8%,8,True,7,1
+VAT10,Thuế GTGT 10%,VAT 10%,10,True,7,1

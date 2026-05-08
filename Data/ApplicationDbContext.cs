@@ -19,7 +19,9 @@ namespace RevenueAccountingMVC.Data
         public DbSet<SalesVoucherDetail> SalesVoucherDetails { get; set; }
         public DbSet<RevenueAdjustment> RevenueAdjustments { get; set; }
         public DbSet<RevenueAdjustmentDetail> RevenueAdjustmentDetails { get; set; }
-
+        public DbSet<JournalEntry> JournalEntries { get; set; }
+        public DbSet<RevenueReportLine> RevenueReportLines { get; set; }
+        public DbSet<RevenueByProductReportLine> RevenueByProductReportLines { get; set; }
         // THÊM ĐOẠN NÀY ĐỂ FIX LỖI MULTIPLE CASCADE PATHS
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

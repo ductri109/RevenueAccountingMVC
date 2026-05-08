@@ -57,7 +57,7 @@ namespace RevenueAccountingMVC.Models
         public decimal TotalPayment { get; set; } = 0;
 
         [Display(Name = "Trạng thái")]
-        public VoucherStatus Status { get; set; } = VoucherStatus.Draft;
+        public VoucherStatus Status { get; set; } = VoucherStatus.Posted;
 
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public string? CreatedBy { get; set; } // Bỏ qua nếu chưa làm Auth

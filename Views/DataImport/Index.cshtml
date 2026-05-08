@@ -1,0 +1,104 @@
+@{
+    ViewData["Title"] = "Import Dữ Liệu Ban Đầu";
+}
+
+<div class="p-6 md:p-10 bg-[#f8fafc] min-h-screen flex justify-center items-start">
+    <div class="w-full max-w-4xl">
+        <div class="mb-8 border-b border-gray-200 pb-4">
+            <h2 class="text-[24px] font-bold text-gray-900">Thiết lập dữ liệu hệ thống</h2>
+            <p class="text-[14px] text-gray-500 mt-1">Sử dụng chức năng này để nạp danh mục ban đầu từ các file CSV</p>
+        </div>
+
+        @if (TempData["Success"] != null)
+        {
+            <div class="mb-6 bg-green-50 border border-green-200 rounded-[12px] p-5 shadow-sm flex items-start gap-4">
+                <div class="mt-0.5 text-green-500 text-xl">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div>
+                    <h4 class="text-green-800 font-bold text-[15px] mb-1">Import thành công!</h4>
+                    <pre class="text-green-700 text-[13px] font-mono whitespace-pre-line">@TempData["Success"]</pre>
+                </div>
+            </div>
+        }
+
+        @if (TempData["Error"] != null)
+        {
+            <div class="mb-6 bg-red-50 border border-red-200 rounded-[12px] p-5 shadow-sm flex items-start gap-4">
+                <div class="mt-0.5 text-red-500 text-xl">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div>
+                    <h4 class="text-red-800 font-bold text-[15px] mb-1">Đã có lỗi xảy ra</h4>
+                    <p class="text-red-700 text-[13px]">@TempData["Error"]</p>
+                </div>
+            </div>
+        }
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white rounded-[16px] shadow-sm border border-gray-100 overflow-hidden">
+                <div class="p-6 border-b border-gray-100 bg-orange-50/50">
+                    <div class="flex items-center gap-2 mb-2">
+                        <i class="fas fa-exclamation-circle text-orange-500"></i>
+                        <h3 class="font-bold text-gray-900 text-[16px]">Cảnh báo quan trọng</h3>
+                    </div>
+                    <p class="text-[13px] text-gray-600 leading-relaxed">
+                        Chức năng này sẽ <strong>XÓA TOÀN BỘ</strong> danh mục hiện có trong cơ sở dữ liệu và nạp lại dữ liệu mới từ file. Vui lòng đảm bảo không có chứng từ nào đang liên kết với danh mục cũ.
+                    </p>
+                </div>
+                <div class="p-6">
+                    <p class="text-[13px] text-gray-700 mb-5">
+                        Hệ thống sẽ nạp dữ liệu theo thứ tự ưu tiên khóa ngoại:<br/>
+                        <span class="font-semibold text-blue-600">Tài khoản → Thuế → Khách hàng → Sản phẩm</span>
+                    </p>
+                    
+                    <form asp-action="Import" method="post" onsubmit="return confirm('CẢNH BÁO: Dữ liệu danh mục cũ sẽ bị XÓA SẠCH. Bạn có chắc chắn muốn tiếp tục?');">
+                        <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg text-[14px] font-bold transition-all shadow-md flex items-center justify-center gap-2">
+                            <i class="fas fa-file-import"></i> Bắt đầu Import Dữ liệu
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-[16px] shadow-sm border border-gray-100 p-6">
+                <h3 class="font-bold text-gray-900 text-[16px] mb-4 flex items-center gap-2">
+                    <i class="fas fa-folder-open text-blue-500"></i> Yêu cầu tệp nguồn
+                </h3>
+                <p class="text-[13px] text-gray-600 mb-4">
+                    Vui lòng đặt 4 file CSV dưới đây vào thư mục <code class="bg-gray-100 px-1.5 py-0.5 rounded text-pink-600 font-mono text-[12px]">/Data/Import/</code> tại thư mục gốc của mã nguồn:
+                </p>
+                
+                <ul class="space-y-3">
+                    <li class="flex items-center justify-between text-[13px] p-3 bg-[#f8fafc] rounded-lg border border-gray-100">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-file-csv text-green-600 text-lg"></i>
+                            <span class="font-semibold text-gray-800">Accounts.csv</span>
+                        </div>
+                        <span class="text-gray-500 text-[12px]">Hệ thống tài khoản</span>
+                    </li>
+                    <li class="flex items-center justify-between text-[13px] p-3 bg-[#f8fafc] rounded-lg border border-gray-100">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-file-csv text-green-600 text-lg"></i>
+                            <span class="font-semibold text-gray-800">Taxes.csv</span>
+                        </div>
+                        <span class="text-gray-500 text-[12px]">Danh mục thuế</span>
+                    </li>
+                    <li class="flex items-center justify-between text-[13px] p-3 bg-[#f8fafc] rounded-lg border border-gray-100">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-file-csv text-green-600 text-lg"></i>
+                            <span class="font-semibold text-gray-800">Customers.csv</span>
+                        </div>
+                        <span class="text-gray-500 text-[12px]">Danh sách khách hàng</span>
+                    </li>
+                    <li class="flex items-center justify-between text-[13px] p-3 bg-[#f8fafc] rounded-lg border border-gray-100">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-file-csv text-green-600 text-lg"></i>
+                            <span class="font-semibold text-gray-800">Products.csv</span>
+                        </div>
+                        <span class="text-gray-500 text-[12px]">Danh mục mặt hàng</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

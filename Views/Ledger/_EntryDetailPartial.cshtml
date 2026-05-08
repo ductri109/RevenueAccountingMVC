@@ -1,0 +1,121 @@
+@model RevenueAccountingMVC.Models.JournalEntry
+
+<div class="space-y-6">
+    <!-- Thông tin cơ bản -->
+    <div>
+        <h4 class="text-[14px] font-bold text-gray-900 mb-4">Thông Tin Bút Toán</h4>
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <span class="block text-[12px] font-semibold text-gray-600 uppercase mb-1">Ngày phát sinh</span>
+                <span class="text-[16px] font-semibold text-gray-900">@Model.PostingDate.ToString("dd/MM/yyyy")</span>
+            </div>
+            <div>
+                <span class="block text-[12px] font-semibold text-gray-600 uppercase mb-1">Số chứng từ</span>
+                <span class="text-[16px] font-bold text-blue-600">@Model.VoucherCode</span>
+            </div>
+            <div>
+                <span class="block text-[12px] font-semibold text-gray-600 uppercase mb-1">Loại chứng từ</span>
+                <span class="inline-block px-3 py-1 text-[12px] font-semibold rounded-full
+                    @(Model.VoucherType == "SalesVoucher" ? "bg-blue-100 text-blue-700" : "bg-orange-100 text-orange-700")">
+                    @(Model.VoucherType == "SalesVoucher" ? "Hóa đơn" : "Giảm giá")
+                </span>
+            </div>
+            <div>
+                <span class="block text-[12px] font-semibold text-gray-600 uppercase mb-1">Loại bút toán</span>
+                <span class="inline-block px-3 py-1 text-[12px] font-semibold rounded-full
+                    @(Model.EntryType == "Debit" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700")">
+                    @(Model.EntryType == "Debit" ? "Nợ (Debit)" : "Có (Credit)")
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <hr class="border-gray-200" />
+
+    <!-- Tài khoản -->
+    <div>
+        <h4 class="text-[14px] font-bold text-gray-900 mb-4">Tài Khoản</h4>
+        <div class="bg-gray-50 p-4 rounded-lg border border-gray-100">
+            <div class="grid grid-cols-1 gap-4">
+                <div>
+                    <span class="block text-[12px] font-semibold text-gray-600 uppercase mb-1">Mã tài khoản</span>
+                    <span class="text-[16px] font-bold text-blue-600">@Model.Account?.AccountNumber</span>
+                </div>
+                <div>
+                    <span class="block text-[12px] font-semibold text-gray-600 uppercase mb-1">Tên tài khoản</span>
+                    <span class="text-[14px] font-semibold text-gray-900">@Model.Account?.AccountName</span>
+                </div>
+                <div>
+                    <span class="block text-[12px] font-semibold text-gray-600 uppercase mb-1">Số tiền</span>
+                    <span class="text-[20px] font-bold @(Model.EntryType == "Debit" ? "text-green-600" : "text-red-600")">
+                        @Model.Amount.ToString("N0")
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chi tiết (nếu có) -->
+    @if (!string.IsNullOrEmpty(Model.CustomerName) || !string.IsNullOrEmpty(Model.ProductName))
+    {
+        <hr class="border-gray-200" />
+        
+        <div>
+            <h4 class="text-[14px] font-bold text-gray-900 mb-4">Chi Tiết Liên Quan</h4>
+            <div class="space-y-3">
+                @if (!string.IsNullOrEmpty(Model.CustomerName))
+                {
+                    <div class="border-l-4 border-blue-500 pl-4">
+                        <span class="block text-[12px] font-semibold text-gray-600 uppercase mb-1">Khách hàng</span>
+                        <span class="text-[14px] font-semibold text-gray-900">@Model.CustomerName</span>
+                        @if (!string.IsNullOrEmpty(Model.CustomerCode))
+                        {
+                            <span class="block text-[12px] text-gray-600">Mã: @Model.CustomerCode</span>
+                        }
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(Model.ProductName))
+                {
+                    <div class="border-l-4 border-purple-500 pl-4">
+                        <span class="block text-[12px] font-semibold text-gray-600 uppercase mb-1">Sản phẩm</span>
+                        <span class="text-[14px] font-semibold text-gray-900">@Model.ProductName</span>
+                        @if (!string.IsNullOrEmpty(Model.ProductCode))
+                        {
+                            <span class="block text-[12px] text-gray-600">Mã: @Model.ProductCode</span>
+                        }
+                    </div>
+                }
+
+                @if (Model.TaxRate.HasValue)
+                {
+                    <div class="border-l-4 border-orange-500 pl-4">
+                        <span class="block text-[12px] font-semibold text-gray-600 uppercase mb-1">Thuế suất</span>
+                        <span class="text-[14px] font-semibold text-gray-900">@Model.TaxRate.Value.ToString("0.00")%</span>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    <!-- Diễn giải -->
+    @if (!string.IsNullOrEmpty(Model.Description))
+    {
+        <hr class="border-gray-200" />
+        
+        <div>
+            <h4 class="text-[14px] font-bold text-gray-900 mb-4">Diễn Giải</h4>
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                <p class="text-[14px] text-gray-700">@Model.Description</p>
+            </div>
+        </div>
+    }
+
+    <!-- Thông tin hệ thống -->
+    <hr class="border-gray-200" />
+    
+    <div class="text-[12px] text-gray-500">
+        <div>Tạo bởi: @Model.CreatedBy</div>
+        <div>Ngày tạo: @Model.PostingDate.ToString("dd/MM/yyyy HH:mm:ss")</div>
+    </div>
+</div>

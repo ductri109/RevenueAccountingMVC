@@ -1,0 +1,147 @@
+@model IEnumerable<RevenueAccountingMVC.Models.RevenueByCustomerReportLine>
+@{
+    ViewData["Title"] = "Báo cáo doanh thu theo khách hàng";
+    var hasSearched = ViewBag.HasSearched as bool? ?? false;
+}
+
+<div class="p-6 md:p-10 bg-[#f8fafc] min-h-screen">
+    <!-- Phần Header và Menu -->
+    <div class="mb-8 border-b border-gray-200 pb-4">
+        <h2 class="text-[24px] font-bold text-gray-900">Báo cáo doanh thu theo khách hàng</h2>
+        <p class="text-[14px] text-gray-500 mt-1">Xem và phân tích doanh thu bán ra theo từng khách hàng</p>
+        
+        <!-- Gọi Menu dùng chung -->
+        <partial name="_ReportTabs" />
+    </div>
+
+    <div class="flex flex-col md:flex-row gap-6">
+        <!-- Sidebar Filter -->
+        <div class="w-full md:w-1/4 bg-white rounded-[16px] shadow-sm p-6 border border-gray-100 h-fit">
+            <h3 class="font-bold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-filter mr-2"></i> Bộ lọc báo cáo
+            </h3>
+            
+            <form asp-action="RevenueByCustomer" method="get">
+                <div class="mb-4">
+                    <label class="block text-[13px] font-semibold text-gray-700 mb-2">Từ ngày</label>
+                    <input type="date" name="fromDate" value="@(ViewBag.FromDate != null ? ((DateTime)ViewBag.FromDate).ToString("yyyy-MM-dd") : "")" class="w-full bg-[#f3f4f6] border border-transparent focus:border-gray-400 rounded-lg px-4 py-2 text-[14px] outline-none" required />
+                </div>
+                <div class="mb-4">
+                    <label class="block text-[13px] font-semibold text-gray-700 mb-2">Đến ngày</label>
+                    <input type="date" name="toDate" value="@(ViewBag.ToDate != null ? ((DateTime)ViewBag.ToDate).ToString("yyyy-MM-dd") : "")" class="w-full bg-[#f3f4f6] border border-transparent focus:border-gray-400 rounded-lg px-4 py-2 text-[14px] outline-none" required />
+                </div>
+                <div class="mb-6">
+                    <label class="block text-[13px] font-semibold text-gray-700 mb-2">Khách hàng</label>
+                    <select name="customerId" class="w-full bg-[#f3f4f6] border border-transparent focus:border-gray-400 rounded-lg px-4 py-2 text-[14px] outline-none">
+                        <option value="">-- Tất cả khách hàng --</option>
+                        @if (ViewBag.Customers != null)
+                        {
+                            @foreach (var c in ViewBag.Customers)
+                            {
+                                if (ViewBag.SelectedCustomerId != null && ViewBag.SelectedCustomerId == c.Id)
+                                {
+                                    <option value="@c.Id" selected>@c.CustomerCode - @c.CustomerName</option>
+                                }
+                                else
+                                {
+                                    <option value="@c.Id">@c.CustomerCode - @c.CustomerName</option>
+                                }
+                            }
+                        }
+                    </select>
+                </div>
+                
+                @if (!ViewData.ModelState.IsValid && hasSearched)
+                {
+                    <div asp-validation-summary="All" class="text-red-500 text-sm mb-4"></div>
+                }
+
+                <div class="flex flex-col gap-2">
+                    <button type="submit" class="w-full bg-black hover:bg-gray-800 text-white py-2.5 rounded-lg text-[14px] font-bold transition-all shadow-md">
+                        Lọc / Xem báo cáo
+                    </button>
+                    @if (hasSearched && Model.Any())
+                    {
+                        <a href="@Url.Action("PrintRevenueByCustomer", "Ledger", new { fromDate = ((DateTime)ViewBag.FromDate).ToString("yyyy-MM-dd"), toDate = ((DateTime)ViewBag.ToDate).ToString("yyyy-MM-dd"), customerId = ViewBag.SelectedCustomerId })" target="_blank" class="w-full bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-lg text-[14px] font-bold transition-all shadow-md text-center flex justify-center items-center">
+                            <i class="fas fa-print mr-1"></i> Xuất PDF / In
+                        </a>
+                    }
+                </div>
+            </form>
+        </div>
+
+        <!-- Main Content (Data Table) -->
+        <div class="w-full md:w-3/4">
+            @if (hasSearched)
+            {
+                if (!Model.Any())
+                {
+                    <div class="bg-white rounded-[16px] shadow-sm p-10 text-gray-400 text-center border border-gray-100 h-full flex flex-col justify-center items-center min-h-[300px]">
+                        <i class="fas fa-inbox text-4xl mb-3 text-gray-300"></i>
+                        <p class="text-[16px] font-semibold text-gray-600">Không có dữ liệu</p>
+                        <p class="text-[14px] mt-1">Không có doanh thu trong khoảng thời gian này.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="bg-white rounded-[16px] shadow-sm border border-gray-100 overflow-hidden">
+                        <!-- Header tóm tắt dữ liệu -->
+                        <div class="p-5 border-b border-gray-100 bg-[#f9fafb] flex justify-between items-center">
+                            <div class="text-[14px] text-gray-700">
+                                <span class="font-bold text-gray-900">Khoảng thời gian:</span> @(((DateTime)ViewBag.FromDate).ToString("dd/MM/yyyy")) - @(((DateTime)ViewBag.ToDate).ToString("dd/MM/yyyy"))
+                            </div>
+                            <div class="text-[14px] text-gray-700">
+                                <span class="font-bold text-gray-900">Số khách hàng:</span> <span class="text-blue-600 font-bold">@Model.Count()</span>
+                            </div>
+                        </div>
+
+                        <table class="w-full text-left text-[13px]">
+                            <thead class="bg-white text-gray-600 font-medium border-b border-gray-200">
+                                <tr>
+                                    <th class="py-4 px-4 text-center">Mã KH</th>
+                                    <th class="py-4 px-4">Tên khách hàng</th>
+                                    <th class="py-4 px-4">Mã số thuế</th>
+                                    <th class="py-4 px-4 text-right">Số giao dịch</th>
+                                    <th class="py-4 px-4 text-right">Doanh thu</th>
+                                    <th class="py-4 px-4 text-center">Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                            @foreach (var item in Model)
+                            {
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td class="py-3 px-4 text-center font-semibold text-blue-600">@item.CustomerCode</td>
+                                    <td class="py-3 px-4 font-medium text-gray-900">@item.CustomerName</td>
+                                    <td class="py-3 px-4 text-gray-600">@item.TaxCode</td>
+                                    <td class="py-3 px-4 text-right">@item.TransactionCount</td>
+                                    <td class="py-3 px-4 text-right font-semibold text-gray-700">@item.TotalRevenue.ToString("N0")</td>
+                                    <td class="py-3 px-4 text-center">
+                                        <a href="#" class="text-blue-600 hover:text-blue-800 font-semibold text-[12px] inline-flex items-center">
+                                            <i class="fas fa-eye mr-1"></i> Chi tiết
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                            </tbody>
+                            <tfoot class="bg-[#f9fafb] border-t border-gray-200">
+                                <tr>
+                                    <td colspan="3" class="py-4 px-4 font-bold text-center text-gray-900">Tổng cộng phát sinh</td>
+                                    <td class="py-4 px-4 text-right font-bold text-gray-900">@Model.Sum(x => x.TransactionCount)</td>
+                                    <td class="py-4 px-4 text-right font-bold text-[#1d4ed8]">@Model.Sum(x => x.TotalRevenue).ToString("N0")</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>    
+                        </table>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="bg-white rounded-[16px] shadow-sm p-10 text-gray-400 text-center border border-gray-100 h-full flex flex-col justify-center items-center min-h-[300px]">
+                    <i class="fas fa-chart-bar text-4xl mb-3 text-gray-300"></i>
+                    <p>Vui lòng chọn thời gian và nhấn "Lọc" để xem báo cáo.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
