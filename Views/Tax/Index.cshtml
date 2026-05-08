@@ -43,7 +43,7 @@
                     <th class="py-3.5 px-5 font-semibold text-gray-800 w-[10%]">Mã thuế</th>
                     <th class="py-3.5 px-5 font-semibold text-gray-800 w-[25%]">Tên thuế</th>
                     <th class="py-3.5 px-5 font-semibold text-gray-800 w-[15%]">Thuế suất</th>
-                    <th class="py-3.5 px-5 font-semibold text-gray-800 w-[20%]">Tài khoản hạch toán</th>
+                    <th class="py-3.5 px-5 font-semibold text-gray-800 w-[20%]">Tài khoản thuế</th>
                     <th class="py-3.5 px-5 font-semibold text-gray-800 w-[15%]">Trạng thái</th>
                     <th class="py-3.5 px-5 font-semibold text-gray-800 text-right w-[15%]">Hành động</th>
                 </tr>
@@ -64,7 +64,7 @@
                                 @if(item.IsDeductible) { <span class="ml-2 text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">Khấu trừ</span> }
                             </td>
                             <td class="py-4 px-5 text-gray-600 font-semibold text-orange-600">@item.TaxRate.ToString("0.##")%</td>
-                            <td class="py-4 px-5 text-gray-600">TK: @(item.TaxAccount?.AccountNumber ?? "N/A")</td>
+                            <td class="py-4 px-5 text-gray-600">@(item.TaxAccount?.AccountNumber ?? "N/A")</td>
                             <td class="py-4 px-5">
                                 <span class="status-badge inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium @statusBadgeClass">@statusName</span>
                             </td>

@@ -7,6 +7,7 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
 
@@ -37,7 +38,8 @@
             }
         }
         <nav class="flex-1 px-4 py-5 space-y-1.5 overflow-y-auto" id="sidebar-menu">
-            <a href="#" class="menu-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">
+            <a asp-controller="Dashboard" asp-action="Index" 
+                class="menu-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">
                 <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
                 <span class="text-[14px] font-medium">Dashboard</span>
             </a>
@@ -55,17 +57,17 @@
             </a>
 
             <a asp-controller="RevenueAdjustment" asp-action="Index" 
-                class="menu-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">
+                class="menu-item flex items-center gap-3 px-3 py-2.5 rounded-lg @GetActiveClass("RevenueAdjustment")">
                 <i data-lucide="file-sliders" class="w-5 h-5"></i>
                 <span class="text-[14px] font-medium leading-tight">Quản lý điều chỉnh doanh thu</span>
             </a>
 
-            <a href="#" class="menu-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">
-                <i data-lucide="file-text" class="w-5 h-5"></i>
-                <span class="text-[14px] font-medium">Quản lý chứng từ</span>
-            </a>
+            <!-- ĐÃ XÓA TẠM "Quản lý chứng từ" NẾU BẠN KHÔNG DÙNG ĐẾN HOẶC CÓ THỂ GIỮ LẠI NẾU CẦN -->
 
-            <a href="#" class="menu-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">
+            <!-- ĐÂY LÀ MENU "BÁO CÁO & SỔ SÁCH" GỘP CHUNG -->
+            <!-- Mặc định khi bấm vào sẽ dẫn đến màn hình AccountLedger (Sổ cái) -->
+            <a asp-controller="Ledger" asp-action="AccountLedger" 
+                class="menu-item flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors @GetActiveClass("Ledger")">
                 <i data-lucide="bar-chart-2" class="w-5 h-5"></i>
                 <span class="text-[14px] font-medium">Báo cáo & sổ sách</span>
             </a>

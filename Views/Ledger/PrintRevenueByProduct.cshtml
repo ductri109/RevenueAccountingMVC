@@ -1,0 +1,144 @@
+@model IEnumerable<RevenueAccountingMVC.Models.RevenueByProductReportLine>
+@{
+    Layout = null; // Bỏ qua Layout chính để in toàn màn hình
+    DateTime fromDate = ViewBag.FromDate;
+    DateTime toDate = ViewBag.ToDate;
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Báo Cáo Doanh Thu Theo Mặt Hàng</title>
+    <style>
+        @@media print {
+            @@page { size: A4 landscape; margin: 15mm; }
+            body { -webkit-print-color-adjust: exact; }
+            button { display: none; } /* Ẩn nút khi in */
+        }
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 13pt;
+            color: #000;
+            line-height: 1.4;
+            background: #fff;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header-company {
+            margin-bottom: 30px;
+        }
+        .header-company div { margin-bottom: 3px; }
+        .font-bold { font-weight: bold; }
+        .font-italic { font-style: italic; }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        
+        .report-title {
+            font-size: 18pt;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 20px;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+        .report-subtitle {
+            text-align: center;
+            font-style: italic;
+            margin-bottom: 10px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            margin-bottom: 30px;
+        }
+        th, td {
+            border: 1px solid #000;
+            padding: 10px;
+        }
+        th {
+            text-align: center;
+            font-weight: bold;
+            vertical-align: middle;
+        }
+        
+        .signature-table {
+            width: 100%;
+            border: none;
+            page-break-inside: avoid;
+        }
+        .signature-table td {
+            border: none;
+            text-align: center;
+            vertical-align: top;
+            width: 33.33%;
+            padding: 0;
+        }
+    </style>
+</head>
+<body onload="window.print()">
+    <!-- Thông tin công ty (Góc trái) -->
+    <div class="header-company">
+        <div class="font-bold">Đơn vị: Công ty Cổ phần Phần mềm BRAVO</div>
+        <div><span class="font-bold">Địa chỉ:</span> Tầng 7, Tòa Nhà Văn Phòng 311-313, Đường Trường Chinh, Phường Phương Liệt, Hà Nội.</div>
+        <div><span class="font-bold">Mã số thuế:</span> 0800263590</div>
+        <div><span class="font-bold">Điện thoại:</span> 0320895604</div>
+    </div>
+
+    <!-- Tiêu đề báo cáo -->
+    <div class="report-title">BÁO CÁO DOANH THU THEO MẶT HÀNG</div>
+    <div class="report-subtitle">Từ ngày @fromDate.ToString("dd/MM/yyyy") đến ngày @toDate.ToString("dd/MM/yyyy")</div>
+    
+    <div class="text-right" style="margin-bottom: 5px;">Đơn vị tính: VNĐ</div>
+
+    <!-- Bảng dữ liệu chính -->
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 15%;">Mã HH</th>
+                <th style="width: 45%;">Tên hàng hóa</th>
+                <th style="width: 15%;">Số lượng</th>
+                <th style="width: 25%;">Doanh thu</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach(var item in Model)
+            {
+                <tr>
+                    <td class="text-center">@item.ProductCode</td>
+                    <td>@item.ProductName</td>
+                    <!-- Định dạng N2 cho số lượng, N0 (hoặc N2) cho Doanh thu -->
+                    <td class="text-right">@item.Quantity.ToString("N2")</td>
+                    <td class="text-right">@item.TotalRevenue.ToString("N2")</td>
+                </tr>
+            }
+            <tr>
+                <td colspan="2" class="text-center font-bold">Tổng cộng</td>
+                <td class="text-right font-bold">@Model.Sum(x => x.Quantity).ToString("N2")</td>
+                <td class="text-right font-bold">@Model.Sum(x => x.TotalRevenue).ToString("N2")</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Chữ ký -->
+    <table class="signature-table">
+        <tr>
+            <td>
+                <div class="font-bold">Người ghi sổ</div>
+                <div class="font-italic">(Ký và ghi rõ họ tên)</div>
+            </td>
+            <td>
+                <div class="font-bold">Kế toán trưởng</div>
+                <div class="font-italic">(Ký và ghi rõ họ tên)</div>
+            </td>
+            <td>
+                <div class="font-bold">Giám đốc</div>
+                <div class="font-italic">(Ký và ghi rõ họ tên)</div>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

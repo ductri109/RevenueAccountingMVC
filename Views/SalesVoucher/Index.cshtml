@@ -41,7 +41,6 @@
                     <th class="py-3.5 px-5 font-semibold text-gray-800">Khách hàng</th>
                     <th class="py-3.5 px-5 font-semibold text-gray-800">Diễn giải</th>
                     <th class="py-3.5 px-5 font-semibold text-gray-800 text-right">Tổng thanh toán</th>
-                    <th class="py-3.5 px-5 font-semibold text-gray-800 text-center">Trạng thái</th>
                     <th class="py-3.5 px-5 font-semibold text-gray-800 text-center">Hành động</th>
                 </tr>
             </thead>
@@ -57,17 +56,6 @@
                             <td class="py-4 px-5 text-gray-500 truncate max-w-[200px]" title="@item.Description">@item.Description</td>
                             <td class="py-4 px-5 text-right font-bold text-gray-900">@item.TotalPayment.ToString("N0") đ</td>
 
-                            <td class="py-4 px-5 text-center">
-                                @if (item.Status == VoucherStatus.Draft)
-                                {
-                                    <span class="bg-yellow-100 text-yellow-700 px-2.5 py-1 rounded-full text-[12px] font-semibold">Bản nháp</span>
-                                }
-                                else
-                                {
-                                    <span class="bg-green-100 text-green-700 px-2.5 py-1 rounded-full text-[12px] font-semibold">Đã ghi sổ</span>
-                                }
-                            </td>
-
                             <td class="py-4 px-5 flex items-center justify-center gap-3">
 
                                 <!-- 👁 XEM CHI TIẾT -->
@@ -76,33 +64,6 @@
                                    title="Xem chi tiết">
                                     <i data-lucide="eye" class="w-4 h-4"></i>
                                 </a>
-
-                                <!-- ✏️ SỬA -->
-                                @if (item.Status != VoucherStatus.Posted)
-                                {
-                                    <a asp-action="Edit" asp-route-id="@item.Id"
-                                       class="text-gray-400 hover:text-green-600 transition-colors"
-                                       title="Chỉnh sửa">
-                                        <i data-lucide="pencil" class="w-4 h-4"></i>
-                                    </a>
-                                }
-
-                                <!-- 🗑 XÓA -->
-                                <button type="button"
-                                        onclick="deleteVoucher(@item.Id)"
-                                        class="text-gray-400 hover:text-red-600 transition-colors"
-                                        title="Xóa">
-                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                </button>
-
-                                @if (item.Status == VoucherStatus.Draft)
-                                {
-                                    <button onclick="postVoucher(@item.Id)"
-                                        class="text-gray-400 hover:text-indigo-600"
-                                        title="Ghi sổ">
-                                        <i data-lucide="check-circle" class="w-4 h-4"></i>
-                                    </button>
-                                }
 
                             </td>
                         </tr>
@@ -120,25 +81,43 @@
         </table>
     </div>
 </div>
-
+@Html.AntiForgeryToken()
 @section Scripts {
     <script>
         lucide.createIcons();
 
         function postVoucher(id) {
             if (confirm("Xác nhận ghi sổ chứng từ này?")) {
-                $.post(`/SalesVoucher/PostVoucher/${id}`, function (res) {
+                // Lấy mã token
+                let token = $('input[name="__RequestVerificationToken"]').val();
+                
+                $.post(`/SalesVoucher/PostVoucher/${id}`, {
+                    __RequestVerificationToken: token
+                }, function (res) {
                     if (res.success) location.reload();
                     else alert(res.message);
+                }).fail(function() {
+                    alert("Có lỗi xảy ra khi gọi server.");
                 });
             }
         }
 
         function deleteVoucher(id) {
             if (confirm('Bạn có chắc chắn muốn xóa chứng từ này? Dữ liệu không thể khôi phục.')) {
-                $.post(`/SalesVoucher/Delete/${id}`, function (res) {
-                    if (res.success) location.reload();
-                    else alert(res.message);
+                // Lấy mã token
+                let token = $('input[name="__RequestVerificationToken"]').val();
+
+                $.post(`/SalesVoucher/Delete/${id}`, { 
+                    __RequestVerificationToken: token 
+                }, function (res) {
+                    if (res.success) {
+                        location.reload();
+                    } else {
+                        // Hiển thị thông báo lỗi từ Controller (VD: "Chỉ được phép xóa chứng từ Nháp")
+                        alert(res.message); 
+                    }
+                }).fail(function() {
+                    alert("Lỗi bảo mật hoặc không thể kết nối đến server.");
                 });
             }
         }

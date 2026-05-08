@@ -7,14 +7,19 @@
 }
 
 <div class="p-8">
-    <div class="flex items-center justify-between mb-6">
+    <div class="flex flex-col gap-4 mb-6">
+        @* Nút Quay lại nằm trên *@
         <div>
-            <h2 class="text-[22px] font-bold text-gray-900">Chỉnh sửa thông tin thuế</h2>
-            <p class="text-[14px] text-gray-500 mt-1">Cập nhật thông tin chi tiết cho loại thuế @Model.TaxCode</p>
+            <a asp-action="Index" class="inline-flex items-center gap-2 text-[14px] font-medium text-gray-500 hover:text-black transition-colors group">
+                <i data-lucide="arrow-left" class="w-4 h-4 transition-transform group-hover:-translate-x-1"></i> 
+                Quay lại
+            </a>
         </div>
-        <a asp-action="Index" class="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-4 py-2.5 rounded-lg text-[14px] font-medium flex items-center gap-2 transition-colors shadow-sm">
-            <i data-lucide="arrow-left" class="w-4 h-4"></i> Quay lại danh sách
-        </a>
+
+        @* Tiêu đề nằm dưới *@
+        <div>
+            <h2 class="text-[24px] font-bold text-gray-900">Chỉnh sửa thuế</h2>
+        </div>
     </div>
 
     <div class="bg-white border border-gray-100 rounded-xl shadow-sm p-6">

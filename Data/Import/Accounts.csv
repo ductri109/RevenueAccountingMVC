@@ -1,0 +1,15 @@
+AccountNumber,AccountName,Category,Nature,IsDetail,Status,ParentAccountId,Description
+111,Tiền mặt,1,1,True,1,,Tiền mặt tại quỹ
+112,Tiền gửi Ngân hàng,1,1,True,1,,Tiền gửi Ngân hàng
+131,Phải thu của khách hàng,1,1,True,1,,Phải thu của khách hàng
+1311,Phải thu khách hàng ngắn hạn,1,1,True,1,3,Phải thu khách hàng ngắn hạn
+138,Phải thu khác,1,1,True,1,,Phải thu khác
+333,Thuế và các khoản phải nộp Nhà nước,2,2,True,1,,Thuế và các khoản phải nộp Nhà nước
+33311,Thuế GTGT phải nộp,2,2,True,1,6,Thuế GTGT phải nộp
+511,Doanh thu bán hàng và cung cấp dịch vụ,3,2,True,1,,Doanh thu bán hàng và cung cấp dịch vụ
+515,Doanh thu hoạt động tài chính,3,2,True,1,,Doanh thu hoạt động tài chính
+521,Các khoản giảm trừ doanh thu,3,2,True,1,,Các khoản giảm trừ doanh thu
+641,Chi phí bán hàng,4,1,True,1,,Chi phí bán hàng
+642,Chi phí quản lý doanh nghiệp,4,1,True,1,,Chi phí quản lý doanh nghiệp
+711,Thu nhập khác,3,2,True,1,,Thu nhập khác
+911,Xác định kết quả kinh doanh,2,3,True,1,,Xác định kết quả kinh doanh

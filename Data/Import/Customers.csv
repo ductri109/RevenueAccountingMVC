@@ -1,0 +1,21 @@
+CustomerCode,CustomerName,CustomerType,Address,PhoneNumber,Email,TaxCode,ReceivableAccountId,MaxDebtDays,ContactPerson,Status
+KH001,Công ty TNHH Giải pháp Phần mềm ABC,2,"12 Duy Tân, Cầu Giấy, Hà Nội",0243123456,contact@abcsoft.vn,0101234567,4,30,,1
+KH002,CTCP Thương mại và Dịch vụ Sao Mai,2,"45 Nguyễn Huệ, Quận 1, TP.HCM",0283998877,info@saomai.com,0302345678,4,30,,1
+KH003,Tổng Công ty Xây dựng Trường Sơn,2,"20 Láng Hạ, Đống Đa, Hà Nội",0243555666,vanphong@truongson.vn,0103456789,4,30,,1
+KH004,Đại lý Phân phối Điện máy Thành Công,2,"150 Trần Hưng Đạo, Đà Nẵng",0903445566,thanhcong.elec@gmail.com,0804567890,4,30,,1
+KH005,Công ty TNHH Thực phẩm Sạch GreenFood,2,"88 Song Hành, Quận 2, TP.HCM",0283777111,sales@greenfood.vn,0305678901,4,30,,1
+KH006,CTCP Đầu tư và Phát triển Bất động sản,2,"102 Lê Văn Lương, Thanh Xuân, Hà Nội",0243888222,land.invest@vnn.vn,0106789012,4,30,,1
+KH007,Công ty TNHH Logistics Toàn Cầu,2,"2A Tôn Đức Thắng, Quận 1, TP.HCM",0283111444,ops@global-log.com,0307890123,4,30,,1
+KH008,Chuỗi Cửa hàng Tiện lợi MiniMart 24/7,2,"34 Thợ Nhuộm, Hoàn Kiếm, Hà Nội",0912334455,minimart247@hotmail.com,0508901234,4,30,,1
+KH009,Công ty TNHH Sản xuất Nhựa Việt Nhật,2,"KCN Đức Hòa, Long An",0272388990,factory@vietnhatplastic.vn,1109012345,4,30,,1
+KH010,CTCP Dược phẩm Tâm An,2,"78 Giải Phóng, Hai Bà Trưng, Hà Nội",0243444555,pharma@taman.com,0110123456,4,30,,1
+KH011,Công ty TNHH Thời trang Blue Sky,2,"121 Cách Mạng Tháng 8, Quận 3, TP.HCM",0283555777,hello@blueskyfashion.vn,0311234567,4,30,,1
+KH012,Đại lý Vật liệu Xây dựng Hùng Cường,2,"202 Phạm Văn Đồng, Thủ Đức, TP.HCM",0988776655,vlxdhungcuong@gmail.com,1512345678,4,30,,1
+KH013,Công ty TNHH Tư vấn Thiết kế Nội thất,2,"56 Lý Thường Kiệt, Hoàn Kiếm, Hà Nội",0243666888,design@interior.vn,0113456789,4,30,,1
+KH014,CTCP Công nghệ Môi trường Xanh,2,"Lầu 8, Bitexco, Quận 1, TP.HCM",0283999222,eco@greenenv.com,0314567890,4,30,,1
+KH015,Tổng Công ty May mặc Việt Nam,2,"410 Minh Khai, Hai Bà Trưng, Hà Nội",0243222333,contact@vinatex.vn,0115678901,4,30,,1
+KH016,Công ty TNHH Truyền thông MultiMedia,2,"15 Phan Xích Long, Phú Nhuận, TP.HCM",0283777555,ads@multimedia.vn,0316789012,4,30,,1
+KH017,Đại lý Nông sản Xuất khẩu Miền Tây,2,"50 Võ Văn Kiệt, Cần Thơ",0945667788,nongsantay@vnn.vn,1817890123,4,30,,1
+KH018,Công ty TNHH Kỹ thuật Cơ khí Hòa Phát,2,"KCN Bắc Thăng Long, Đông Anh, Hà Nội",0243888999,tech@hoaphat-eng.vn,0118901234,4,30,,1
+KH019,CTCP Xuất nhập khẩu Thủy sản 4,2,"102 Nguyễn Tất Thành, Quận 4, TP.HCM",0283111999,seafood4@seaprodex.vn,0319012345,4,30,,1
+KH020,Công ty TNHH Du lịch và Lữ hành VietGo,2,"18 Hàng Bông, Hoàn Kiếm, Hà Nội",0243333444,booking@vietgo.com.vn,0120123456,4,30,,1

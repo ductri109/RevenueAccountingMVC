@@ -3,6 +3,7 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using RevenueAccountingMVC.Models;
 
+
 namespace RevenueAccountingMVC.Controllers;
 [Authorize]
 public class HomeController : Controller
@@ -29,4 +30,5 @@ public class HomeController : Controller
     {
         return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
     }
+
 }

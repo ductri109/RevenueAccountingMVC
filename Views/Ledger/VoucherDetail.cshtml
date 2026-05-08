@@ -1,0 +1,196 @@
+@model List<RevenueAccountingMVC.Models.JournalEntry>
+
+@{
+    ViewData["Title"] = "Chi Tiết Chứng Từ";
+    var voucherCode = ViewBag.VoucherCode as string;
+    var voucherType = ViewBag.VoucherType as string;
+    var voucherId = ViewBag.VoucherId as int?;
+}
+
+<div class="p-6 md:p-10 bg-[#f8fafc] min-h-screen">
+    <!-- Tiêu đề -->
+    <div class="mb-8">
+        <div class="flex items-center gap-2 mb-4">
+            <a href="@Url.Action("Index")" class="text-blue-600 hover:text-blue-800 font-semibold text-[14px]">
+                <i class="fas fa-arrow-left mr-1"></i> Quay lại
+            </a>
+        </div>
+        <h2 class="text-[24px] font-bold text-gray-900">Chi Tiết Chứng Từ</h2>
+        <p class="text-[14px] text-gray-500 mt-1">Danh sách tất cả các bút toán liên quan đến chứng từ</p>
+    </div>
+
+    @if (Model.Any())
+    {
+        <!-- Thông tin chứng từ -->
+        <div class="bg-white rounded-[16px] shadow-sm p-6 border border-gray-100 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div>
+                    <span class="block text-[12px] font-semibold text-gray-600 uppercase mb-1">Số chứng từ</span>
+                    <span class="text-[18px] font-bold text-gray-900">@voucherCode</span>
+                </div>
+                <div>
+                    <span class="block text-[12px] font-semibold text-gray-600 uppercase mb-1">Loại chứng từ</span>
+                    <span class="inline-block px-3 py-1 text-[13px] font-semibold rounded-full
+                        @(voucherType == "SalesVoucher" ? "bg-blue-100 text-blue-700" : "bg-orange-100 text-orange-700")">
+                        @(voucherType == "SalesVoucher" ? "Hóa đơn bán hàng" : "Chứng từ giảm giá")
+                    </span>
+                </div>
+                <div>
+                    <span class="block text-[12px] font-semibold text-gray-600 uppercase mb-1">Ngày chứng từ</span>
+                    <span class="text-[18px] font-bold text-gray-900">@Model.FirstOrDefault()?.VoucherDate.ToString("dd/MM/yyyy")</span>
+                </div>
+                <div>
+                    <span class="block text-[12px] font-semibold text-gray-600 uppercase mb-1">Tổng bút toán</span>
+                    <span class="text-[18px] font-bold text-gray-900">@Model.Count</span>
+                </div>
+            </div>
+
+            <!-- Thông tin khách hàng (nếu có) -->
+            @{
+                var firstEntry = Model.FirstOrDefault();
+            }
+            @if (!string.IsNullOrEmpty(firstEntry?.CustomerName))
+            {
+                <div class="mt-6 pt-6 border-t border-gray-100">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <span class="block text-[12px] font-semibold text-gray-600 uppercase mb-1">Khách hàng</span>
+                            <span class="text-[16px] font-semibold text-gray-900">@firstEntry.CustomerName</span>
+                            <span class="block text-[13px] text-gray-600 mt-1">Mã: @firstEntry.CustomerCode</span>
+                        </div>
+                        <div>
+                            <span class="block text-[12px] font-semibold text-gray-600 uppercase mb-1">Ghi chú</span>
+                            <span class="text-[14px] text-gray-700">@firstEntry.Description</span>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Danh sách bút toán chi tiết -->
+        <div class="bg-white rounded-[16px] shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-6 border-b border-gray-100 bg-[#f9fafb]">
+                <h3 class="text-[16px] font-bold text-gray-900">Các bút toán (A3 - Chi tiết bút toán)</h3>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-[13px]">
+                    <thead class="bg-[#f9fafb] text-gray-600 font-medium border-b border-gray-100">
+                        <tr>
+                            <th class="py-3 px-4">Tài khoản</th>
+                            <th class="py-3 px-4">Diễn giải</th>
+                            <th class="py-3 px-4">Loại bút toán</th>
+                            <th class="py-3 px-4 text-right">Số tiền</th>
+                            <th class="py-3 px-4">Sản phẩm</th>
+                            <th class="py-3 px-4">Thuế</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        @foreach (var entry in Model.OrderBy(x => x.AccountId))
+                        {
+                            <tr class="hover:bg-gray-50/50">
+                                <td class="py-3 px-4 font-semibold text-blue-600">
+                                    @entry.Account?.AccountNumber
+                                    <br />
+                                    <span class="text-[12px] text-gray-600 font-normal">@entry.Account?.AccountName</span>
+                                </td>
+                                <td class="py-3 px-4 text-gray-700">@entry.Description</td>
+                                <td class="py-3 px-4">
+                                    <span class="inline-block px-3 py-1 text-[12px] font-semibold rounded-full
+                                        @(entry.EntryType == "Debit" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700")">
+                                        @(entry.EntryType == "Debit" ? "Nợ" : "Có")
+                                    </span>
+                                </td>
+                                <td class="py-3 px-4 text-right font-semibold">
+                                    @entry.Amount.ToString("N0")
+                                </td>
+                                <td class="py-3 px-4">
+                                    @if (!string.IsNullOrEmpty(entry.ProductName))
+                                    {
+                                        <span class="font-medium">@entry.ProductName</span>
+                                        <br />
+                                        <span class="text-[12px] text-gray-600">@entry.ProductCode</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-gray-400">-</span>
+                                    }
+                                </td>
+                                <td class="py-3 px-4">
+                                    @if (entry.TaxRate.HasValue)
+                                    {
+                                        <span>@entry.TaxRate.Value.ToString("0.00")%</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-gray-400">-</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Tóm tắt -->
+            <div class="p-6 border-t border-gray-100 bg-[#f9fafb]">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <div class="text-[12px] text-gray-600 font-semibold">Tổng Nợ</div>
+                        <div class="text-[18px] font-bold text-green-600">@Model.Where(x => x.EntryType == "Debit").Sum(x => x.Amount).ToString("N0")</div>
+                    </div>
+                    <div>
+                        <div class="text-[12px] text-gray-600 font-semibold">Tổng Có</div>
+                        <div class="text-[18px] font-bold text-red-600">@Model.Where(x => x.EntryType == "Credit").Sum(x => x.Amount).ToString("N0")</div>
+                    </div>
+                    <div class="col-span-2">
+                        <div class="text-[12px] text-gray-600 font-semibold">Kiểm chứng</div>
+                        <div class="text-[14px]">
+                            @if (Model.Where(x => x.EntryType == "Debit").Sum(x => x.Amount) == Model.Where(x => x.EntryType == "Credit").Sum(x => x.Amount))
+                            {
+                                <span class="text-green-600 font-semibold">
+                                    <i class="fas fa-check-circle mr-1"></i> Nợ = Có (Cân bằng)
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="text-red-600 font-semibold">
+                                    <i class="fas fa-exclamation-circle mr-1"></i> Nợ ≠ Có (Không cân bằng)
+                                </span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chứng từ gốc (A3 - Xem chứng từ gốc) -->
+        <div class="mt-6 bg-white rounded-[16px] shadow-sm p-6 border border-gray-100">
+            <h3 class="text-[16px] font-bold text-gray-900 mb-4">Chứng từ Gốc (A3)</h3>
+            
+            @if (voucherType == "SalesVoucher")
+            {
+                <a href="@Url.Action("Edit", "SalesVoucher", new { id = voucherId })" 
+                   class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-[14px] font-semibold transition-all">
+                    <i class="fas fa-file-invoice mr-2"></i> Xem Hóa Đơn Bán Hàng
+                </a>
+            }
+            else if (voucherType == "RevenueAdjustment")
+            {
+                <a href="@Url.Action("Edit", "RevenueAdjustment", new { id = voucherId })" 
+                   class="inline-block bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg text-[14px] font-semibold transition-all">
+                    <i class="fas fa-file-alt mr-2"></i> Xem Chứng Từ Giảm Giá
+                </a>
+            }
+        </div>
+    }
+    else
+    {
+        <!-- Không có dữ liệu -->
+        <div class="bg-white rounded-[16px] shadow-sm p-12 border border-gray-100 text-center">
+            <i class="fas fa-inbox text-gray-300 text-[48px] mb-4"></i>
+            <p class="text-[16px] text-gray-600 font-semibold">Không tìm thấy bút toán</p>
+            <p class="text-[14px] text-gray-500 mt-2">Chứng từ này không có bút toán liên quan</p>
+        </div>
+    }
+</div>

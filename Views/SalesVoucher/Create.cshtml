@@ -361,28 +361,26 @@
             const bindRowEvents = (row) => {
                 row.find('.txt-qty, .txt-price, .txt-discount, .cbo-tax').on('input change', calculateGrandTotals);
 
-                // KHI CHỌN SẢN PHẨM -> GỌI AJAX VỀ SERVER
+                // KHI CHỌN SẢN PHẨM -> CHỈ ĐIỀN TÊN SẢN PHẨM, CÁC TRƯỜNG KHÁC ĐỂ TRỐNG CHO NGƯỜI DÙNG TỰ CHỌN
+                // KHI CHỌN SẢN PHẨM -> CHỈ ĐIỀN TÊN SẢN PHẨM, GIỮ NGUYÊN CÁC TRƯỜNG KHÁC
                 row.find('.cbo-product').on('change', function () {
                     let pId = $(this).val();
                     
                     if (pId) {
                         $.get(`${productApiUrl}/${pId}`, function(data) {
+                            // Chỉ tự động điền tên sản phẩm
                             row.find('.txt-product-name').val(data.productName || '');
-                            row.find('.txt-unit').val(data.unit || '');
-                            row.find('.txt-price').val(data.defaultPrice || 0);
-
-                            if (data.revenueAccountId) row.find('.cbo-credit').val(data.revenueAccountId);
-                            if (data.taxId) row.find('.cbo-tax').val(data.taxId);
-                            if (data.taxAccountId) row.find('.cbo-taxaccount').val(data.taxAccountId);
+                            
+                            // Đã xóa các dòng gán value rỗng/0 cho TK Có, TK Thuế, Đơn giá...
+                            // để người dùng tự chọn và không bị mất dữ liệu khi đổi mã SP
                             
                             calculateGrandTotals();
                         }).fail(function() {
                             alert("Không thể lấy dữ liệu sản phẩm từ máy chủ.");
                         });
                     } else {
+                        // Nếu bỏ chọn sản phẩm thì chỉ xóa tên sản phẩm
                         row.find('.txt-product-name').val('');
-                        row.find('.txt-unit').val('');
-                        row.find('.txt-price').val('0');
                         calculateGrandTotals();
                     }
                 });
@@ -408,7 +406,6 @@
                         $('#txtDebtDays').val(data.maxDebtDays || 0);
 
                         globalReceivableAccount = data.receivableAccountId || '';
-                        $('.cbo-debit').val(globalReceivableAccount);
                         
                         calculateDueDate();
                     }).fail(function() {
