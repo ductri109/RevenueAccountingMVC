@@ -21,6 +21,18 @@ namespace RevenueAccountingMVC.Services
         }
 
         /// <summary>
+        /// Hàm hỗ trợ: Lấy Khóa chính (Id) của Tài khoản dựa trên Số tài khoản
+        /// </summary>
+        private async Task<int> GetAccountIdAsync(string accountNumber)
+        {
+            var acc = await _context.Accounts.FirstOrDefaultAsync(a => a.AccountNumber == accountNumber);
+            if (acc == null)
+                throw new Exception($"Hệ thống không tìm thấy số tài khoản '{accountNumber}' trong Danh mục Tài khoản. Vui lòng thêm tài khoản này trước khi hạch toán.");
+
+            return acc.Id;
+        }
+
+        /// <summary>
         /// Sinh bút toán từ SalesVoucher
         /// </summary>
         public async Task GenerateEntriesFromSalesVoucherAsync(int voucherId)
@@ -38,22 +50,27 @@ namespace RevenueAccountingMVC.Services
             var oldEntries = await _context.JournalEntries
                 .Where(x => x.VoucherId == voucherId && x.VoucherType == "SalesVoucher")
                 .ToListAsync();
+
             if (oldEntries.Count > 0)
                 _context.JournalEntries.RemoveRange(oldEntries);
 
+            // 🔥 TÌM ID THỰC SỰ CỦA CÁC TÀI KHOẢN MẶC ĐỊNH 🔥
+            int defaultDebitId = await GetAccountIdAsync("131");
+            int defaultCreditId = await GetAccountIdAsync("511");
+            int defaultTaxParentId = await GetAccountIdAsync("333");
+
+            // 👇 CHỈ CẦN SỬA DÒNG NÀY THÀNH 33311 👇
+            int defaultTaxChildId = await GetAccountIdAsync("33311");
             foreach (var detail in voucher.Details)
             {
                 // ========== BÚT TOÁN HÀNG BÁN ==========
-                // Nợ TK Tài sản (131 - Hàng bán lẻ) = Thành tiền
-                // Có TK Doanh thu (511 - Doanh thu bán hàng) = Thành tiền
-
                 await CreateEntryAsync(new JournalEntry
                 {
                     VoucherType = "SalesVoucher",
                     VoucherId = voucher.Id,
                     VoucherCode = voucher.VoucherCode,
                     VoucherDate = voucher.AccountingDate,
-                    AccountId = detail.DebitAccountId ?? 131,  // Default: 131 (Hàng bán lẻ)
+                    AccountId = detail.DebitAccountId ?? defaultDebitId, // Dùng ID tra cứu được
                     EntryType = "Debit",
                     Amount = detail.Amount,
                     CustomerId = voucher.CustomerId,
@@ -73,7 +90,7 @@ namespace RevenueAccountingMVC.Services
                     VoucherId = voucher.Id,
                     VoucherCode = voucher.VoucherCode,
                     VoucherDate = voucher.AccountingDate,
-                    AccountId = detail.CreditAccountId ?? 511,  // Default: 511 (Doanh thu bán hàng)
+                    AccountId = detail.CreditAccountId ?? defaultCreditId, // Dùng ID tra cứu được
                     EntryType = "Credit",
                     Amount = detail.Amount,
                     CustomerId = voucher.CustomerId,
@@ -88,9 +105,6 @@ namespace RevenueAccountingMVC.Services
                 });
 
                 // ========== BÚT TOÁN THUẾ ==========
-                // Nợ TK 333 (Thuế GTGT phải nộp) = Tiền thuế
-                // Có TK 3333 (Thuế GTGT phải nộp chi tiết) = Tiền thuế
-
                 if (detail.TaxAmount > 0)
                 {
                     await CreateEntryAsync(new JournalEntry
@@ -99,7 +113,7 @@ namespace RevenueAccountingMVC.Services
                         VoucherId = voucher.Id,
                         VoucherCode = voucher.VoucherCode,
                         VoucherDate = voucher.AccountingDate,
-                        AccountId = 333,  // Thuế GTGT phải nộp
+                        AccountId = defaultTaxParentId,  // ĐÃ SỬA: Không hardcode số 333 nữa
                         EntryType = "Debit",
                         Amount = detail.TaxAmount,
                         CustomerId = voucher.CustomerId,
@@ -117,7 +131,7 @@ namespace RevenueAccountingMVC.Services
                         VoucherId = voucher.Id,
                         VoucherCode = voucher.VoucherCode,
                         VoucherDate = voucher.AccountingDate,
-                        AccountId = detail.TaxAccountId ?? 3333,  // Thuế GTGT chi tiết
+                        AccountId = detail.TaxAccountId ?? defaultTaxChildId, // ĐÃ SỬA: Không hardcode số 3333 nữa
                         EntryType = "Credit",
                         Amount = detail.TaxAmount,
                         CustomerId = voucher.CustomerId,
@@ -148,20 +162,23 @@ namespace RevenueAccountingMVC.Services
             if (adjustment == null)
                 throw new Exception($"Không tìm thấy chứng từ giảm giá ID {adjustmentId}");
 
-            // Xóa bút toán cũ nếu có
             var oldEntries = await _context.JournalEntries
                 .Where(x => x.VoucherId == adjustmentId && x.VoucherType == "RevenueAdjustment")
                 .ToListAsync();
             if (oldEntries.Count > 0)
                 _context.JournalEntries.RemoveRange(oldEntries);
 
+            // 🔥 TÌM ID THỰC SỰ CỦA CÁC TÀI KHOẢN MẶC ĐỊNH 🔥
+            // 🔥 TÌM ID THỰC SỰ CỦA CÁC TÀI KHOẢN MẶC ĐỊNH 🔥
+            int defaultDebitId = await GetAccountIdAsync("131");
+            int defaultCreditId = await GetAccountIdAsync("511");
+            int defaultTaxParentId = await GetAccountIdAsync("333");
+
+            // ĐÃ SỬA: Thay "3333" thành "33311" cho khớp với Seed DB của bạn
+            int defaultTaxChildId = await GetAccountIdAsync("33311");
+
             foreach (var detail in adjustment.Details)
             {
-                // ========== BÚT TOÁN HÀNG GIẢM (ĐẢO NGƯỢC) ==========
-                // Khi bán: Nợ TK 131, Có TK 511
-                // Khi giảm: Nợ TK 511 (lợi nhuận giảm), Có TK 131 (hàng trả về)
-                // Nhưng Amount của adjustment.Details là ÂM, nên phải lấy Math.Abs()
-
                 var absAmount = Math.Abs(detail.Amount);
 
                 await CreateEntryAsync(new JournalEntry
@@ -170,7 +187,7 @@ namespace RevenueAccountingMVC.Services
                     VoucherId = adjustment.Id,
                     VoucherCode = adjustment.AdjustmentCode,
                     VoucherDate = adjustment.AdjustmentDate,
-                    AccountId = detail.CreditAccountId ?? 511,  // Doanh thu (bây giờ là nợ)
+                    AccountId = detail.CreditAccountId ?? defaultCreditId, // Doanh thu (bây giờ là nợ)
                     EntryType = "Debit",
                     Amount = absAmount,
                     CustomerId = adjustment.CustomerId,
@@ -190,7 +207,7 @@ namespace RevenueAccountingMVC.Services
                     VoucherId = adjustment.Id,
                     VoucherCode = adjustment.AdjustmentCode,
                     VoucherDate = adjustment.AdjustmentDate,
-                    AccountId = detail.DebitAccountId ?? 131,  // Hàng (bây giờ là có)
+                    AccountId = detail.DebitAccountId ?? defaultDebitId, // Hàng (bây giờ là có)
                     EntryType = "Credit",
                     Amount = absAmount,
                     CustomerId = adjustment.CustomerId,
@@ -204,8 +221,7 @@ namespace RevenueAccountingMVC.Services
                     CreatedBy = "System"
                 });
 
-                // ========== BÚT TOÁN THUẾ GIẢM ==========
-                if (detail.TaxAmount > 0)
+                if (detail.TaxAmount < 0 || detail.TaxAmount > 0) // Hỗ trợ cả số âm lẫn số dương
                 {
                     var absTax = Math.Abs(detail.TaxAmount);
 
@@ -215,7 +231,7 @@ namespace RevenueAccountingMVC.Services
                         VoucherId = adjustment.Id,
                         VoucherCode = adjustment.AdjustmentCode,
                         VoucherDate = adjustment.AdjustmentDate,
-                        AccountId = detail.TaxAccountId ?? 3333,  // Thuế (bây giờ là nợ)
+                        AccountId = detail.TaxAccountId ?? defaultTaxChildId,
                         EntryType = "Debit",
                         Amount = absTax,
                         CustomerId = adjustment.CustomerId,
@@ -232,7 +248,7 @@ namespace RevenueAccountingMVC.Services
                         VoucherId = adjustment.Id,
                         VoucherCode = adjustment.AdjustmentCode,
                         VoucherDate = adjustment.AdjustmentDate,
-                        AccountId = 333,  // Thuế phải nộp (bây giờ là có)
+                        AccountId = defaultTaxParentId, // Thuế phải nộp
                         EntryType = "Credit",
                         Amount = absTax,
                         CustomerId = adjustment.CustomerId,
@@ -248,18 +264,12 @@ namespace RevenueAccountingMVC.Services
             await _context.SaveChangesAsync();
         }
 
-        /// <summary>
-        /// Tạo 1 bút toán
-        /// </summary>
         private async Task CreateEntryAsync(JournalEntry entry)
         {
             _context.JournalEntries.Add(entry);
             await _context.SaveChangesAsync();
         }
 
-        /// <summary>
-        /// Xóa tất cả bút toán của 1 chứng từ
-        /// </summary>
         public async Task RemoveEntriesByVoucherAsync(int voucherId, string voucherType)
         {
             var entries = await _context.JournalEntries
@@ -273,9 +283,6 @@ namespace RevenueAccountingMVC.Services
             }
         }
 
-        /// <summary>
-        /// Lấy bút toán của 1 chứng từ
-        /// </summary>
         public async Task<List<JournalEntry>> GetEntriesByVoucherAsync(int voucherId, string voucherType)
         {
             return await _context.JournalEntries
@@ -286,9 +293,6 @@ namespace RevenueAccountingMVC.Services
                 .ToListAsync();
         }
 
-        /// <summary>
-        /// Lấy bút toán trong khoảng thời gian
-        /// </summary>
         public async Task<List<JournalEntry>> GetEntriesByPeriodAsync(
             DateTime fromDate,
             DateTime toDate,
@@ -307,9 +311,6 @@ namespace RevenueAccountingMVC.Services
                 .ToListAsync();
         }
 
-        /// <summary>
-        /// Lấy tổng Nợ/Có của 1 TK trong khoảng thời gian
-        /// </summary>
         public async Task<(decimal TotalDebit, decimal TotalCredit)> GetAccountTotalsAsync(
             int accountId,
             DateTime fromDate,
