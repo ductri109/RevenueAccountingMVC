@@ -17,6 +17,14 @@ public class HomeController : Controller
 
     public IActionResult Index()
     {
+        // Kiểm tra xem đã đăng nhập chưa và có phải là Admin không
+        if (User.Identity != null && User.Identity.IsAuthenticated && User.IsInRole("Admin"))
+        {
+            // Nếu là Admin, tự động điều hướng sang Controller "User", Action "Index"
+            return RedirectToAction("Index", "User");
+        }
+
+        // Nếu là Kế toán hoặc Lãnh đạo thì vẫn hiển thị trang Dashboard bình thường
         return View();
     }
 

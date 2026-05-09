@@ -1,0 +1,65 @@
+@model IEnumerable<RevenueAccountingMVC.Models.User>
+@{
+    ViewData["Title"] = "Quản lý người dùng";
+}
+
+<div class="min-h-screen bg-slate-50 p-6">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">Quản trị hệ thống</h1>
+        <a asp-action="Create" class="bg-black hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium">
+            + Thêm tài khoản
+        </a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="bg-green-100 text-green-800 p-4 rounded-lg mb-4 font-medium border border-green-200">
+            @TempData["Success"]
+        </div>
+    }
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <table class="w-full text-left text-sm">
+            <thead class="bg-gray-50 border-b border-gray-200 text-gray-600">
+                <tr>
+                    <th class="p-4 font-semibold">Họ và tên</th>
+                    <th class="p-4 font-semibold">Email</th>
+                    <th class="p-4 font-semibold">Vai trò</th>
+                    <th class="p-4 font-semibold">Trạng thái</th>
+                    <th class="p-4 font-semibold text-center">Hành động</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                @foreach (var item in Model)
+                {
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="p-4 font-medium text-gray-900">@item.FullName</td>
+                        <td class="p-4 text-gray-600">@item.Email</td>
+                        <td class="p-4">
+                            @if (item.Role == RevenueAccountingMVC.Models.UserRole.Admin)
+                            { <span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-bold">Admin</span> }
+                            else if (item.Role == RevenueAccountingMVC.Models.UserRole.Leader)
+                            { <span class="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-xs font-bold">Lãnh đạo</span> }
+                            else
+                            { <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold">Kế toán</span> }
+                        </td>
+                        <td class="p-4">
+                            @if (item.IsActive)
+                            { <span class="text-green-600 font-semibold flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-green-500"></div> Hoạt động</span> }
+                            else
+                            { <span class="text-red-600 font-semibold flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-red-500"></div> Đã khóa</span> }
+                        </td>
+                        <td class="p-4 text-center">
+                            <form asp-action="ToggleStatus" asp-route-id="@item.Id" method="post" class="inline">
+                                <button type="submit" class="text-xs font-bold px-3 py-1 rounded border @(item.IsActive ? "text-red-600 border-red-200 hover:bg-red-50" : "text-green-600 border-green-200 hover:bg-green-50")"
+                                        onclick="return confirm('Bạn có chắc chắn muốn @(item.IsActive ? "khóa" : "mở khóa") tài khoản này?');">
+                                    @(item.IsActive ? "Khóa" : "Mở khóa")
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

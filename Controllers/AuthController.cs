@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using RevenueAccountingMVC.Data;
 using RevenueAccountingMVC.Models;
 using System.Security.Claims;
@@ -25,15 +26,16 @@ namespace RevenueAccountingMVC.Controllers
         {
             if (!ModelState.IsValid) return View(model);
 
-            var user = _context.Users.FirstOrDefault(u => u.Email == model.Email && u.PasswordHash == model.Password);
+            // Dùng FirstOrDefaultAsync để tối ưu hiệu năng
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == model.Email);
             
-            if (user == null || !user.IsActive)
+            // Check null, check IsActive, và check Mật khẩu bằng BCrypt
+            if (user == null || !user.IsActive || !BCrypt.Net.BCrypt.Verify(model.Password, user.PasswordHash))
             {
                 ModelState.AddModelError(string.Empty, "Tài khoản hoặc mật khẩu không chính xác, hoặc đã bị khóa.");
                 return View(model);
             }
 
-            // Chặn Lãnh đạo đăng nhập ở cổng này
             if (user.Role == UserRole.Leader)
             {
                 ModelState.AddModelError(string.Empty, "Lãnh đạo vui lòng sử dụng Cổng đăng nhập dành cho Lãnh đạo.");
@@ -41,7 +43,7 @@ namespace RevenueAccountingMVC.Controllers
             }
 
             await SignInUser(user);
-            return RedirectToAction("Index", "Home"); // Chuyển hướng về trang chủ
+            return RedirectToAction("Index", "Home");
         }
 
         // --- ĐĂNG NHẬP LÃNH ĐẠO ---
@@ -53,16 +55,16 @@ namespace RevenueAccountingMVC.Controllers
         {
             if (!ModelState.IsValid) return View(model);
 
-            var user = _context.Users.FirstOrDefault(u => u.Email == model.Email && u.PasswordHash == model.Password);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == model.Email);
             
-            if (user == null || user.Role != UserRole.Leader || !user.IsActive)
+            if (user == null || user.Role != UserRole.Leader || !user.IsActive || !BCrypt.Net.BCrypt.Verify(model.Password, user.PasswordHash))
             {
                 ModelState.AddModelError(string.Empty, "Thông tin đăng nhập không hợp lệ hoặc bạn không có quyền Lãnh đạo.");
                 return View(model);
             }
 
             await SignInUser(user);
-            return RedirectToAction("Index", "Home"); // Chuyển về Dashboard Lãnh đạo (Tùy bạn thiết lập)
+            return RedirectToAction("Index", "Home");
         }
 
         // --- ĐĂNG KÝ (CHỈ DÀNH CHO KẾ TOÁN) ---
@@ -70,11 +72,12 @@ namespace RevenueAccountingMVC.Controllers
         public IActionResult Register() => View();
 
         [HttpPost]
-        public IActionResult Register(RegisterViewModel model)
+        public async Task<IActionResult> Register(RegisterViewModel model)
         {
             if (!ModelState.IsValid) return View(model);
 
-            if (_context.Users.Any(u => u.Email == model.Email))
+            // Cũng dùng Async nốt
+            if (await _context.Users.AnyAsync(u => u.Email == model.Email))
             {
                 ModelState.AddModelError("Email", "Email này đã được sử dụng.");
                 return View(model);
@@ -84,13 +87,14 @@ namespace RevenueAccountingMVC.Controllers
             {
                 FullName = model.FullName,
                 Email = model.Email,
-                PasswordHash = model.Password, // Nên Hash mật khẩu ở đây
-                Role = UserRole.Accountant, // Cứng logic: Chỉ đăng ký Kế toán
+                // Mã hóa mật khẩu siêu xịn
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(model.Password), 
+                Role = UserRole.Accountant, 
                 IsActive = true
             };
 
             _context.Users.Add(newUser);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync(); // Lưu bằng Async
 
             TempData["SuccessMessage"] = "Đăng ký thành công! Vui lòng đăng nhập.";
             return RedirectToAction("Login");
@@ -118,6 +122,12 @@ namespace RevenueAccountingMVC.Controllers
             var principal = new ClaimsPrincipal(identity);
 
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
+        }
+
+        [HttpGet]
+        public IActionResult AccessDenied()
+        {
+            return View();
         }
     }
 }

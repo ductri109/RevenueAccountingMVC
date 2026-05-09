@@ -6,6 +6,7 @@ using RevenueAccountingMVC.ViewModels;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 
 namespace RevenueAccountingMVC.Controllers
 {
@@ -17,7 +18,8 @@ namespace RevenueAccountingMVC.Controllers
         {
             _context = context;
         }
-
+        
+        [Authorize(Roles = "Accountant, Leader")] // CHỈ KẾ TOÁN VÀ LÃNH ĐẠO MỚI ĐƯỢC XEM DASHBOARD
         public async Task<IActionResult> Index(DateTime? fromDate, DateTime? toDate, int? customerId)
         {
             // Mặc định lấy dữ liệu tháng hiện tại

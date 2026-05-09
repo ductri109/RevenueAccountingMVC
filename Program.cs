@@ -18,8 +18,8 @@ builder.Services.AddScoped<DataImportService>();
 builder.Services.AddAuthentication(Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
-        options.LoginPath = "/Auth/Login"; // Nếu chưa đăng nhập, tự động văng về đây
-        options.AccessDeniedPath = "/Auth/Login"; // Nếu không đủ quyền (Vd kế toán vào nhầm link lãnh đạo)
+        options.LoginPath = "/Auth/Login"; // Chưa đăng nhập thì về đây
+        options.AccessDeniedPath = "/Auth/AccessDenied"; // Đăng nhập rồi nhưng THIẾU QUYỀN thì về đây
     });
 var app = builder.Build();
 
@@ -45,6 +45,21 @@ app.MapControllerRoute(
     .WithStaticAssets();
 
 // ========== GỌI HÀM SEED DỮ LIỆU ==========
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        // Gọi class SeedData ở thư mục Data
+        RevenueAccountingMVC.Data.SeedData.Initialize(services);
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Đã xảy ra lỗi trong quá trình khởi tạo dữ liệu mẫu (Seed Data).");
+    }
+}
+
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();

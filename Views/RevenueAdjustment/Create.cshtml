@@ -56,12 +56,12 @@
                     </div>
 
                     @* ĐÃ SỬA: Ô này dùng để hiển thị tự động Tên Khách Hàng *@
-                    <div class="col-span-1">
+                    <div class="col-span-2">
                         <label class="block text-sm text-gray-500">Tên khách hàng</label>
                         <input type="text" readonly id="txtCustomerName" class="w-full border rounded p-2 bg-gray-50" placeholder="Tên khách hàng..." />
                     </div>
                     
-                    <div class="col-span-3">
+                    <div class="col-span-2">
                         <label class="block text-sm text-gray-500">Địa chỉ</label>
                         <input asp-for="Address" readonly id="txtAddress" class="w-full border rounded p-2 bg-gray-50" placeholder="Địa chỉ..." />
                     </div>
@@ -267,7 +267,8 @@ $('#ddlOriginalVoucher').change(function(){
             $('#txtOriginalDate').val(res.voucherDate);
 
             $('#txtOriginalAmountDisplay').val((res.totalAmount || 0).toLocaleString('vi-VN') + ' đ');
-            $('#txtOriginalTaxRateDisplay').val((res.taxRate || 0) + ' %');
+            let headerTaxRate = (res.details && res.details.length > 0) ? res.details[0].originalTaxRate : (res.taxRate || 0);
+            $('#txtOriginalTaxRateDisplay').val(headerTaxRate + ' %');
             $('#txtOriginalPaymentDisplay').val((res.totalPayment || 0).toLocaleString('vi-VN') + ' đ');
 
             $('#hdnOriginalAmount').val(safeNumber(res.totalAmount));
@@ -289,7 +290,7 @@ $('#ddlOriginalVoucher').change(function(){
 
                     <td class="py-2 px-2">
                         <input type="text" class="w-full border border-gray-200 rounded p-1.5 bg-[#f8fafc] text-xs font-semibold" 
-                               value="${d.productCode} - Tồn: ${d.originalQty}" readonly title="${d.productName}" />
+                               value="${d.productCode}" readonly title="${d.productName}" />
                         <input type="hidden" name="Details[${rowIdx}].ProductId" value="${d.productId}" />
                     </td>
 
@@ -351,9 +352,14 @@ $('#ddlOriginalVoucher').change(function(){
                         <!-- THÊM DÒNG NÀY ĐỂ FIX LỖI MẤT REF INDEX -->
                         <input type="hidden" name="TaxDetails[${rowIdx}].RefIndex" value="${rowIdx}" /> 
 
-                        <td class="py-2 px-2 font-semibold">
-                            VAT ${d.originalTaxRate}%
-                            <input type="hidden" name="TaxDetails[${rowIdx}].TaxRate" value="${d.originalTaxRate}" />
+                        <!-- ĐÃ SỬA: Mockup lại trường Thuế suất (%) thành Input hiển thị đẹp mắt -->
+                        <td class="py-2 px-2">
+                            <div class="relative flex items-center">
+                                <input type="number" step="any" name="TaxDetails[${rowIdx}].TaxRate" 
+                                    class="w-full border border-gray-200 rounded p-1.5 bg-[#f8fafc] pr-6 font-semibold text-gray-700 outline-none" 
+                                    value="${d.originalTaxRate || 0}" readonly title="Thuế suất GTGT" />
+                                <span class="absolute right-2 text-gray-500 text-sm font-medium">%</span>
+                            </div>
                         </td>
 
                         <td class="py-2 px-2">
@@ -374,7 +380,6 @@ $('#ddlOriginalVoucher').change(function(){
 
                     tbodyTax.append(taxRow);
                 }
-
                 rowIdx++;
             });
 
