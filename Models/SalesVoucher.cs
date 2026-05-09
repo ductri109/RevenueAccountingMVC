@@ -22,6 +22,11 @@ namespace RevenueAccountingMVC.Models
         [MaxLength(20)]
         [Display(Name = "Số chứng từ")]
         public string VoucherCode { get; set; } // Tự sinh: CT0001...
+        
+        [Display(Name = "Số hóa đơn")]
+        [RegularExpression(@"^\d+$", ErrorMessage = "Số hóa đơn chỉ được chứa các chữ số (0-9)")]
+        [MaxLength(20)]
+        public string? InvoiceNumber { get; set; }
 
         [Required]
         [Display(Name = "Ngày hạch toán")]

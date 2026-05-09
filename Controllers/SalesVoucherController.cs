@@ -298,7 +298,7 @@ namespace RevenueAccountingMVC.Controllers
             // Update header
             existing.AccountingDate = model.AccountingDate;
             existing.CustomerId = model.CustomerId;
-
+            existing.InvoiceNumber = model.InvoiceNumber;
             var customer = await _context.Customers.FindAsync(model.CustomerId);
             if (customer != null)
             {
