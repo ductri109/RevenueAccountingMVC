@@ -7,87 +7,160 @@
 }
 
 <div class="p-6 md:p-10 bg-[#f8fafc] min-h-screen">
-
-    <div class="flex justify-between mb-6">
-        <h2 class="text-[22px] font-bold">Chi tiết chứng từ</h2>
-        <a asp-action="Index" class="text-gray-600">← Quay lại</a>
+    
+    @* HEADER *@
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h2 class="text-[24px] font-bold text-gray-900">Chi tiết chứng từ bán hàng</h2>
+            <p class="text-[14px] text-gray-500 mt-1">Xem thông tin chi tiết của chứng từ đã ghi nhận</p>
+        </div>
+        <a asp-action="Index" class="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-4 py-2.5 rounded-lg text-[14px] font-medium flex items-center gap-2 transition-colors shadow-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+            Quay lại
+        </a>
     </div>
 
-    <div class="bg-white p-6 rounded-xl shadow mb-6">
-        <div class="grid grid-cols-2 gap-6">
+    @* THÔNG TIN CHUNG *@
+    <div class="bg-white rounded-[16px] shadow-sm p-8 mb-6 border border-gray-100">
+        <div class="flex justify-between items-start mb-6">
+            <h3 class="text-[18px] font-bold text-gray-900">Thông tin chung</h3>
+            
+            <div class="bg-gray-100 text-gray-600 px-4 py-2 rounded-md text-[13px] font-medium flex items-center gap-2">
+                <span>Số chứng từ:</span>
+                <span class="font-bold text-blue-600 uppercase">@Model.VoucherCode</span>
+            </div>
+        </div>
 
-            <div>
-                <label class="text-gray-500">Số chứng từ</label>
-                <p class="font-bold">@Model.VoucherCode</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
+            @* Cột Trái *@
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-[14px] font-semibold text-gray-800 mb-2">Ngày hạch toán</label>
+                    <input type="text" readonly value="@Model.AccountingDate.ToString("dd/MM/yyyy")" class="w-full bg-[#f3f4f6] border border-transparent rounded-lg px-4 py-3 text-[14px] text-gray-800 outline-none cursor-not-allowed" />
+                </div>
+
+                <div>
+                    <label class="block text-[14px] font-semibold text-gray-800 mb-2">Tên khách hàng</label>
+                    <input type="text" readonly value="@Model.CustomerNameSnapshot" class="w-full bg-[#f3f4f6] border border-transparent rounded-lg px-4 py-3 text-[14px] text-gray-800 outline-none cursor-not-allowed" />
+                </div>
+
+                <div>
+                    <label class="block text-[14px] font-semibold text-gray-800 mb-2">Diễn giải</label>
+                    <textarea readonly rows="4" class="w-full bg-[#f3f4f6] border border-transparent rounded-lg px-4 py-3 text-[14px] text-gray-800 outline-none cursor-not-allowed resize-none">@Model.Description</textarea>
+                </div>
             </div>
 
-            <div>
-                <label class="text-gray-500">Ngày</label>
-                <p>@Model.AccountingDate.ToString("dd/MM/yyyy")</p>
-            </div>
+            @* Cột Phải *@
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-[14px] font-semibold text-gray-800 mb-2">Mã khách hàng</label>
+                    <input type="text" readonly value="@(Model.Customer?.CustomerCode ?? "-")" class="w-full bg-[#f3f4f6] border border-transparent rounded-lg px-4 py-3 text-[14px] text-gray-800 outline-none cursor-not-allowed" />
+                </div>
 
-            <div>
-                <label class="text-gray-500">Khách hàng</label>
-                <p>@Model.CustomerNameSnapshot</p>
-            </div>
+                <div>
+                    <label class="block text-[14px] font-semibold text-gray-800 mb-2">Địa chỉ</label>
+                    <input type="text" readonly value="@Model.CustomerAddressSnapshot" class="w-full bg-[#f3f4f6] border border-transparent rounded-lg px-4 py-3 text-[14px] text-gray-800 outline-none cursor-not-allowed" />
+                </div>
 
-            <div>
-                <label class="text-gray-500">Địa chỉ</label>
-                <p>@Model.CustomerAddressSnapshot</p>
-            </div>
+                <div>
+                    <label class="block text-[14px] font-semibold text-gray-800 mb-2">Số ngày nợ</label>
+                    <input type="text" readonly value="@Model.DebtDays" class="w-full bg-[#f3f4f6] border border-transparent rounded-lg px-4 py-3 text-[14px] text-gray-800 outline-none cursor-not-allowed" />
+                </div>
 
-            <div class="col-span-2">
-                <label class="text-gray-500">Diễn giải</label>
-                <p>@Model.Description</p>
+                <div>
+                    <label class="block text-[14px] font-semibold text-gray-800 mb-2">Ngày đáo hạn</label>
+                    <input type="text" readonly value="@(Model.DueDate.ToString("dd/MM/yyyy") ?? "-")" class="w-full bg-[#f3f4f6] border border-transparent rounded-lg px-4 py-3 text-[14px] text-gray-500 outline-none cursor-not-allowed" />
+                </div>
             </div>
-
         </div>
     </div>
 
-    <div class="bg-white p-6 rounded-xl shadow mb-6">
-        <h3 class="font-bold mb-4">Chi tiết hàng hóa</h3>
-
-        <table class="w-full text-sm">
-            <thead>
-                <tr>
-                    <th>Sản phẩm</th>
-                    <th>SL</th>
-                    <th>Đơn giá</th>
-                    <th>CK</th>
-                    <th>Thành tiền</th>
-                    <th>Thuế</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var d in Model.Details)
-                {
+    @* CHI TIẾT HÀNG HÓA *@
+    <div class="bg-white rounded-[16px] shadow-sm overflow-hidden mb-6 border border-gray-100">
+        <div class="p-6">
+            <h3 class="text-[18px] font-bold text-gray-900">Chi tiết hàng hóa</h3>
+        </div>
+        <div class="overflow-x-auto px-6 pb-6">
+            <table class="w-full min-w-max text-left text-[13px] border-t border-gray-100">
+                <thead class="bg-[#f9fafb] text-gray-600 border-b border-gray-100">
                     <tr>
-                        <td>@d.ProductNameSnapshot</td>
-                        <td>@d.Quantity</td>
-                        <td>@d.UnitPrice</td>
-                        <td>@d.DiscountRate%</td>
-                        <td>@d.Amount.ToString("N0")</td>
-                        <td>@d.TaxAmount.ToString("N0")</td>
+                        <th class="py-3 px-2 font-semibold w-[150px]">Mã sản phẩm</th>
+                        <th class="py-3 px-2 font-semibold w-[150px]">Tên sản phẩm</th>
+                        <th class="py-3 px-2 font-semibold w-[60px] text-center">ĐVT</th>
+                        <th class="py-3 px-2 font-semibold w-[80px] text-center">Số lượng</th>
+                        <th class="py-3 px-2 font-semibold w-[100px] text-right">Đơn giá</th>
+                        <th class="py-3 px-2 font-semibold w-[60px] text-center">CK (%)</th>
+                        <th class="py-3 px-2 font-semibold w-[110px] text-right">Thành tiền</th>
+                        <th class="py-3 px-2 font-semibold w-[80px] text-center">Thuế (%)</th>
+                        <th class="py-3 px-2 font-semibold w-[100px] text-right">Tiền thuế</th>
                     </tr>
-                }
-            </tbody>
-        </table>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    @if (Model.Details != null && Model.Details.Any())
+                    {
+                        foreach (var d in Model.Details)
+                        {
+                            <tr class="hover:bg-gray-50/50 transition-colors border-b border-gray-100">
+                                <td class="py-3 px-2 align-middle">
+                                    <span class="px-2 py-1 bg-gray-100 text-gray-600 rounded font-medium">@(d.Product?.ProductCode ?? "-")</span>
+                                </td>
+                                <td class="py-3 px-2 align-middle text-gray-800">
+                                    @d.ProductNameSnapshot
+                                </td>
+                                <td class="py-3 px-2 align-middle text-center text-gray-600">
+                                    @d.UnitSnapshot
+                                </td>
+                                <td class="py-3 px-2 align-middle text-center font-medium text-gray-800">
+                                    @d.Quantity
+                                </td>
+                                <td class="py-3 px-2 align-middle text-right text-gray-800">
+                                    @d.UnitPrice.ToString("N0")
+                                </td>
+                                <td class="py-3 px-2 align-middle text-center text-gray-600">
+                                    @d.DiscountRate
+                                </td>
+                                <td class="py-3 px-2 align-middle text-right font-bold text-gray-900">
+                                    @d.Amount.ToString("N0")
+                                </td>
+                                <td class="py-3 px-2 align-middle text-center text-gray-600">
+                                    @d.TaxRateSnapshot
+                                </td>
+                                <td class="py-3 px-2 align-middle text-right font-semibold text-gray-600">
+                                    @d.TaxAmount.ToString("N0")
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="9" class="py-8 text-center text-gray-500">Không có dữ liệu chi tiết hàng hóa.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
     </div>
 
-    <div class="bg-white p-6 rounded-xl shadow w-[400px] ml-auto">
-        <div class="flex justify-between">
-            <span>Tổng tiền:</span>
-            <span>@Model.TotalAmount.ToString("N0")</span>
-        </div>
-
-        <div class="flex justify-between">
-            <span>Thuế:</span>
-            <span>@Model.TotalTaxAmount.ToString("N0")</span>
-        </div>
-
-        <div class="flex justify-between font-bold text-lg">
-            <span>Thanh toán:</span>
-            <span>@Model.TotalPayment.ToString("N0")</span>
+    @* TỔNG HỢP THANH TOÁN *@
+    <div class="flex justify-end mb-8">
+        <div class="w-full md:w-[400px] bg-white rounded-[16px] shadow-sm p-6 border border-gray-100">
+            <h3 class="text-[16px] font-bold text-gray-900 mb-6">Tổng hợp thanh toán</h3>
+            
+            <div class="flex justify-between items-center mb-4 text-[14px]">
+                <span class="text-gray-500 font-medium">Tổng thành tiền:</span>
+                <span class="font-bold text-gray-900">@Model.TotalAmount.ToString("N0") <span class="text-[12px] underline ml-1">đ</span></span>
+            </div>
+            
+            <div class="flex justify-between items-center mb-6 text-[14px]">
+                <span class="text-gray-500 font-medium">Tổng thuế GTGT:</span>
+                <span class="font-bold text-gray-900">@Model.TotalTaxAmount.ToString("N0") <span class="text-[12px] underline ml-1">đ</span></span>
+            </div>
+            
+            <div class="flex justify-between items-center bg-[#eff6ff] p-4 rounded-xl text-[15px]">
+                <span class="text-gray-900 font-bold">Tổng thanh toán:</span>
+                <span class="font-bold text-[#1d4ed8] text-[18px]">@Model.TotalPayment.ToString("N0") <span class="text-[14px] underline ml-1">đ</span></span>
+            </div>
         </div>
     </div>
 

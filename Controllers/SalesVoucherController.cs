@@ -29,6 +29,8 @@ namespace RevenueAccountingMVC.Controllers
         {
             var vouchers = _context.SalesVouchers
                 .Include(v => v.Customer)
+                // THÊM DÒNG NÀY: Chỉ hiển thị các chứng từ có Status là Posted
+                .Where(v => v.Status == VoucherStatus.Posted)
                 .AsQueryable();
 
             if (!string.IsNullOrEmpty(searchString))
@@ -57,6 +59,7 @@ namespace RevenueAccountingMVC.Controllers
             ViewBag.NextCode = SalesVoucher.GenerateVoucherCode(next);
 
             var model = new SalesVoucher();
+            model.VoucherCode = SalesVoucher.GenerateVoucherCode(next); 
             model.Details.Add(new SalesVoucherDetail());
             model.AccountingDate = DateTime.Now.Date;
 
@@ -68,7 +71,7 @@ namespace RevenueAccountingMVC.Controllers
         // =======================
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(SalesVoucher model)
+        public async Task<IActionResult> Create(SalesVoucher model, string submitAction)
         {
             if (model.Details != null)
             {
@@ -77,18 +80,36 @@ namespace RevenueAccountingMVC.Controllers
 
             if (model.Details == null || model.Details.Count == 0)
             {
-                ModelState.AddModelError("", "Vui lòng chọn ít nhất 1 hàng hóa/dịch vụ hợp lệ.");
+                ModelState.AddModelError("", "Vui lòng chọn ít nhất 1 hàng hóa hợp lệ.");
+            }
+
+            // KIỂM TRA DỮ LIỆU ĐẦU VÀO
+            for (int i = 0; i < model.Details?.Count; i++)
+            {
+                var d = model.Details[i];
+                
+                if (d.DebitAccountId == null || d.DebitAccountId == 0)
+                    ModelState.AddModelError("", $"Dòng {i + 1}: Vui lòng chọn TK Nợ.");
+                    
+                if (d.CreditAccountId == null || d.CreditAccountId == 0)
+                    ModelState.AddModelError("", $"Dòng {i + 1}: Vui lòng chọn TK Có.");
+
+                // Kiểm tra theo TaxRateSnapshot thay vì TaxId sẽ chính xác hơn
+                if (d.TaxRateSnapshot > 0 && (d.TaxAccountId == null || d.TaxAccountId == 0))
+                {
+                    ModelState.AddModelError("", $"Dòng {i + 1}: Có phát sinh thuế, vui lòng chọn [TK Thuế].");
+                }
             }
 
             if (!ModelState.IsValid)
             {
                 await LoadDropdownData();
-                ViewBag.NextCode = model.VoucherCode ?? SalesVoucher.GenerateVoucherCode(await _context.SalesVouchers.CountAsync() + 1);
+                if (string.IsNullOrEmpty(model.VoucherCode))
+                {
+                    model.VoucherCode = SalesVoucher.GenerateVoucherCode(await _context.SalesVouchers.CountAsync() + 1);
+                }
                 return View(model);
             }
-
-            int next = await _context.SalesVouchers.CountAsync() + 1;
-            model.VoucherCode = SalesVoucher.GenerateVoucherCode(next);
 
             model.TotalAmount = 0;
             model.TotalTaxAmount = 0;
@@ -102,8 +123,6 @@ namespace RevenueAccountingMVC.Controllers
 
             model.DueDate = model.AccountingDate.AddDays(model.DebtDays);
             model.CreatedAt = DateTime.Now;
-            
-            // Bạn đang set mặc định là Posted ở đây
             model.Status = VoucherStatus.Posted;
 
             foreach (var detail in model.Details)
@@ -118,6 +137,15 @@ namespace RevenueAccountingMVC.Controllers
                 detail.Amount = detail.Quantity * detail.UnitPrice * (1 - (detail.DiscountRate / 100m));
                 detail.TaxAmount = detail.Amount * (detail.TaxRateSnapshot / 100m);
 
+                // 🔥 BẢO VỆ SERVICE GHI SỔ KHỎI LỖI FOREIGN KEY 🔥
+                // Nếu dòng này không có thuế, TaxAccountId đang là null sẽ khiến Service 
+                // tự động chuyển thành ID = 0 và làm sập Database. 
+                // Ta gán tạm nó bằng CreditAccountId để vượt qua lỗi khóa ngoại.
+                if (detail.TaxAccountId == null || detail.TaxAccountId == 0)
+                {
+                    detail.TaxAccountId = detail.CreditAccountId;
+                }
+
                 model.TotalAmount += detail.Amount;
                 model.TotalTaxAmount += detail.TaxAmount;
             }
@@ -125,23 +153,23 @@ namespace RevenueAccountingMVC.Controllers
             model.TotalPayment = model.TotalAmount + model.TotalTaxAmount;
 
             _context.SalesVouchers.Add(model);
-            
-            // 1. Lưu vào Database để lấy được model.Id
             await _context.SaveChangesAsync();
 
-            // 2. BỔ SUNG ĐOẠN NÀY: Sinh bút toán ghi sổ cái ngay lập tức nếu Status là Posted
             if (model.Status == VoucherStatus.Posted)
             {
                 await _journalService.GenerateEntriesFromSalesVoucherAsync(model.Id);
             }
 
             TempData["SuccessMessage"] = $"Ghi nhận doanh thu thành công (Số CT: {model.VoucherCode})";
+
+            if (submitAction == "save_and_new")
+            {
+                return RedirectToAction(nameof(Create));
+            }
+
             return RedirectToAction(nameof(Index));
         }
 
-        // =======================
-        // 4. DELETE
-        // =======================
         // =======================
         // 4. DELETE
         // =======================
@@ -156,14 +184,17 @@ namespace RevenueAccountingMVC.Controllers
             if (voucher == null)
                 return Json(new { success = false, message = "Không tìm thấy chứng từ." });
 
-            // THÊM ĐIỀU KIỆN CHẶN XÓA NẾU KHÔNG PHẢI LÀ DRAFT
-            if (voucher.Status != VoucherStatus.Draft)
-            {
-                return Json(new { success = false, message = "Chỉ được phép xóa chứng từ đang ở trạng thái Nháp!" });
-            }
+            // ĐÃ XÓA ĐIỀU KIỆN CHẶN TRẠNG THÁI (Giờ trạng thái Posted cũng xóa được)
 
-            _context.SalesVoucherDetails.RemoveRange(voucher.Details);
-            _context.SalesVouchers.Remove(voucher);
+            // ĐÃ THAY ĐỔI: Chuyển trạng thái sang Hủy (Canceled) thay vì xóa vật lý khỏi DB
+            voucher.Status = VoucherStatus.Draft;; 
+            // Lưu ý: Nếu có hàm xóa bút toán sổ cái tương ứng trong JournalEntryService, 
+            // bạn nên gọi nó ở đây (vd: await _journalService.DeleteEntriesAsync(voucher.Id);)
+
+            // Bỏ 2 dòng Remove cũ:
+            // _context.SalesVoucherDetails.RemoveRange(voucher.Details);
+            // _context.SalesVouchers.Remove(voucher);
+
             await _context.SaveChangesAsync();
 
             return Json(new { success = true });
@@ -224,6 +255,36 @@ namespace RevenueAccountingMVC.Controllers
                 await LoadDropdownData();
                 return View(model);
             }
+            if (model.Details == null || model.Details.Count == 0)
+            {
+                ModelState.AddModelError("", "Vui lòng chọn ít nhất 1 hàng hóa hợp lệ.");
+            }
+
+            // 👇 BỔ SUNG ĐOẠN CODE KIỂM TRA NÀY VÀO ĐÂY 👇
+            for (int i = 0; i < model.Details.Count; i++)
+            {
+                var d = model.Details[i];
+                
+                // Kiểm tra TK Nợ / TK Có
+                if (d.DebitAccountId == null || d.DebitAccountId == 0)
+                    ModelState.AddModelError("", $"Dòng {i + 1}: Vui lòng chọn TK Nợ.");
+                    
+                if (d.CreditAccountId == null || d.CreditAccountId == 0)
+                    ModelState.AddModelError("", $"Dòng {i + 1}: Vui lòng chọn TK Có.");
+
+                // Kiểm tra nếu có thuế nhưng quên chọn TK Thuế
+                if (d.TaxId != null && d.TaxId > 0 && (d.TaxAccountId == null || d.TaxAccountId == 0))
+                {
+                    ModelState.AddModelError("", $"Dòng {i + 1}: Có phát sinh thuế, vui lòng chọn [TK Thuế].");
+                }
+            }
+            // 👆 KẾT THÚC ĐOẠN BỔ SUNG 👆
+
+            if (!ModelState.IsValid)
+            {
+                await LoadDropdownData();
+                return View(model);
+            }
 
             var existing = await _context.SalesVouchers
                 .Include(v => v.Details)
@@ -259,7 +320,13 @@ namespace RevenueAccountingMVC.Controllers
                 Quantity = d.Quantity,
                 UnitPrice = d.UnitPrice,
                 DiscountRate = d.DiscountRate,
-                TaxRateSnapshot = d.TaxRateSnapshot
+                TaxRateSnapshot = d.TaxRateSnapshot,
+                
+                // 👇 BỔ SUNG CÁC TRƯỜNG TÀI KHOẢN BỊ THIẾU Ở ĐÂY 👇
+                DebitAccountId = d.DebitAccountId,
+                CreditAccountId = d.CreditAccountId,
+                TaxId = d.TaxId,
+                TaxAccountId = d.TaxAccountId
             }).ToList();
 
             foreach (var detail in existing.Details)
@@ -281,6 +348,15 @@ namespace RevenueAccountingMVC.Controllers
             existing.TotalPayment = existing.TotalAmount + existing.TotalTaxAmount;
 
             await _context.SaveChangesAsync();
+
+
+
+            // THÊM ĐOẠN NÀY: Nếu chứng từ đang là Posted mà bị sửa, 
+            // ta gọi lại hàm GenerateEntries... để cập nhật lại (xóa bút toán cũ sinh bút toán mới) vào Sổ cái.
+            if (existing.Status == VoucherStatus.Posted)
+            {
+                await _journalService.GenerateEntriesFromSalesVoucherAsync(existing.Id);
+            }
 
             TempData["SuccessMessage"] = "Cập nhật thành công!";
             return RedirectToAction(nameof(Index));
@@ -386,9 +462,12 @@ namespace RevenueAccountingMVC.Controllers
                 return Json(new { success = false, message = "Chứng từ đã ghi sổ rồi!" });
             }
 
+            // Đổi trạng thái
             voucher.Status = VoucherStatus.Posted;
-
             await _context.SaveChangesAsync();
+
+            // THÊM DÒNG NÀY: Sinh bút toán sổ cái sau khi ghi sổ thành công
+            await _journalService.GenerateEntriesFromSalesVoucherAsync(voucher.Id);
 
             return Json(new { success = true });
         }

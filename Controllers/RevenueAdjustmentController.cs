@@ -21,7 +21,7 @@ namespace RevenueAccountingMVC.Controllers
         public RevenueAdjustmentController(ApplicationDbContext context, JournalEntryService journalService)
         {
             _context = context;
-            _journalService = journalService; 
+            _journalService = journalService;
         }
 
         public async Task<IActionResult> Index()
@@ -38,7 +38,7 @@ namespace RevenueAccountingMVC.Controllers
         [HttpGet]
         public IActionResult Create()
         {
-            ViewBag.Customers = new SelectList(_context.Customers, "Id", "CustomerName");
+            ViewBag.Customers = new SelectList(_context.Customers, "Id", "CustomerCode");
             ViewBag.Vouchers = new SelectList(Enumerable.Empty<SelectListItem>());
             ViewBag.Accounts = new SelectList(
                 _context.Accounts.Where(a => a.IsDetail).ToList(),
@@ -173,7 +173,7 @@ namespace RevenueAccountingMVC.Controllers
                 TotalTaxAmount = model.TotalTaxAmount,
                 TotalPayment = model.TotalPayment,
                 // SỬA ĐỔI 1: LƯU TRỰC TIẾP VỚI TRẠNG THÁI POSTED (ĐÃ GHI SỔ)
-                Status = VoucherStatus.Posted, 
+                Status = VoucherStatus.Posted,
 
                 Details = model.Details.Select((d, idx) =>
                 {
@@ -221,7 +221,7 @@ namespace RevenueAccountingMVC.Controllers
         // ===================== SUPPORT =====================
         private void ReloadViewBag(RevenueAdjustmentViewModel model)
         {
-            ViewBag.Customers = new SelectList(_context.Customers, "Id", "CustomerName", model.CustomerId);
+            ViewBag.Customers = new SelectList(_context.Customers, "Id", "CustomerCode", model.CustomerId);
             ViewBag.Vouchers = new SelectList(_context.SalesVouchers.Where(x => x.CustomerId == model.CustomerId), "Id", "VoucherCode", model.OriginalSalesVoucherId);
             ViewBag.Accounts = new SelectList(_context.Accounts.Where(a => a.IsDetail).ToList(), "Id", "AccountNumber");
         }
@@ -272,7 +272,7 @@ namespace RevenueAccountingMVC.Controllers
                     productCode = d.Product.ProductCode,
                     productName = d.Product.ProductName,
                     // Trả về số lượng/đơn giá CÒN LẠI thay vì gốc
-                    originalQty = d.Quantity - alreadyReturned, 
+                    originalQty = d.Quantity - alreadyReturned,
                     originalPrice = d.UnitPrice - alreadyDiscounted,
                     originalTaxRate = d.TaxRateSnapshot
                 };
@@ -290,5 +290,20 @@ namespace RevenueAccountingMVC.Controllers
                 details = details
             });
         }
+
+        // ===================== API =====================
+        [HttpGet]
+        public async Task<IActionResult> GetCustomerInfo(int id)
+        {
+            var customer = await _context.Customers.FindAsync(id);
+            if (customer == null) return NotFound();
+
+            return Json(new { 
+                customerName = customer.CustomerName, 
+                address = customer.Address,
+                customerCode = customer.CustomerCode
+            });
+        }
+        
     }
 }
