@@ -5,6 +5,9 @@
     ViewData["Title"] = "Quản lý danh mục tài khoản";
     Layout = "~/Views/Shared/_Layout.cshtml";
     ViewData["ActiveTab"] = "Account";
+    
+    // THÊM DÒNG NÀY ĐỂ ĐẾM SỐ LƯỢNG BẢN GHI VÀ TRUYỀN VÀO TAB
+    ViewData["CurrentCount"] = Model?.Count() ?? 0;
 
     // Hàm đệ quy tính cấp độ tài khoản
     int GetAccountLevel(Account account)
@@ -87,7 +90,7 @@
                             <a asp-action="Edit" asp-route-id="@item.Id" class="hover:text-gray-900"><i data-lucide="edit-2" class="w-4 h-4"></i></a>
                             <button class="toggle-status" data-id="@item.Id">
                                 <i data-lucide="@(item.Status == AccountStatus.Active ? "toggle-right" : "toggle-left")" 
-                                   class="w-5 h-5 @(item.Status == AccountStatus.Active ? "text-green-500" : "text-gray-300")"></i>
+                                class="w-5 h-5 @(item.Status == AccountStatus.Active ? "text-green-500" : "text-gray-300")"></i>
                             </button>
                         </td>
                     </tr>

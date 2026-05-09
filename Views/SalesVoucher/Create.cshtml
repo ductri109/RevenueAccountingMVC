@@ -48,12 +48,18 @@
     <form asp-action="Create" method="post" id="voucherForm">
         <div asp-validation-summary="ModelOnly" class="text-red-500 text-sm mb-4"></div>
 
-        @* THÔNG TIN CHUNG *@
+@* THÔNG TIN CHUNG *@
         <div class="bg-white rounded-[16px] shadow-sm p-8 mb-6 border border-gray-100">
             <div class="flex justify-between items-start mb-6">
                 <h3 class="text-[18px] font-bold text-gray-900">Thông tin chung</h3>
-                <div class="bg-gray-100 text-gray-600 px-4 py-2 rounded-md text-[13px] font-medium">
-                    Chứng từ: tự động
+                
+                @* ĐÃ SỬA: Hiển thị mã chứng từ động từ Controller truyền sang *@
+                <div class="bg-gray-100 text-gray-600 px-4 py-2 rounded-md text-[13px] font-medium flex items-center gap-2">
+                    <span>Số chứng từ:</span>
+                    <span class="font-bold text-blue-600 uppercase">@(Model?.VoucherCode ?? ViewBag.VoucherNumber ?? "Hệ thống tự tạo")</span>
+                    
+                    @* Thêm input hidden để map giá trị mã chứng từ khi submit form (nếu property của bạn tên là VoucherNumber) *@
+                    <input type="hidden" asp-for="VoucherCode" value="@(Model?.VoucherCode ?? ViewBag.VoucherNumber)" />
                 </div>
             </div>
 
@@ -171,10 +177,20 @@
             </div>
         </div>
 
-        <div class="flex items-center justify-end gap-3 pb-10">
-            <a asp-action="Index" class="px-6 py-2.5 text-[14px] font-semibold text-gray-600 hover:bg-white rounded-lg transition-colors border border-transparent hover:border-gray-200">Hủy bỏ</a>
-            <button type="submit" class="bg-black hover:bg-gray-800 text-white px-8 py-2.5 rounded-lg text-[14px] font-bold flex items-center gap-2 transition-all active:scale-95 shadow-md">
-                Lưu chứng từ
+        <div class="flex items-center justify-end gap-3 pb-10 mt-6">
+            @* Nút Hủy *@
+            <a asp-action="Index" class="px-6 py-2.5 text-[14px] font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors shadow-sm">
+                Hủy
+            </a>
+            
+            @* Nút Lưu (Lưu xong quay về danh sách) *@
+            <button type="submit" name="submitAction" value="save" class="bg-black hover:bg-gray-800 text-white px-6 py-2.5 rounded-lg text-[14px] font-bold flex items-center gap-2 transition-all active:scale-95 shadow-sm">
+                Lưu
+            </button>
+            
+            @* Nút Lưu & Thêm mới (Lưu xong ở lại trang form mới) *@
+            <button type="submit" name="submitAction" value="save_and_new" class="bg-black hover:bg-gray-800 text-white px-6 py-2.5 rounded-lg text-[14px] font-bold flex items-center gap-2 transition-all active:scale-95 shadow-md">
+                Lưu và thêm mới
             </button>
         </div>
     </form>
@@ -368,8 +384,11 @@
                     
                     if (pId) {
                         $.get(`${productApiUrl}/${pId}`, function(data) {
-                            // Chỉ tự động điền tên sản phẩm
+                            // Tự động điền tên sản phẩm
                             row.find('.txt-product-name').val(data.productName || '');
+                            
+                            // ĐÃ THÊM DÒNG NÀY: Tự động điền Đơn vị tính (ĐVT)
+                            row.find('.txt-unit').val(data.unit || '');
                             
                             // Đã xóa các dòng gán value rỗng/0 cho TK Có, TK Thuế, Đơn giá...
                             // để người dùng tự chọn và không bị mất dữ liệu khi đổi mã SP
@@ -379,8 +398,12 @@
                             alert("Không thể lấy dữ liệu sản phẩm từ máy chủ.");
                         });
                     } else {
-                        // Nếu bỏ chọn sản phẩm thì chỉ xóa tên sản phẩm
+                        // Nếu bỏ chọn sản phẩm thì xóa trắng tên sản phẩm và ĐVT
                         row.find('.txt-product-name').val('');
+                        
+                        // ĐÃ THÊM DÒNG NÀY: Xóa ĐVT
+                        row.find('.txt-unit').val(''); 
+                        
                         calculateGrandTotals();
                     }
                 });
