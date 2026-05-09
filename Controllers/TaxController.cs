@@ -3,9 +3,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using RevenueAccountingMVC.Data;
 using RevenueAccountingMVC.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace RevenueAccountingMVC.Controllers
 {
+     
     public class TaxController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -18,6 +20,7 @@ namespace RevenueAccountingMVC.Controllers
         // =======================
         // INDEX
         // =======================
+        [Authorize(Roles = "Accountant, Leader")] // CHỈ KẾ TOÁN VÀ LÃNH ĐẠO MỚI ĐƯỢC XEM DANH SÁCH THUẾ
         public async Task<IActionResult> Index(string searchString)
         {
             var taxes = _context.Taxes
@@ -41,6 +44,7 @@ namespace RevenueAccountingMVC.Controllers
         // =======================
         // CREATE
         // =======================
+        [Authorize(Roles = "Accountant")]
         public async Task<IActionResult> Create()
         {
             await LoadAccounts();
@@ -53,6 +57,7 @@ namespace RevenueAccountingMVC.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Accountant")]
         public async Task<IActionResult> Create(Tax tax, string submitAction)
         {
             if (ModelState.IsValid)
@@ -82,6 +87,7 @@ namespace RevenueAccountingMVC.Controllers
         // =======================
         // EDIT
         // =======================
+        [Authorize(Roles = "Accountant")]
         public async Task<IActionResult> Edit(int id)
         {
             var tax = await _context.Taxes.FindAsync(id);
@@ -94,6 +100,7 @@ namespace RevenueAccountingMVC.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Accountant")]
         public async Task<IActionResult> Edit(int id, Tax tax)
         {
             if (id != tax.Id) return BadRequest();
@@ -132,6 +139,7 @@ namespace RevenueAccountingMVC.Controllers
         // =======================
         // DETAILS
         // =======================
+        [Authorize(Roles = "Accountant, Leader")]
         public async Task<IActionResult> Details(int id)
         {
             var tax = await _context.Taxes
@@ -147,6 +155,7 @@ namespace RevenueAccountingMVC.Controllers
         // TOGGLE
         // =======================
         [HttpPost]
+        [Authorize(Roles = "Accountant")]
         public async Task<IActionResult> ToggleStatus(int id)
         {
             var tax = await _context.Taxes.FindAsync(id);
@@ -166,6 +175,7 @@ namespace RevenueAccountingMVC.Controllers
         // =======================
         // HELPER
         // =======================
+        [Authorize(Roles = "Accountant, Leader")]
         private async Task LoadAccounts(int? selectedId = null)
         {
             var accounts = await _context.Accounts

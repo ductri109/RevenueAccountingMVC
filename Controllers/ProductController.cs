@@ -7,7 +7,6 @@ using RevenueAccountingMVC.Models;
 
 namespace RevenueAccountingMVC.Controllers
 {
-    [Authorize]
     public class ProductController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -20,6 +19,7 @@ namespace RevenueAccountingMVC.Controllers
         // =======================
         // INDEX
         // =======================
+        [Authorize(Roles = "Accountant, Leader")] // CHỈ KẾ TOÁN VÀ LÃNH ĐẠO MỚI ĐƯỢC XEM DANH SÁCH SẢN PHẨM
         public async Task<IActionResult> Index(string searchString, string productType)
         {
             // 1. Khởi tạo truy vấn
@@ -58,6 +58,7 @@ namespace RevenueAccountingMVC.Controllers
         // =======================
         // CREATE (GET)
         // =======================
+        [Authorize(Roles = "Accountant")]
         public async Task<IActionResult> Create()
         {
             await LoadData();
@@ -73,6 +74,7 @@ namespace RevenueAccountingMVC.Controllers
         // =======================
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Accountant")]
         public async Task<IActionResult> Create(Product product, string submitAction)
         {
             if (ModelState.IsValid)
@@ -105,6 +107,7 @@ namespace RevenueAccountingMVC.Controllers
         // =======================
         // EDIT
         // =======================
+        [Authorize(Roles = "Accountant")]
         public async Task<IActionResult> Edit(int id)
         {
             var product = await _context.Products.FindAsync(id);
@@ -117,6 +120,7 @@ namespace RevenueAccountingMVC.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Accountant")]
         public async Task<IActionResult> Edit(int id, Product product)
         {
             if (id != product.Id) return BadRequest();
@@ -156,6 +160,7 @@ namespace RevenueAccountingMVC.Controllers
         // =======================
         // DETAILS
         // =======================
+        [Authorize(Roles = "Accountant, Leader")] // CHỈ KẾ TOÁN VÀ LÃNH ĐẠO MỚI ĐƯỢC XEM CHI TIẾT SẢN PHẨM
         public async Task<IActionResult> Details(int id)
         {
             var product = await _context.Products
@@ -173,6 +178,7 @@ namespace RevenueAccountingMVC.Controllers
         // TOGGLE STATUS
         // =======================
         [HttpPost]
+        [Authorize(Roles = "Accountant")]
         public async Task<IActionResult> ToggleStatus(int id)
         {
             var product = await _context.Products.FindAsync(id);

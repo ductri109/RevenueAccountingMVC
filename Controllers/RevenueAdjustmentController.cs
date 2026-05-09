@@ -4,7 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using RevenueAccountingMVC.Data;
 using RevenueAccountingMVC.Models;
 using RevenueAccountingMVC.ViewModels;
-using RevenueAccountingMVC.Services; // BỔ SUNG THÊM THƯ VIỆN NÀY
+using RevenueAccountingMVC.Services;
+using Microsoft.AspNetCore.Authorization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,6 +25,7 @@ namespace RevenueAccountingMVC.Controllers
             _journalService = journalService;
         }
 
+        [Authorize(Roles = "Accountant, Leader")]
         public async Task<IActionResult> Index()
         {
             var data = await _context.RevenueAdjustments
@@ -36,6 +38,7 @@ namespace RevenueAccountingMVC.Controllers
 
         // ===================== GET CREATE =====================
         [HttpGet]
+        [Authorize(Roles = "Accountant")]
         public IActionResult Create()
         {
             ViewBag.Customers = new SelectList(_context.Customers, "Id", "CustomerCode");
@@ -61,6 +64,7 @@ namespace RevenueAccountingMVC.Controllers
         // ===================== POST CREATE =====================
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Accountant")]
         public async Task<IActionResult> Create(RevenueAdjustmentViewModel model)
         {
             // ================= VALIDATION =================

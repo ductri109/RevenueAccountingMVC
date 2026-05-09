@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using RevenueAccountingMVC.Data;
 using RevenueAccountingMVC.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace RevenueAccountingMVC.Controllers
 {
@@ -18,6 +19,7 @@ namespace RevenueAccountingMVC.Controllers
         // =======================
         // INDEX
         // =======================
+        [Authorize(Roles = "Accountant, Leader")] // CHỈ KẾ TOÁN VÀ LÃNH ĐẠO MỚI ĐƯỢC XEM DANH SÁCH KHÁCH HÀNG
         public async Task<IActionResult> Index(string searchString)
         {
             var customers = _context.Customers
@@ -43,6 +45,7 @@ namespace RevenueAccountingMVC.Controllers
         // =======================
         // CREATE (GET)
         // =======================
+        [Authorize(Roles = "Accountant")]
         public async Task<IActionResult> Create()
         {
             await LoadAccounts();
@@ -59,6 +62,7 @@ namespace RevenueAccountingMVC.Controllers
         // =======================
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Accountant")]
         public async Task<IActionResult> Create(Customer customer, string submitAction)
         {
             if (ModelState.IsValid)
@@ -93,6 +97,7 @@ namespace RevenueAccountingMVC.Controllers
         // =======================
         // EDIT (GET)
         // =======================
+        [Authorize(Roles = "Accountant")]
         public async Task<IActionResult> Edit(int id)
         {
             var customer = await _context.Customers.FindAsync(id);
@@ -108,6 +113,7 @@ namespace RevenueAccountingMVC.Controllers
         // =======================
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Accountant")]
         public async Task<IActionResult> Edit(int id, Customer customer)
         {
             if (id != customer.Id) return BadRequest();
@@ -147,6 +153,7 @@ namespace RevenueAccountingMVC.Controllers
         // =======================
         // DETAILS
         // =======================
+        [Authorize(Roles = "Accountant, Leader")] // CHỈ KẾ TOÁN VÀ LÃNH ĐẠO MỚI ĐƯỢC XEM CHI TIẾT KHÁCH HÀNG
         public async Task<IActionResult> Details(int id)
         {
             var customer = await _context.Customers
@@ -162,6 +169,7 @@ namespace RevenueAccountingMVC.Controllers
         // TOGGLE STATUS
         // =======================
         [HttpPost]
+        [Authorize(Roles = "Accountant")]
         public async Task<IActionResult> ToggleStatus(int id)
         {
             var customer = await _context.Customers.FindAsync(id);

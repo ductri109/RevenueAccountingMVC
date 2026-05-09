@@ -7,12 +7,14 @@ using System.Threading.Tasks;
 using RevenueAccountingMVC.Data;
 using RevenueAccountingMVC.Models;
 using RevenueAccountingMVC.Services;
+using Microsoft.AspNetCore.Authorization;
 
 namespace RevenueAccountingMVC.Controllers
 {
     /// <summary>
     /// Controller: Báo cáo doanh thu
     /// </summary>
+    [Authorize(Roles = "Accountant, Leader")] // CHỈ KẾ TOÁN VÀ LÃNH ĐẠO MỚI ĐƯỢC XEM BÁO CÁO
     public class ReportController : Controller
     {
         private readonly ApplicationDbContext _context;

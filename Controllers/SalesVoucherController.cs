@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using RevenueAccountingMVC.Data;
 using RevenueAccountingMVC.Models;
 using RevenueAccountingMVC.Services;
+using Microsoft.AspNetCore.Authorization;
 
 namespace RevenueAccountingMVC.Controllers
 {
@@ -25,6 +26,7 @@ namespace RevenueAccountingMVC.Controllers
         // =======================
         // 1. INDEX - Danh sách
         // =======================
+        [Authorize(Roles = "Accountant, Leader")]
         public async Task<IActionResult> Index(string searchString)
         {
             var vouchers = _context.SalesVouchers
@@ -51,6 +53,7 @@ namespace RevenueAccountingMVC.Controllers
         // =======================
         // 2. CREATE (GET)
         // =======================
+        [Authorize(Roles = "Accountant")]
         public async Task<IActionResult> Create()
         {
             await LoadDropdownData();
@@ -71,6 +74,7 @@ namespace RevenueAccountingMVC.Controllers
         // =======================
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Accountant")]
         public async Task<IActionResult> Create(SalesVoucher model, string submitAction)
         {
             if (model.Details != null)
@@ -175,6 +179,7 @@ namespace RevenueAccountingMVC.Controllers
         // =======================
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Accountant")]
         public async Task<IActionResult> Delete(int id)
         {
             var voucher = await _context.SalesVouchers
@@ -203,6 +208,7 @@ namespace RevenueAccountingMVC.Controllers
         // =======================
         // 5. DETAILS
         // =======================
+        [Authorize(Roles = "Accountant, Leader")]
         public async Task<IActionResult> Details(int id)
         {
             var voucher = await _context.SalesVouchers
@@ -219,6 +225,7 @@ namespace RevenueAccountingMVC.Controllers
         // =======================
         // 6. EDIT (GET)
         // =======================
+        [Authorize(Roles = "Accountant")]
         public async Task<IActionResult> Edit(int id)
         {
             var voucher = await _context.SalesVouchers
@@ -236,6 +243,7 @@ namespace RevenueAccountingMVC.Controllers
         // =======================
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Accountant")]
         public async Task<IActionResult> Edit(int id, SalesVoucher model)
         {
             if (id != model.Id) return NotFound();
@@ -365,6 +373,7 @@ namespace RevenueAccountingMVC.Controllers
         // =======================
         // HELPER DROPDOWNS
         // =======================
+        [Authorize(Roles = "Accountant, Leader")]
         private async Task LoadDropdownData()
         {
             var customers = await _context.Customers
@@ -452,6 +461,7 @@ namespace RevenueAccountingMVC.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Accountant")]
         public async Task<IActionResult> PostVoucher(int id)
         {
             var voucher = await _context.SalesVouchers.FindAsync(id);
