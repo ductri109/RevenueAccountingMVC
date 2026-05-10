@@ -11,20 +11,62 @@
     <meta charset="UTF-8">
     <title>Báo Cáo Tổng Hợp Doanh Thu</title>
     <style>
+        /* Fix lỗi in dư trang trắng và format chuẩn A4 */
         @@media print {
             @@page { size: A4 portrait; margin: 15mm; }
-            body { -webkit-print-color-adjust: exact; }
+            html, body { 
+                background: #fff !important; 
+                margin: 0 !important;
+                padding: 0 !important;
+                height: auto !important;
+                -webkit-print-color-adjust: exact; 
+            }
+            .pdf-container {
+                overflow: visible !important;
+                height: auto !important;
+                background: none !important;
+                padding: 0 !important;
+            }
+            .pdf-page {
+                box-shadow: none !important;
+                margin: 0 !important;
+                width: auto !important;
+                min-height: 0 !important; /* Chìa khóa chống in trang trắng */
+                height: auto !important;
+                padding: 0 !important;
+            }
+            .no-print { display: none; }
         }
+
+        /* Giao diện PDF Viewer trên Web */
         body {
             font-family: 'Times New Roman', serif;
             font-size: 12pt;
             color: #000;
             line-height: 1.4;
-            background: #fff;
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 20px;
+            margin: 0;
+            padding: 0;
         }
+
+        .pdf-container {
+            width: 100%;
+            height: 100vh;
+            overflow: auto; /* Thanh cuộn ngang dọc */
+            background-color: #525659;
+            padding: 20px 0;
+            box-sizing: border-box;
+        }
+
+        .pdf-page {
+            background-color: #fff;
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            padding: 15mm;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            box-sizing: border-box;
+        }
+
         .header-company { margin-bottom: 30px; }
         .header-company div { margin-bottom: 3px; }
         .font-bold { font-weight: bold; }
@@ -51,85 +93,91 @@
             border-collapse: collapse;
             margin-bottom: 40px;
         }
-        th, td {
-            border: 1px solid #000;
-            padding: 8px 10px;
-        }
-        th {
-            text-align: center;
-            font-weight: bold;
-            vertical-align: middle;
-        }
+        th, td { border: 1px solid #000; padding: 8px 10px; }
+        th { text-align: center; font-weight: bold; vertical-align: middle; background-color: #f2f2f2; }
         
-        .signature-table {
-            width: 100%;
-            border: none;
-            page-break-inside: avoid;
-        }
-        .signature-table td {
-            border: none;
-            text-align: center;
-            vertical-align: top;
-            width: 33.33%;
-            padding: 0;
-        }
+        .signature-table { width: 100%; border: none; page-break-inside: avoid; }
+        .signature-table td { border: none; text-align: center; vertical-align: top; width: 33.33%; padding: 0; }
     </style>
 </head>
-<body onload="window.print()">
-    <!-- Header Thông tin công ty -->
-    <div class="header-company">
-        <div class="font-bold">Đơn vị: Công ty Cổ phần Phần mềm BRAVO</div>
-        <div><span class="font-bold">Địa chỉ:</span> Tầng 7, Tòa Nhà Văn Phòng 311-313, Đường Trường Chinh, Phường Phương Liệt, Hà Nội.</div>
-        <div><span class="font-bold">Mã số thuế:</span> 0800263590</div>
-        <div><span class="font-bold">Điện thoại:</span> 0320895604</div>
+<body onload="@(ViewBag.AutoPrint == true ? "window.print()" : null)">
+
+    <div class="pdf-container">
+        <div class="pdf-page">
+
+            <!-- Header Thông tin công ty -->
+            <div class="header-company">
+                <div class="font-bold">Đơn vị: Công ty Cổ phần Phần mềm BRAVO</div>
+                <div><span class="font-bold">Địa chỉ:</span> Tầng 7, Tòa Nhà Văn Phòng 311-313, Đường Trường Chinh, Phường Phương Liệt, Hà Nội.</div>
+                <div><span class="font-bold">Mã số thuế:</span> 0800263590</div>
+                <div><span class="font-bold">Điện thoại:</span> 0320895604</div>
+            </div>
+
+            <!-- Tiêu đề báo cáo -->
+            <div class="report-title">BÁO CÁO TỔNG HỢP DOANH THU</div>
+            <div class="report-subtitle">Từ ngày @fromDate.ToString("dd/MM/yyyy") đến ngày @toDate.ToString("dd/MM/yyyy")</div>
+
+            <!-- Bảng số liệu -->
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 12%;">Mã KH</th>
+                        <th style="width: 40%;">Tên khách hàng</th>
+                        <th style="width: 16%;">Doanh thu</th>
+                        <th style="width: 16%;">Giảm trừ</th>
+                        <th style="width: 16%;">Doanh thu thuần</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        decimal sumRevenue = 0;
+                        decimal sumAdjustment = 0;
+                        decimal sumNet = 0;
+                    }
+                    @foreach(var item in Model)
+                    {
+                        sumRevenue += item.TotalRevenue;
+                        sumAdjustment += Math.Abs(item.AdjustmentRevenue);
+                        sumNet += item.NetRevenue;
+                        
+                        <tr>
+                            <td class="text-center font-bold">@item.CustomerCode</td>
+                            <td class="font-bold">@item.CustomerName.ToUpper()</td>
+                            <td class="text-right">@item.TotalRevenue.ToString("N0")</td>
+                            <td class="text-right">@Math.Abs(item.AdjustmentRevenue).ToString("N0")</td>
+                            <td class="text-right font-bold text-[#1d4ed8]">@item.NetRevenue.ToString("N0")</td>
+                        </tr>
+                    }
+                    <tr>
+                        <td colspan="2" class="font-bold text-center uppercase">Tổng cộng</td>
+                        <td class="text-right font-bold text-green-700">@sumRevenue.ToString("N0")</td>
+                        <td class="text-right font-bold text-red-600">@sumAdjustment.ToString("N0")</td>
+                        <td class="text-right font-bold text-[#1d4ed8]">@sumNet.ToString("N0")</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Chữ ký -->
+            <table class="signature-table">
+                <tr>
+                    <td>
+                        <div class="font-bold">Người lập báo cáo</div>
+                        <div class="font-italic">(Ký và ghi rõ họ tên)</div>
+                    </td>
+                    <td>
+                        <div class="font-bold">Kế toán trưởng</div>
+                        <div class="font-italic">(Ký và ghi rõ họ tên)</div>
+                    </td>
+                    <td>
+                        <div>Ngày @DateTime.Now.Day tháng @DateTime.Now.Month năm @DateTime.Now.Year</div>
+                        <div class="font-bold">Giám đốc</div>
+                        <div class="font-italic">(Ký và ghi rõ họ tên)</div>
+                    </td>
+                </tr>
+            </table>
+
+        </div>
     </div>
 
-    <!-- Tiêu đề báo cáo -->
-    <div class="report-title">BÁO CÁO TỔNG HỢP DOANH THU</div>
-    <div class="report-subtitle">Từ ngày @fromDate.ToString("dd/MM/yyyy") đến ngày @toDate.ToString("dd/MM/yyyy")</div>
-
-    <!-- Bảng số liệu -->
-    <table>
-        <thead>
-            <tr>
-                <th style="width: 12%;">Mã KH</th>
-                <th style="width: 40%;">Tên khách hàng</th>
-                <th style="width: 16%;">Doanh thu</th>
-                <th style="width: 16%;">Giảm trừ</th>
-                <th style="width: 16%;">Doanh thu thuần</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach(var item in Model)
-            {
-                <tr>
-                    <td class="text-center font-bold">@item.CustomerCode</td>
-                    <td class="font-bold">@item.CustomerName.ToUpper()</td>
-                    <td class="text-right">@item.TotalRevenue.ToString("N2")</td>
-                    <td class="text-right">@Math.Abs(item.AdjustmentRevenue).ToString("N2")</td>
-                    <td class="text-right">@item.NetRevenue.ToString("N2")</td>
-                </tr>
-            }
-        </tbody>
-    </table>
-
-    <!-- Chữ ký -->
-    <table class="signature-table">
-        <tr>
-            <td>
-                <div class="font-bold">Người lập báo cáo</div>
-                <div class="font-italic">(Ký và ghi rõ họ tên)</div>
-            </td>
-            <td>
-                <div class="font-bold">Kế toán trưởng</div>
-                <div class="font-italic">(Ký và ghi rõ họ tên)</div>
-            </td>
-            <td>
-                <div>Ngày @DateTime.Now.Day tháng @DateTime.Now.Month năm @DateTime.Now.Year</div>
-                <div class="font-bold">Giám đốc</div>
-                <div class="font-italic">(Ký và ghi rõ họ tên)</div>
-            </td>
-        </tr>
-    </table>
 </body>
 </html>

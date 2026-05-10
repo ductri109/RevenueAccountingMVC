@@ -10,7 +10,6 @@
         <h2 class="text-[24px] font-bold text-gray-900">Báo cáo doanh thu theo khách hàng</h2>
         <p class="text-[14px] text-gray-500 mt-1">Xem và phân tích doanh thu bán ra theo từng khách hàng</p>
         
-        <!-- Gọi Menu dùng chung -->
         <partial name="_ReportTabs" />
     </div>
 
@@ -62,15 +61,16 @@
                     </button>
                     @if (hasSearched && Model.Any())
                     {
-                        <a href="@Url.Action("PrintRevenueByCustomer", "Ledger", new { fromDate = ((DateTime)ViewBag.FromDate).ToString("yyyy-MM-dd"), toDate = ((DateTime)ViewBag.ToDate).ToString("yyyy-MM-dd"), customerId = ViewBag.SelectedCustomerId })" target="_blank" class="w-full bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-lg text-[14px] font-bold transition-all shadow-md text-center flex justify-center items-center">
+                        <!-- Gọi thẳng hàm print của Iframe -->
+                        <button type="button" onclick="document.getElementById('reportFrame').contentWindow.print()" class="w-full bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-lg text-[14px] font-bold transition-all shadow-md text-center flex justify-center items-center">
                             <i class="fas fa-print mr-1"></i> Xuất PDF / In
-                        </a>
+                        </button>
                     }
                 </div>
             </form>
         </div>
 
-        <!-- Main Content (Data Table) -->
+        <!-- Main Content (Iframe PDF Viewer) -->
         <div class="w-full md:w-3/4">
             @if (hasSearched)
             {
@@ -84,54 +84,13 @@
                 }
                 else
                 {
-                    <div class="bg-white rounded-[16px] shadow-sm border border-gray-100 overflow-hidden">
-                        <!-- Header tóm tắt dữ liệu -->
-                        <div class="p-5 border-b border-gray-100 bg-[#f9fafb] flex justify-between items-center">
-                            <div class="text-[14px] text-gray-700">
-                                <span class="font-bold text-gray-900">Khoảng thời gian:</span> @(((DateTime)ViewBag.FromDate).ToString("dd/MM/yyyy")) - @(((DateTime)ViewBag.ToDate).ToString("dd/MM/yyyy"))
-                            </div>
-                            <div class="text-[14px] text-gray-700">
-                                <span class="font-bold text-gray-900">Số khách hàng:</span> <span class="text-blue-600 font-bold">@Model.Count()</span>
-                            </div>
-                        </div>
-
-                        <table class="w-full text-left text-[13px]">
-                            <thead class="bg-white text-gray-600 font-medium border-b border-gray-200">
-                                <tr>
-                                    <th class="py-4 px-4 text-center">Mã KH</th>
-                                    <th class="py-4 px-4">Tên khách hàng</th>
-                                    <th class="py-4 px-4">Mã số thuế</th>
-                                    <th class="py-4 px-4 text-right">Số giao dịch</th>
-                                    <th class="py-4 px-4 text-right">Doanh thu</th>
-                                    <th class="py-4 px-4 text-center">Hành động</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100">
-                            @foreach (var item in Model)
-                            {
-                                <tr class="hover:bg-gray-50 transition-colors">
-                                    <td class="py-3 px-4 text-center font-semibold text-blue-600">@item.CustomerCode</td>
-                                    <td class="py-3 px-4 font-medium text-gray-900">@item.CustomerName</td>
-                                    <td class="py-3 px-4 text-gray-600">@item.TaxCode</td>
-                                    <td class="py-3 px-4 text-right">@item.TransactionCount</td>
-                                    <td class="py-3 px-4 text-right font-semibold text-gray-700">@item.TotalRevenue.ToString("N0")</td>
-                                    <td class="py-3 px-4 text-center">
-                                        <a href="#" class="text-blue-600 hover:text-blue-800 font-semibold text-[12px] inline-flex items-center">
-                                            <i class="fas fa-eye mr-1"></i> Chi tiết
-                                        </a>
-                                    </td>
-                                </tr>
-                            }
-                            </tbody>
-                            <tfoot class="bg-[#f9fafb] border-t border-gray-200">
-                                <tr>
-                                    <td colspan="3" class="py-4 px-4 font-bold text-center text-gray-900">Tổng cộng phát sinh</td>
-                                    <td class="py-4 px-4 text-right font-bold text-gray-900">@Model.Sum(x => x.TransactionCount)</td>
-                                    <td class="py-4 px-4 text-right font-bold text-[#1d4ed8]">@Model.Sum(x => x.TotalRevenue).ToString("N0")</td>
-                                    <td></td>
-                                </tr>
-                            </tfoot>    
-                        </table>
+                    <!-- Nhúng trang in thông qua iframe -->
+                    <div class="bg-white rounded-[16px] shadow-sm border border-gray-100 overflow-hidden h-[800px]">
+                        <iframe id="reportFrame" 
+                                src="@Url.Action("PrintRevenueByCustomer", "Ledger", new { fromDate = ((DateTime)ViewBag.FromDate).ToString("yyyy-MM-dd"), toDate = ((DateTime)ViewBag.ToDate).ToString("yyyy-MM-dd"), customerId = ViewBag.SelectedCustomerId, autoPrint = false })" 
+                                class="w-full h-full" 
+                                frameborder="0">
+                        </iframe>
                     </div>
                 }
             }
@@ -139,7 +98,7 @@
             {
                 <div class="bg-white rounded-[16px] shadow-sm p-10 text-gray-400 text-center border border-gray-100 h-full flex flex-col justify-center items-center min-h-[300px]">
                     <i class="fas fa-chart-bar text-4xl mb-3 text-gray-300"></i>
-                    <p>Vui lòng chọn thời gian và nhấn "Lọc" để xem báo cáo.</p>
+                    <p>Vui lòng chọn thời gian và nhấn "Lọc" để xem bản trước Báo cáo.</p>
                 </div>
             }
         </div>
