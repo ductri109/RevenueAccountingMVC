@@ -12,8 +12,8 @@ using RevenueAccountingMVC.Data;
 namespace RevenueAccountingMVC.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260509112642_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260510172608_InitDb")]
+    partial class InitDb
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

@@ -8,6 +8,7 @@ using RevenueAccountingMVC.Data;
 using RevenueAccountingMVC.Models;
 using RevenueAccountingMVC.Services;
 using RevenueAccountingMVC.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 
 namespace RevenueAccountingMVC.Controllers
 {
@@ -34,6 +35,7 @@ namespace RevenueAccountingMVC.Controllers
         /// <summary>
         /// Hiển thị sổ cái (tất cả bút toán theo khoảng thời gian)
         /// </summary>
+        [Authorize(Roles = "Accountant")]
         public async Task<IActionResult> Index(
             DateTime? fromDate,
             DateTime? toDate,
@@ -96,6 +98,7 @@ namespace RevenueAccountingMVC.Controllers
         /// Sổ chi tiết của 1 tài khoản theo khoảng thời gian
         /// Hiển thị: Số dư đầu kỳ, Phát sinh Nợ, Phát sinh Có, Số dư cuối kỳ
         /// </summary>
+        [Authorize(Roles = "Accountant")]
         public async Task<IActionResult> AccountLedger(
             string? accountNumber,
             DateTime? fromDate,
@@ -306,7 +309,8 @@ namespace RevenueAccountingMVC.Controllers
 
         // ========== 7. IN SỔ CÁI PDF ==========
         [HttpGet]
-        public async Task<IActionResult> PrintAccountLedger(string? accountNumber, DateTime? fromDate, DateTime? toDate)
+        [Authorize(Roles = "Accountant")]
+        public async Task<IActionResult> PrintAccountLedger(string? accountNumber, DateTime? fromDate, DateTime? toDate, bool autoPrint = false)
         {
             var model = new ReportViewModel
             {
@@ -330,17 +334,15 @@ namespace RevenueAccountingMVC.Controllers
 
             model.OpeningBalance = openingEntries.Sum(x => x.EntryType == "Debit" ? x.Amount : -x.Amount);
 
-            // Xử lý lấy hết dữ liệu đến giây cuối cùng của ngày ToDate
             var endOfDay = model.ToDate.Date.AddDays(1).AddTicks(-1);
 
             var periodEntries = await _context.JournalEntries
                 .Where(x => x.AccountId == account.Id
-                         && x.PostingDate >= model.FromDate.Date
-                         && x.PostingDate <= endOfDay)
+                        && x.PostingDate >= model.FromDate.Date
+                        && x.PostingDate <= endOfDay)
                 .OrderBy(x => x.PostingDate).ThenBy(x => x.Id)
                 .ToListAsync();
 
-            // --- BẮT ĐẦU FIX LỖI EF CORE TRANSLATION ---
             var voucherIds = periodEntries.Select(x => x.VoucherId).Distinct().ToList();
             var voucherTypes = periodEntries.Select(x => x.VoucherType).Distinct().ToList();
 
@@ -354,7 +356,6 @@ namespace RevenueAccountingMVC.Controllers
             var voucherEntries = rawVoucherEntries
                 .Where(x => voucherKeys.Contains($"{x.VoucherType}:{x.VoucherId}"))
                 .ToList();
-            // --- KẾT THÚC FIX LỖI EF CORE TRANSLATION ---
 
             decimal runningBalance = model.OpeningBalance;
 
@@ -366,9 +367,9 @@ namespace RevenueAccountingMVC.Controllers
 
                 var correspondingEntry = voucherEntries
                     .Where(x => x.VoucherId == entry.VoucherId
-                             && x.VoucherType == entry.VoucherType
-                             && x.EntryType != entry.EntryType
-                             && x.AccountId != entry.AccountId)
+                            && x.VoucherType == entry.VoucherType
+                            && x.EntryType != entry.EntryType
+                            && x.AccountId != entry.AccountId)
                     .OrderBy(x => x.Id).FirstOrDefault();
 
                 model.Rows.Add(new ReportRowViewModel
@@ -382,6 +383,9 @@ namespace RevenueAccountingMVC.Controllers
                     Balance = runningBalance
                 });
             }
+
+            // Truyền cờ autoPrint sang View
+            ViewBag.AutoPrint = autoPrint;
 
             return View(model);
         }
@@ -585,7 +589,7 @@ namespace RevenueAccountingMVC.Controllers
         /// Màn hình in báo cáo theo chuẩn mẫu
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> PrintRevenueByProduct(DateTime fromDate, DateTime toDate, int? productId)
+        public async Task<IActionResult> PrintRevenueByProduct(DateTime fromDate, DateTime toDate, int? productId, bool autoPrint = false)
         {
             var reportLines = await _reportService.GenerateRevenueByProductReportAsync(fromDate, toDate);
 
@@ -596,6 +600,9 @@ namespace RevenueAccountingMVC.Controllers
 
             ViewBag.FromDate = fromDate;
             ViewBag.ToDate = toDate;
+            
+            // Truyền cờ in sang View
+            ViewBag.AutoPrint = autoPrint;
 
             return View(reportLines);
         }
@@ -650,7 +657,7 @@ namespace RevenueAccountingMVC.Controllers
 
         // ========== 14. IN BÁO CÁO DOANH THU TỔNG HỢP (PDF) ==========
         [HttpGet]
-        public async Task<IActionResult> PrintRevenueSummary(DateTime fromDate, DateTime toDate, int? productId, int? customerId)
+        public async Task<IActionResult> PrintRevenueSummary(DateTime fromDate, DateTime toDate, int? productId, int? customerId, bool autoPrint = false)
         {
             var reportLines = await _reportService.GenerateRevenueByCustomerReportAsync(fromDate, toDate);
 
@@ -661,6 +668,9 @@ namespace RevenueAccountingMVC.Controllers
 
             ViewBag.FromDate = fromDate;
             ViewBag.ToDate = toDate;
+            
+            // Truyền cờ in sang View
+            ViewBag.AutoPrint = autoPrint;
 
             return View(reportLines);
         }
@@ -670,7 +680,8 @@ namespace RevenueAccountingMVC.Controllers
         /// Màn hình in Sổ Nhật Ký Chung theo Mẫu số S03a-DN
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> PrintJournal(DateTime? fromDate, DateTime? toDate, int? accountId, string sortBy = "date")
+        [Authorize(Roles = "Accountant")]
+        public async Task<IActionResult> PrintJournal(DateTime? fromDate, DateTime? toDate, int? accountId, string sortBy = "date", bool autoPrint = false)
         {
             if (!fromDate.HasValue) 
                 fromDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
@@ -689,8 +700,31 @@ namespace RevenueAccountingMVC.Controllers
 
             ViewBag.FromDate = fromDate;
             ViewBag.ToDate = toDate;
+            
+            // Truyền cờ in sang View
+            ViewBag.AutoPrint = autoPrint;
 
             return View(entries);
+        }
+
+        // ========== IN BÁO CÁO DOANH THU THEO KHÁCH HÀNG (PDF) ==========
+        [HttpGet]
+        public async Task<IActionResult> PrintRevenueByCustomer(DateTime fromDate, DateTime toDate, int? customerId, bool autoPrint = false)
+        {
+            var reportLines = await _reportService.GenerateRevenueByCustomerReportAsync(fromDate, toDate);
+
+            if (customerId.HasValue && customerId.Value > 0)
+            {
+                reportLines = reportLines.Where(x => x.CustomerId == customerId.Value).ToList();
+            }
+
+            ViewBag.FromDate = fromDate;
+            ViewBag.ToDate = toDate;
+            
+            // Truyền cờ in sang View
+            ViewBag.AutoPrint = autoPrint;
+
+            return View(reportLines);
         }
     }
 }

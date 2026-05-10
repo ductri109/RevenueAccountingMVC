@@ -10,7 +10,6 @@
         <p class="text-[14px] text-gray-500 mt-1">Xem báo cáo tổng quan về doanh thu bán hàng, các khoản giảm trừ và doanh thu thuần</p>        
         <!-- GỌI GIAO DIỆN LINK DÙNG CHUNG Ở ĐÂY -->
         <partial name="_ReportTabs" />
-
     </div>
 
     <div class="flex flex-col md:flex-row gap-6">
@@ -77,70 +76,48 @@
 
                 <div class="flex flex-col gap-2">
                     <button type="submit" class="w-full bg-black hover:bg-gray-800 text-white py-2.5 rounded-lg text-[14px] font-bold transition-all shadow-md">
-                        Lọc
+                        Lọc / Xem báo cáo
                     </button>
                     @if (hasSearched && Model.Any())
                     {
-                        <a href="@Url.Action("PrintRevenueSummary", "Ledger", new { fromDate = ((DateTime)ViewBag.FromDate).ToString("yyyy-MM-dd"), toDate = ((DateTime)ViewBag.ToDate).ToString("yyyy-MM-dd"), productId = ViewBag.SelectedProductId, customerId = ViewBag.SelectedCustomerId })" target="_blank" class="w-full bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-lg text-[14px] font-bold transition-all shadow-md text-center">
+                        <!-- Sửa nút in gọi iframe -->
+                        <button type="button" onclick="document.getElementById('reportFrame').contentWindow.print()" class="w-full bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-lg text-[14px] font-bold transition-all shadow-md text-center flex justify-center items-center">
                             <i class="fas fa-print mr-1"></i> Xuất PDF / In
-                        </a>
+                        </button>
                     }
                 </div>
             </form>
         </div>
 
-        <!-- Bảng Dữ Liệu -->
+        <!-- Bản xem trước PDF (Iframe Viewer) -->
         <div class="w-full md:w-3/4">
             @if (hasSearched)
             {
                 if (!Model.Any())
                 {
-                    <div class="bg-white rounded-[16px] shadow-sm p-6 text-gray-500 text-center border border-gray-100">
-                        Không có dữ liệu phù hợp trong khoảng thời gian này.
+                    <div class="bg-white rounded-[16px] shadow-sm p-10 text-gray-400 text-center border border-gray-100 h-full flex flex-col justify-center items-center min-h-[300px]">
+                        <i class="fas fa-inbox text-4xl mb-3 text-gray-300"></i>
+                        <p class="text-[16px] font-semibold text-gray-600">Không có dữ liệu</p>
+                        <p class="text-[14px] mt-1">Không có dữ liệu phù hợp trong khoảng thời gian này.</p>
                     </div>
                 }
                 else
                 {
-                    <div class="bg-white rounded-[16px] shadow-sm border border-gray-100 overflow-hidden">
-                        <table class="w-full text-left text-[13px]">
-                            <thead class="bg-[#f9fafb] text-gray-600 font-medium border-b border-gray-100">
-                                <tr>
-                                    <th class="py-4 px-4 text-center">Mã KH</th>
-                                    <th class="py-4 px-4">Tên khách hàng</th>
-                                    <th class="py-4 px-4 text-right">Doanh thu</th>
-                                    <th class="py-4 px-4 text-right">Giảm trừ</th>
-                                    <th class="py-4 px-4 text-right">Doanh thu thuần</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100">
-                                @foreach (var item in Model)
-                                {
-                                    <tr class="hover:bg-gray-50">
-                                        <td class="py-3 px-4 text-center font-semibold">@item.CustomerCode</td>
-                                        <td class="py-3 px-4">@item.CustomerName</td>
-                                        <td class="py-3 px-4 text-right text-green-600 font-semibold">@item.TotalRevenue.ToString("N0")</td>
-                                        <td class="py-3 px-4 text-right text-red-500">@Math.Abs(item.AdjustmentRevenue).ToString("N0")</td>
-                                        <td class="py-3 px-4 text-right text-blue-600 font-bold">@item.NetRevenue.ToString("N0")</td>
-                                    </tr>
-                                }
-                            </tbody>
-                            <tfoot class="bg-[#f9fafb] border-t border-gray-200">
-                                <tr>
-                                    <td colspan="2" class="py-4 px-4 font-bold text-center">Tổng cộng</td>
-                                    <td class="py-4 px-4 text-right font-bold text-green-700">@Model.Sum(x => x.TotalRevenue).ToString("N0")</td>
-                                    <td class="py-4 px-4 text-right font-bold text-red-600">@Math.Abs(Model.Sum(x => x.AdjustmentRevenue)).ToString("N0")</td>
-                                    <td class="py-4 px-4 text-right font-bold text-blue-700">@Model.Sum(x => x.NetRevenue).ToString("N0")</td>
-                                </tr>
-                            </tfoot>
-                        </table>
+                    <!-- Nhúng trang in thông qua iframe -->
+                    <div class="bg-white rounded-[16px] shadow-sm border border-gray-100 overflow-hidden h-[800px]">
+                        <iframe id="reportFrame" 
+                                src="@Url.Action("PrintRevenueSummary", "Ledger", new { fromDate = ((DateTime)ViewBag.FromDate).ToString("yyyy-MM-dd"), toDate = ((DateTime)ViewBag.ToDate).ToString("yyyy-MM-dd"), productId = ViewBag.SelectedProductId, customerId = ViewBag.SelectedCustomerId, autoPrint = false })" 
+                                class="w-full h-full" 
+                                frameborder="0">
+                        </iframe>
                     </div>
                 }
             }
             else
             {
-                <div class="bg-white rounded-[16px] shadow-sm p-10 text-gray-400 text-center border border-gray-100 h-full flex flex-col justify-center items-center">
-                    <i class="fas fa-chart-pie text-4xl mb-3"></i>
-                    <p>Vui lòng chọn điều kiện và nhấn "Lọc" để xem báo cáo.</p>
+                <div class="bg-white rounded-[16px] shadow-sm p-10 text-gray-400 text-center border border-gray-100 h-full flex flex-col justify-center items-center min-h-[300px]">
+                    <i class="fas fa-file-pdf text-4xl mb-3 text-gray-300"></i>
+                    <p>Vui lòng chọn điều kiện và nhấn "Lọc" để xem bản trước Báo cáo.</p>
                 </div>
             }
         </div>

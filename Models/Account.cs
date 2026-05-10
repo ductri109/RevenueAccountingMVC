@@ -10,14 +10,17 @@ namespace RevenueAccountingMVC.Models
         [Display(Name = "Tài sản")]
         Asset = 1,
 
-        [Display(Name = "Nợ phải trả & Vốn chủ sở hữu")]
-        LiabilityAndEquity = 2,
+        [Display(Name = "Nợ phải trả")]
+        Liability = 2,
 
-        [Display(Name = "Doanh thu")]
-        Revenue = 3,
+        [Display(Name = "Vốn chủ sở hữu")]
+        Equity = 3,
 
-        [Display(Name = "Chi phí")]
-        Expense = 4
+        [Display(Name = "Thu nhập khác")] // Bao gồm cả doanh thu
+        Income = 4,
+
+        [Display(Name = "Chi phí khác")] // Bao gồm cả chi phí hoạt động
+        Expense = 5
     }
 
     public enum AccountNature
@@ -56,8 +59,6 @@ namespace RevenueAccountingMVC.Models
         [Required]
         [MaxLength(255)]
         public string AccountName { get; set; }
-
-        // ❌ ĐÃ XÓA Level
 
         public AccountCategory Category { get; set; }
 

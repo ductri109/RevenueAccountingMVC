@@ -4,9 +4,10 @@
 @{
     ViewData["Title"] = "Quản lý danh mục khách hàng";
     Layout = "~/Views/Shared/_Layout.cshtml";
-
-
-
+    
+    // Đánh dấu tab đang active và đếm tổng số lượng bản ghi truyền vào Tab
+    ViewData["ActiveTab"] = "Customer";
+    ViewData["CurrentCount"] = Model?.Count() ?? 0;
 }
 
 <div class="p-8">
@@ -49,7 +50,11 @@
         </form>
     </div>
 
-    <div class="mt-6 bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+    <!-- Tiêu đề bảng & Số lượng -->
+    <div class="mt-6 flex justify-between items-end">
+    </div>
+
+    <div class="mt-2 bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
         <table class="w-full text-left text-[14px]">
             <thead class="border-b border-gray-200 bg-white">
                 <tr>

@@ -234,16 +234,19 @@ $('#btnTabTax').click(function() {
     updateAllTaxAmounts();
 });
 
+// Cập nhật lại toàn bộ tiền thuế nếu có thay đổi từ tab doanh thu
 function updateAllTaxAmounts() {
     $('#tblDetails tbody tr:not(.tax-row)').each(function() {
         let row = $(this);
         let amount = parseFloat(row.find('.txt-amount').val()) || 0;
         let index = row.find('input[name$=".Index"]').val();
-        let taxRate = parseFloat(row.find('.hdn-tax-rate').val()) || 0;
         
         let taxRow = $(`.tax-row[data-ref="${index}"]`);
         
         if(taxRow.length > 0 && !taxRow.data('manual')) {
+            // Lấy trực tiếp thuế suất từ ô nhập bên tab thuế
+            let taxRate = parseFloat(taxRow.find('.txt-tax-rate').val()) || 0;
+            // Áp dụng công thức: Thuế = Thành tiền * Thuế suất %
             let taxAmount = amount * (taxRate / 100);
             taxRow.find('.txt-tax-amount').val(taxAmount.toFixed(0));
         }
@@ -262,7 +265,6 @@ $('#ddlOriginalVoucher').change(function(){
         $.get(`/RevenueAdjustment/GetOriginalVoucher/${id}`,function(res){
             const accountsOptionsHtml = $('#tpl-accounts').html();
 
-            // Cập nhật trường hiển thị chứng từ gốc
             $('#txtOriginalCustomer').val(res.customerName); 
             $('#txtOriginalDate').val(res.voucherDate);
 
@@ -339,25 +341,23 @@ $('#ddlOriginalVoucher').change(function(){
 
                     <input type="hidden" name="Details[${rowIdx}].OriginalQty" class="hdn-o-qty" value="${d.originalQty}" />
                     <input type="hidden" name="Details[${rowIdx}].OriginalPrice" class="hdn-o-price" value="${d.originalPrice}" />
-                    <input type="hidden" name="Details[${rowIdx}].OriginalTaxRate" class="hdn-tax-rate" value="${d.originalTaxRate}" />
                 </tr>
                 `;
 
                 tbodyRevenue.append(row);
 
-                if (d.originalTaxRate > 0) {
+                if (d.originalTaxRate >= 0) { // Cho phép cả trường hợp thuế 0%
                     let taxRow = `
                     <tr class="tax-row" data-ref="${rowIdx}">
                         <input type="hidden" name="TaxDetails.Index" value="${rowIdx}" />
-                        <!-- THÊM DÒNG NÀY ĐỂ FIX LỖI MẤT REF INDEX -->
                         <input type="hidden" name="TaxDetails[${rowIdx}].RefIndex" value="${rowIdx}" /> 
 
-                        <!-- ĐÃ SỬA: Mockup lại trường Thuế suất (%) thành Input hiển thị đẹp mắt -->
                         <td class="py-2 px-2">
                             <div class="relative flex items-center">
+                                <!-- MỞ KHÓA: Thêm class txt-tax-rate, bỏ readonly để sửa trực tiếp Thuế suất -->
                                 <input type="number" step="any" name="TaxDetails[${rowIdx}].TaxRate" 
-                                    class="w-full border border-gray-200 rounded p-1.5 bg-[#f8fafc] pr-6 font-semibold text-gray-700 outline-none" 
-                                    value="${d.originalTaxRate || 0}" readonly title="Thuế suất GTGT" />
+                                    class="txt-tax-rate w-full border border-gray-300 rounded p-1.5 bg-white pr-6 font-semibold text-gray-900 outline-none focus:border-blue-500" 
+                                    value="${d.originalTaxRate || 0}" title="Thuế suất GTGT" />
                                 <span class="absolute right-2 text-gray-500 text-sm font-medium">%</span>
                             </div>
                         </td>
@@ -391,22 +391,18 @@ $('#ddlOriginalVoucher').change(function(){
     }
 });
 
-// SỰ KIỆN ĐỔI MÃ KHÁCH HÀNG
 $('#ddlCustomer').change(function(){
     let id = $(this).val();
     
-    // Xóa sạch thông tin cũ
     $('#ddlOriginalVoucher').empty().append('<option value="">-- Chọn chứng từ --</option>');
     $('#txtCustomerName').val('');
     $('#txtAddress').val('');
     $('#hdnCustomerCode').val('');
 
     if(id){
-        // Lưu giá trị Mã KH (ví dụ KH001) hiển thị trên Dropdown vào biến Hidden
         let customerCode = $(this).find("option:selected").text();
         $('#hdnCustomerCode').val(customerCode);
 
-        // Gọi API ĐỂ TỰ ĐỘNG ĐIỀN TÊN VÀ ĐỊA CHỈ
         $.get(`/RevenueAdjustment/GetCustomerInfo/${id}`, function(data) {
             $('#txtCustomerName').val(data.customerName || '');
             $('#txtAddress').val(data.address || '');
@@ -414,7 +410,6 @@ $('#ddlCustomer').change(function(){
             console.log("Cảnh báo: Không thể lấy chi tiết khách hàng từ server.");
         });
 
-        // Load danh sách Chứng từ của Khách hàng này
         $.get(`/RevenueAdjustment/GetVouchersByCustomer?customerId=${id}`,function(res){
             res.forEach(v=>{
                 $('#ddlOriginalVoucher').append(`<option value="${v.id}">${v.voucherCode}</option>`);
@@ -437,8 +432,6 @@ function updateRowUI(row) {
     let oPrice = parseFloat(row.find('.hdn-o-price').val()) || 0;
 
     let inputs = row.find('.txt-qty, .txt-price, .txt-discount');
-    
-    // SỬA LỖI QUAN TRỌNG: Thay vì .val('') thì phải là .val(0) để tránh lỗi "The value '' is invalid" ở Server
     inputs.prop('readonly', true).removeClass('bg-white').addClass('bg-[#f8fafc]').val(0);
 
     if (type === "TraLai") {
@@ -473,10 +466,7 @@ function calculateRow(row){
     let amount = 0;
 
     if (type === "TraLai") {
-        if (qty > 0) {
-            qty = -qty;
-            row.find('.txt-qty').val(qty);
-        }
+        if (qty > 0) { qty = -qty; row.find('.txt-qty').val(qty); }
         if (Math.abs(qty) > oQty) {
             alert("Số lượng trả lại không được vượt quá số lượng còn lại (" + oQty + ")!");
             qty = -oQty;
@@ -485,10 +475,7 @@ function calculateRow(row){
         amount = qty * oPrice; 
     } 
     else if (type === "GiamGia") {
-        if (price > 0) {
-            price = -price;
-            row.find('.txt-price').val(price);
-        }
+        if (price > 0) { price = -price; row.find('.txt-price').val(price); }
         if (Math.abs(price) > oPrice) {
             alert("Đơn giá giảm không được vượt quá giá trị có thể giảm (" + oPrice + ")!");
             price = -oPrice;
@@ -506,16 +493,19 @@ function calculateRow(row){
     }
 
     row.find('.txt-amount').val(amount.toFixed(0));
+    
+    // Cập nhật ngay sang tab thuế
     updateTaxTab(row, amount);
     calculateTotal();
 }
 
 function updateTaxTab(row, amount) {
     let index = row.find('input[name$=".Index"]').val();
-    let taxRate = parseFloat(row.find('.hdn-tax-rate').val()) || 0;
-
     let taxRow = $(`.tax-row[data-ref="${index}"]`);
     if (taxRow.length === 0) return;
+
+    // Lấy thuế suất từ input bên tab thuế (thay vì ẩn)
+    let taxRate = parseFloat(taxRow.find('.txt-tax-rate').val()) || 0;
 
     if (!taxRow.data('manual')) {
         let taxAmount = amount * (taxRate / 100);
@@ -552,11 +542,34 @@ $(document).on('change', '.ddl-type', function(){
     updateRowUI($(this).closest('tr'));
 });
 
-$(document).on('change', '.txt-qty, .txt-price, .txt-discount', function(){
+$(document).on('input', '.txt-qty, .txt-price, .txt-discount', function(){
     calculateRow($(this).closest('tr'));
 });
 
-$(document).on('change', '.txt-tax-amount', function(){
+// SỰ KIỆN: KHI NGƯỜI DÙNG SỬA THUẾ SUẤT TRỰC TIẾP TRÊN UI
+$(document).on('input', '.txt-tax-rate', function(){
+    let taxRow = $(this).closest('.tax-row');
+    let index = taxRow.attr('data-ref');
+    
+    // Tìm dòng doanh thu tương ứng để lấy Thành tiền giảm
+    let revenueRow = $('#tblDetails tbody tr:not(.tax-row)').filter(function() {
+        return $(this).find('input[name$=".Index"]').val() == index;
+    });
+
+    let amount = parseFloat(revenueRow.find('.txt-amount').val()) || 0;
+    let taxRate = parseFloat($(this).val()) || 0;
+
+    // Tính lại: Thuế = Thành tiền * Thuế suất %
+    let taxAmount = amount * (taxRate / 100);
+    taxRow.find('.txt-tax-amount').val(taxAmount.toFixed(0));
+    
+    // Đặt cờ manual = false để nó vẫn auto update nếu Thành tiền đổi
+    taxRow.data('manual', false); 
+    calculateTotal();
+});
+
+// SỰ KIỆN: KHI NGƯỜI DÙNG CỐ TÌNH SỬA THÀNH TIỀN THUẾ
+$(document).on('input', '.txt-tax-amount', function(){
     $(this).closest('.tax-row').data('manual', true);
     calculateTotal();
 });
@@ -608,9 +621,7 @@ $(document).ready(function () {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    // SỬA LỖI QUAN TRỌNG TRƯỚC KHI SUBMIT FORM
     $('#frmGhiGiam').on('submit', function () {
-        // Rà soát lại tất cả các ô input dạng số, nếu bị rỗng thì tự điền số 0 để chống văng lỗi Server
         $(this).find('input[type="number"], .txt-amount, .txt-tax-amount').each(function() {
             if ($(this).val() === '') {
                 $(this).val(0);
