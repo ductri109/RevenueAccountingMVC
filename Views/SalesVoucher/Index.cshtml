@@ -4,6 +4,15 @@
 @{
     ViewData["Title"] = "Quản lý doanh thu";
     Layout = "~/Views/Shared/_Layout.cshtml";
+
+    // Khởi tạo các biến phân trang từ Controller truyền sang
+    int currentPage = ViewData["CurrentPage"] != null ? (int)ViewData["CurrentPage"] : 1;
+    int totalPages = ViewData["TotalPages"] != null ? (int)ViewData["TotalPages"] : 1;
+    int totalItems = ViewData["TotalItems"] != null ? (int)ViewData["TotalItems"] : 0;
+    string currentSearch = ViewData["CurrentSearch"]?.ToString();
+    
+    // Lấy tổng tiền toàn bộ danh sách (đã lọc)
+    decimal totalAmount = ViewData["TotalAmount"] != null ? (decimal)ViewData["TotalAmount"] : 0;
 }
 
 <div class="p-8">
@@ -19,16 +28,19 @@
             <i data-lucide="plus-circle" class="w-4 h-4"></i> Ghi nhận mới
         </a>
 
-        <form method="get" class="flex items-center gap-3 flex-1 ml-4">
+        <form asp-action="Index" method="get" class="flex items-center gap-3 flex-1 ml-4">
             <div class="relative w-[350px]">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <i data-lucide="search" class="w-4 h-4 text-gray-400"></i>
                 </div>
-                <input type="text" name="searchString" value="@ViewData["CurrentSearch"]" class="w-full bg-gray-50 border border-gray-300 focus:border-black rounded-lg pl-9 pr-4 py-2.5 text-[14px] outline-none transition-all" placeholder="Tìm số chứng từ, khách hàng...">
+                <input type="text" name="searchString" value="@currentSearch" class="w-full bg-gray-50 border border-gray-300 focus:border-black rounded-lg pl-9 pr-4 py-2.5 text-[14px] outline-none transition-all" placeholder="Tìm số chứng từ, khách hàng...">
             </div>
             <button type="submit" class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2.5 rounded-lg text-[14px] font-medium flex items-center gap-2 shadow-sm">
                 Tìm kiếm
             </button>
+            <a asp-action="Index" class="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-4 py-2.5 rounded-lg text-[14px] font-medium flex items-center gap-2 transition-colors cursor-pointer shadow-sm ml-auto">
+                <i data-lucide="refresh-cw" class="w-4 h-4 text-gray-600"></i> Làm mới
+            </a>
         </form>
     </div>
 
@@ -47,11 +59,11 @@
             </thead>
             <tbody class="divide-y divide-gray-100">
                 
-                @* ĐÃ SỬA: Dòng tổng được chuyển lên đầu của tbody giống mẫu của bạn *@
+                @* ĐÃ SỬA: Dòng tổng lấy từ Controller để tính tổng của tất cả trang thay vì chỉ trang hiện tại *@
                 <tr class="bg-gray-50/50 font-semibold text-gray-900">
-                    <td colspan="5" class="py-3 px-5 text-[14px]">Tổng</td>
+                    <td colspan="5" class="py-3 px-5 text-[14px]">Tổng cộng toàn bộ dữ liệu</td>
                     <td class="py-3 px-5 text-right text-[14px] text-black-700 font-bold">
-                        @(Model?.Sum(x => x.TotalPayment).ToString("N0") ?? "0") đ
+                        @totalAmount.ToString("N0") đ
                     </td>
                     <td></td>
                 </tr>
@@ -106,7 +118,54 @@
             </tbody>
         </table>
     </div>
+
+    <!-- KHU VỰC PHÂN TRANG (PAGINATION) -->
+    @if (totalPages > 1)
+    {
+        <div class="mt-4 flex items-center justify-between bg-white px-4 py-3 border border-gray-200 rounded-xl shadow-sm">
+            <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm text-gray-700">
+                        Trang <span class="font-medium">@currentPage</span> / <span class="font-medium">@totalPages</span>
+                    </p>
+                </div>
+                <div>
+                    <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                        <!-- Nút Previous -->
+                        <a asp-action="Index" 
+                           asp-route-pageNumber="@(currentPage - 1)" 
+                           asp-route-searchString="@currentSearch" 
+                           class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 @(currentPage == 1 ? "pointer-events-none opacity-50 bg-gray-100" : "cursor-pointer")">
+                            <span class="sr-only">Previous</span>
+                            <i data-lucide="chevron-left" class="h-4 w-4"></i>
+                        </a>
+                        
+                        <!-- Hiển thị các số trang -->
+                        @for (int i = 1; i <= totalPages; i++)
+                        {
+                            <a asp-action="Index" 
+                               asp-route-pageNumber="@i" 
+                               asp-route-searchString="@currentSearch" 
+                               class="relative inline-flex items-center px-4 py-2 text-sm font-semibold @(i == currentPage ? "z-10 bg-[#0f172a] text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0f172a]" : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 cursor-pointer")">
+                                @i
+                            </a>
+                        }
+
+                        <!-- Nút Next -->
+                        <a asp-action="Index" 
+                           asp-route-pageNumber="@(currentPage + 1)" 
+                           asp-route-searchString="@currentSearch" 
+                           class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 @(currentPage == totalPages ? "pointer-events-none opacity-50 bg-gray-100" : "cursor-pointer")">
+                            <span class="sr-only">Next</span>
+                            <i data-lucide="chevron-right" class="h-4 w-4"></i>
+                        </a>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    }
 </div>
+
 @Html.AntiForgeryToken()
 
 @section Scripts {

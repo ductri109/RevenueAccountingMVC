@@ -22,10 +22,10 @@ namespace RevenueAccountingMVC.Controllers
         // =======================
         // INDEX
         // =======================
-        [Authorize(Roles = "Accountant, Leader")] // CHỈ KẾ TOÁN VÀ LÃNH ĐẠO MỚI ĐƯỢC XEM DANH SÁCH TÀI KHOẢN
-        public async Task<IActionResult> Index(string searchString)
+        [Authorize(Roles = "Accountant, Leader")]
+        public async Task<IActionResult> Index(string searchString, int pageNumber = 1)
         {
-            // Tải toàn bộ danh sách để có thể tính toán cấp độ (Level)
+            // Tải toàn bộ danh sách để có thể tính toán cấp độ (Level) theo cây phả hệ
             var allAccounts = await _context.Accounts
                 .Include(a => a.ParentAccount)
                 .OrderBy(a => a.AccountNumber)
@@ -33,17 +33,34 @@ namespace RevenueAccountingMVC.Controllers
 
             var query = allAccounts.AsEnumerable();
 
+            // 1. Áp dụng tìm kiếm (nếu có)
             if (!string.IsNullOrEmpty(searchString))
             {
                 query = query.Where(a =>
-                    a.AccountNumber.Contains(searchString) ||
-                    a.AccountName.Contains(searchString));
+                    a.AccountNumber.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+                    a.AccountName.Contains(searchString, StringComparison.OrdinalIgnoreCase));
             }
 
-            ViewData["CurrentSearch"] = searchString;
-            return View(query);
-        }
+            // 2. Tính toán phân trang
+            int pageSize = 10;
+            int totalItems = query.Count();
+            int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
 
+            // Xử lý trường hợp trang nhập vào không hợp lệ
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageNumber > totalPages && totalPages > 0) pageNumber = totalPages;
+
+            // 3. Cắt dữ liệu theo trang hiện tại
+            var paginatedData = query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+
+            // 4. Đẩy dữ liệu ra View
+            ViewData["CurrentSearch"] = searchString;
+            ViewData["CurrentPage"] = pageNumber;
+            ViewData["TotalPages"] = totalPages;
+            ViewData["TotalItems"] = totalItems; // Dùng để hiển thị đếm số lượng trên Tab
+
+            return View(paginatedData);
+        }
         // =======================
         // CREATE (GET)
         // =======================

@@ -1,0 +1,469 @@
+@model RevenueAccountingMVC.ViewModels.RevenueAdjustmentViewModel
+@{
+    ViewData["Title"] = "Chỉnh sửa ghi giảm doanh thu";
+}
+
+<div class="min-h-screen font-['Inter'] antialiased text-slate-900 bg-slate-50/30 pb-20">
+    <form asp-action="Edit" method="post" id="frmGhiGiam">
+        <input type="hidden" asp-for="Id" id="hdnAdjustmentId" />
+        
+        <div class="w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8 max-w-7xl mx-auto">
+            
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div asp-validation-summary="All" class="text-rose-700 bg-rose-50 border border-rose-200 p-4 mb-6 rounded-xl text-sm font-medium shadow-sm"></div>
+            }
+
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 gap-4">
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">Chỉnh sửa Ghi giảm - <span class="text-amber-600">@Model.AdjustmentCode</span></h1>
+                    <p class="text-sm text-slate-500 mt-1">Hệ thống sẽ tự động cập nhật lại sổ nhật ký chung.</p>
+                </div>
+                <div class="flex items-center gap-3 w-full sm:w-auto">
+                    <a asp-action="Index" class="flex-1 sm:flex-none justify-center flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-50 transition-all shadow-sm">
+                        <i data-lucide="x" class="w-4 h-4"></i> Hủy
+                    </a>
+                    <button type="submit" class="flex-1 sm:flex-none justify-center flex items-center gap-2 px-6 py-2 bg-slate-900 text-white text-sm font-semibold rounded-lg hover:bg-slate-800 transition-all shadow-sm">
+                        <i data-lucide="save" class="w-4 h-4"></i> Cập nhật chứng từ
+                    </button>
+                </div>
+            </div>
+
+            <div class="space-y-6">
+                <!-- THÔNG TIN CHUNG -->
+                <div class="bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-slate-200">
+                    <h2 class="font-bold text-base text-slate-900 mb-5 border-b border-slate-100 pb-3">Thông tin chung</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1.5">Mã điều chỉnh</label>
+                            <input asp-for="AdjustmentCode" class="w-full border border-slate-200 rounded-lg p-2.5 bg-slate-50 text-sm text-slate-500 font-semibold outline-none pointer-events-none" readonly />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1.5">Ngày chứng từ</label>
+                            <input asp-for="AdjustmentDate" type="date" class="w-full border border-slate-200 rounded-lg p-2.5 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1.5">Ngày hạch toán</label>
+                            <input asp-for="AccountingDate" type="date" class="w-full border border-slate-200 rounded-lg p-2.5 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1.5">Mã khách hàng</label>
+                            <select id="ddlCustomer" asp-for="CustomerId" asp-items="ViewBag.Customers" class="w-full border border-slate-200 rounded-lg p-2.5 bg-slate-50 text-sm text-slate-500 outline-none pointer-events-none" readonly></select>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-sm font-medium text-slate-700 mb-1.5">Tên khách hàng</label>
+                            <input type="text" readonly id="txtCustomerName" class="w-full border border-slate-200 rounded-lg p-2.5 bg-slate-50 text-sm text-slate-600 outline-none pointer-events-none" />
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-sm font-medium text-slate-700 mb-1.5">Địa chỉ</label>
+                            <input type="text" readonly id="txtAddress" class="w-full border border-slate-200 rounded-lg p-2.5 bg-slate-50 text-sm text-slate-600 outline-none pointer-events-none" />
+                        </div>
+                        <div class="lg:col-span-4">
+                            <label class="block text-sm font-medium text-slate-700 mb-1.5">Lý do điều chỉnh</label>
+                            <textarea asp-for="Description" class="w-full border border-slate-200 rounded-lg p-2.5 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all" rows="2"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CHỨNG TỪ GỐC -->
+                <div class="bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-slate-200">
+                    <h2 class="font-bold text-base text-slate-900 mb-5 border-b border-slate-100 pb-3">Chứng từ gốc</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1.5">Số chứng từ bán hàng</label>
+                            <select asp-for="OriginalSalesVoucherId" id="ddlOriginalVoucher" asp-items="ViewBag.Vouchers" class="w-full border border-slate-200 rounded-lg p-2.5 bg-slate-50 text-sm text-slate-500 outline-none pointer-events-none"></select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1.5">Ngày chứng từ gốc</label>
+                            <input type="date" id="txtOriginalDate" class="w-full border border-slate-200 rounded-lg p-2.5 bg-slate-50 text-sm text-slate-600 outline-none pointer-events-none" readonly />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1.5">Khách hàng</label>
+                            <input type="text" id="txtOriginalCustomer" class="w-full border border-slate-200 rounded-lg p-2.5 bg-slate-50 text-sm text-slate-600 outline-none pointer-events-none" readonly />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1.5">Tổng tiền hàng</label>
+                            <input type="text" id="txtOriginalAmountDisplay" class="w-full border border-slate-200 rounded-lg p-2.5 bg-slate-50 text-sm font-semibold text-slate-600 outline-none pointer-events-none" readonly />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1.5">Thuế GTGT gốc</label>
+                            <input type="text" id="txtOriginalTaxRateDisplay" class="w-full border border-slate-200 rounded-lg p-2.5 bg-slate-50 text-sm font-semibold text-slate-600 outline-none pointer-events-none" readonly />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1.5">Tổng thanh toán</label>
+                            <input type="text" id="txtOriginalPaymentDisplay" class="w-full border border-slate-200 rounded-lg p-2.5 bg-slate-50 text-sm font-bold text-slate-600 outline-none pointer-events-none" readonly />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BẢNG CHI TIẾT -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="p-6 pb-0">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-2">
+                            <h2 class="font-bold text-base text-slate-900">Chi tiết ghi giảm</h2>
+                            <span class="text-amber-600 text-xs sm:text-sm font-medium bg-amber-50 px-3 py-1 rounded-md border border-amber-100">* Chỉ được phép sửa số liệu, không thể thêm/xóa dòng.</span>
+                        </div>
+                        <div class="flex gap-6 border-b border-slate-200">
+                            <button type="button" id="btnTabRevenue" class="pb-3 text-sm font-semibold text-indigo-600 border-b-2 border-indigo-600 transition-colors">Ghi giảm doanh thu</button>
+                            <button type="button" id="btnTabTax" class="pb-3 text-sm font-semibold text-slate-500 border-b-2 border-transparent hover:text-slate-800 transition-colors">Hạch toán thuế</button>
+                        </div>
+                    </div>
+
+                    <div class="p-6 overflow-x-auto">
+                        <div id="tabRevenueContent" class="block">
+                            <table class="w-full min-w-[1000px] text-left text-sm" id="tblDetails">
+                                <thead class="text-slate-500 font-semibold border-b border-slate-100">
+                                    <tr>
+                                        <th class="pb-3 px-2 w-[220px] uppercase text-[11px] tracking-wider">Sản phẩm</th>
+                                        <th class="pb-3 px-2 w-[100px] uppercase text-[11px] tracking-wider">Số lượng</th>
+                                        <th class="pb-3 px-2 w-[130px] uppercase text-[11px] tracking-wider">Đơn giá</th>
+                                        <th class="pb-3 px-2 w-[110px] uppercase text-[11px] tracking-wider">TK Nợ</th>
+                                        <th class="pb-3 px-2 w-[110px] uppercase text-[11px] tracking-wider">TK Có</th>
+                                        <th class="pb-3 px-2 w-[80px] uppercase text-[11px] tracking-wider">%CK</th>
+                                        <th class="pb-3 px-2 w-[140px] uppercase text-[11px] tracking-wider text-right">Thành tiền</th>
+                                        <th class="pb-3 px-2 w-[180px] uppercase text-[11px] tracking-wider">Loại giảm</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-50">
+                                    <!-- JS Load -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div id="tabTaxContent" class="hidden">
+                            <table class="w-full min-w-[800px] text-left text-sm" id="tblTaxDetails">
+                                <thead class="text-slate-500 font-semibold border-b border-slate-100">
+                                    <tr>
+                                        <th class="pb-3 px-2 w-[150px] uppercase text-[11px] tracking-wider">Thuế suất (%)</th>
+                                        <th class="pb-3 px-2 w-[250px] uppercase text-[11px] tracking-wider">Thành tiền (Số âm)</th>
+                                        <th class="pb-3 px-2 w-[180px] uppercase text-[11px] tracking-wider">TK Thuế</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-50">
+                                    <!-- JS Load -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="px-6 py-6 bg-slate-50 border-t border-slate-100 flex flex-col items-end gap-3 text-sm">
+                        <div class="flex justify-between w-[320px]">
+                            <span class="font-medium text-slate-600">Cộng tiền hàng (Giảm):</span>
+                            <span id="lblTotalAmount" class="font-bold text-slate-900">@Model.TotalDiscountAmount.ToString("N0")</span>
+                        </div>
+                        <div class="flex justify-between w-[320px]">
+                            <span class="font-medium text-slate-600">Tiền thuế (Giảm):</span>
+                            <span id="lblTotalTax" class="font-bold text-slate-900">@Model.TotalTaxAmount.ToString("N0")</span>
+                        </div>
+                        <div class="flex justify-between w-[320px] text-base mt-2 pt-3 border-t border-slate-200">
+                            <span class="font-bold text-slate-900">Tổng cộng:</span>
+                            <span id="lblTotalPayment" class="font-bold text-rose-600">@Model.TotalPayment.ToString("N0")</span>
+                        </div>
+
+                        <input type="hidden" asp-for="TotalDiscountAmount" id="hdnTotalAmount" />
+                        <input type="hidden" asp-for="TotalTaxAmount" id="hdnTotalTax" />
+                        <input type="hidden" asp-for="TotalPayment" id="hdnTotalPayment" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Dữ liệu thô JSON để JS load lại lưới -->
+<script id="modelData" type="application/json">
+    @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Details))
+</script>
+<script id="taxData" type="application/json">
+    @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.TaxDetails))
+</script>
+
+<template id="tpl-accounts">
+    @if(ViewBag.Accounts != null)
+    {
+        @foreach (var item in (SelectList)ViewBag.Accounts) 
+        { 
+            <option value="@item.Value">@item.Text</option> 
+        }
+    }
+</template>
+
+@section Scripts{
+    <script>
+        $(document).ready(function () {
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+
+            let editData = JSON.parse(document.getElementById('modelData').innerHTML);
+            let taxData = JSON.parse(document.getElementById('taxData').innerHTML);
+            let currentId = $('#hdnAdjustmentId').val();
+
+            let cId = $('#ddlCustomer').val();
+            let vId = $('#ddlOriginalVoucher').val();
+            
+            if (cId) {
+                $.get(`/RevenueAdjustment/GetCustomerInfo/${cId}`, function(data) {
+                    $('#txtCustomerName').val(data.customerName);
+                    $('#txtAddress').val(data.address);
+                });
+            }
+
+            if (vId) {
+                $.get(`/RevenueAdjustment/GetOriginalVoucher?id=${vId}&excludeAdjustmentId=${currentId}`, function(res) {
+                    $('#txtOriginalCustomer').val(res.customerName); 
+                    $('#txtOriginalDate').val(res.voucherDate);
+                    $('#txtOriginalAmountDisplay').val((res.totalAmount || 0).toLocaleString('vi-VN') + ' đ');
+                    let headerTaxRate = (res.details && res.details.length > 0) ? res.details[0].originalTaxRate : 0;
+                    $('#txtOriginalTaxRateDisplay').val(headerTaxRate + ' %');
+                    $('#txtOriginalPaymentDisplay').val((res.totalPayment || 0).toLocaleString('vi-VN') + ' đ');
+
+                    let accountsOptionsHtml = $('#tpl-accounts').html();
+                    let tbodyRevenue = $('#tblDetails tbody');
+                    let tbodyTax = $('#tblTaxDetails tbody');
+                    
+                    tbodyRevenue.empty();
+                    tbodyTax.empty();
+
+                    editData.forEach((ed, idx) => {
+                        let matchedOrigin = res.details.find(x => x.productId === ed.ProductId);
+                        let oQty = matchedOrigin ? matchedOrigin.originalQty : 0;
+                        let oPrice = matchedOrigin ? matchedOrigin.originalPrice : 0;
+                        let tData = taxData.find(x => x.RefIndex === idx) || {};
+
+                        let row = `
+                        <tr class="group hover:bg-slate-50 transition-colors">
+                            <input type="hidden" name="Details.Index" value="${idx}" />
+                            <td class="py-2.5 px-2">
+                                <input type="hidden" name="Details[${idx}].ProductId" value="${ed.ProductId}" /> 
+                                <span class="font-semibold text-slate-700">${matchedOrigin ? matchedOrigin.productCode : 'SP ' + ed.ProductId}</span>
+                            </td>
+                            <td class="py-2.5 px-2"><input type="number" name="Details[${idx}].Quantity" class="txt-qty w-full border border-slate-200 rounded-lg p-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none" value="${ed.Quantity}" /></td>
+                            <td class="py-2.5 px-2"><input type="number" name="Details[${idx}].UnitPrice" class="txt-price w-full border border-slate-200 rounded-lg p-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none" value="${ed.UnitPrice}" /></td>
+                            <td class="py-2.5 px-2">
+                                <select class="w-full border border-slate-200 rounded-lg p-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none" name="Details[${idx}].DebitAccountId">
+                                    <option value="${ed.DebitAccountId || ''}" selected>${ed.DebitAccountId || '-- Chọn --'}</option>
+                                    ${accountsOptionsHtml}
+                                </select>
+                            </td>
+                            <td class="py-2.5 px-2">
+                                <select class="w-full border border-slate-200 rounded-lg p-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none" name="Details[${idx}].CreditAccountId">
+                                    <option value="${ed.CreditAccountId || ''}" selected>${ed.CreditAccountId || '-- Chọn --'}</option>
+                                    ${accountsOptionsHtml}
+                                </select>
+                            </td>
+                            <td class="py-2.5 px-2"><input type="number" step="0.01" class="txt-discount w-full border border-slate-200 rounded-lg p-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none" name="Details[${idx}].DiscountRate" value="${ed.DiscountRate}" /></td>
+                            <td class="py-2.5 px-2"><input type="text" name="Details[${idx}].Amount" class="txt-amount w-full border-transparent bg-transparent text-right font-bold text-slate-900 focus:outline-none" value="${ed.Amount}" readonly /></td>
+                            <td class="py-2.5 px-2">
+                                <select name="Details[${idx}].AdjustmentType" class="ddl-type w-full border border-slate-200 rounded-lg p-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none">
+                                    <option value="GiamGia" ${ed.AdjustmentType=='GiamGia'?'selected':''}>Giảm giá</option>
+                                    <option value="TraLai" ${ed.AdjustmentType=='TraLai'?'selected':''}>Trả lại</option>
+                                    <option value="ChietKhau" ${ed.AdjustmentType=='ChietKhau'?'selected':''}>Chiết khấu</option>
+                                </select>
+                            </td>
+                            <input type="hidden" name="Details[${idx}].OriginalQty" class="hdn-o-qty" value="${oQty}" />
+                            <input type="hidden" name="Details[${idx}].OriginalPrice" class="hdn-o-price" value="${oPrice}" />
+                        </tr>`;
+
+                        tbodyRevenue.append(row);
+
+                        let taxRow = `
+                        <tr class="tax-row hover:bg-slate-50 transition-colors" data-ref="${idx}">
+                            <input type="hidden" name="TaxDetails.Index" value="${idx}" />
+                            <input type="hidden" name="TaxDetails[${idx}].RefIndex" value="${idx}" /> 
+                            <td class="py-2.5 px-2">
+                                <div class="relative flex items-center">
+                                    <input type="number" step="any" name="TaxDetails[${idx}].TaxRate" class="txt-tax-rate w-full border border-slate-200 rounded-lg p-2 pr-6 bg-white font-semibold text-slate-900 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-sm" value="${tData.TaxRate || 0}" />
+                                    <span class="absolute right-2 text-slate-400 text-sm font-medium">%</span>
+                                </div>
+                            </td>
+                            <td class="py-2.5 px-2"><input type="number" step="any" name="TaxDetails[${idx}].TaxAmount" class="txt-tax-amount w-full border border-slate-200 rounded-lg p-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none" value="${tData.TaxAmount || 0}" /></td>
+                            <td class="py-2.5 px-2">
+                                <select class="w-full border border-slate-200 rounded-lg p-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none" name="TaxDetails[${idx}].TaxAccountId">
+                                    <option value="${tData.TaxAccountId || ''}" selected>${tData.TaxAccountId || '-- Chọn --'}</option>
+                                    ${accountsOptionsHtml}
+                                </select>
+                            </td>
+                        </tr>`;
+                        tbodyTax.append(taxRow);
+                    });
+
+                    $('#tblDetails tbody tr:not(.tax-row)').each(function () {
+                        updateRowUI($(this));
+                    });
+                    calculateTotal();
+                });
+            }
+
+            // Tabs toggle
+            $('#btnTabRevenue').click(function() {
+                $(this).removeClass('text-slate-500 border-transparent').addClass('text-indigo-600 border-indigo-600');
+                $('#btnTabTax').removeClass('text-indigo-600 border-indigo-600').addClass('text-slate-500 border-transparent');
+                $('#tabRevenueContent').removeClass('hidden').addClass('block');
+                $('#tabTaxContent').removeClass('block').addClass('hidden');
+            });
+
+            $('#btnTabTax').click(function() {
+                $(this).removeClass('text-slate-500 border-transparent').addClass('text-indigo-600 border-indigo-600');
+                $('#btnTabRevenue').removeClass('text-indigo-600 border-indigo-600').addClass('text-slate-500 border-transparent');
+                $('#tabTaxContent').removeClass('hidden').addClass('block');
+                $('#tabRevenueContent').removeClass('block').addClass('hidden');
+                
+                updateAllTaxAmounts();
+            });
+
+            $(document).on('change', '.ddl-type', function(){ updateRowUI($(this).closest('tr')); });
+            $(document).on('input', '.txt-qty, .txt-price, .txt-discount', function(){ calculateRow($(this).closest('tr')); });
+            
+            $(document).on('input', '.txt-tax-rate', function(){
+                let taxRow = $(this).closest('.tax-row');
+                let index = taxRow.attr('data-ref');
+                
+                let revenueRow = $('#tblDetails tbody tr:not(.tax-row)').filter(function() {
+                    return $(this).find('input[name$=".Index"]').val() == index;
+                });
+
+                let amount = parseFloat(revenueRow.find('.txt-amount').val()) || 0;
+                let taxRate = parseFloat($(this).val()) || 0;
+
+                let taxAmount = amount * (taxRate / 100);
+                taxRow.find('.txt-tax-amount').val(taxAmount.toFixed(0));
+                
+                taxRow.data('manual', false); 
+                calculateTotal();
+            });
+
+            $(document).on('input', '.txt-tax-amount', function(){
+                $(this).closest('.tax-row').data('manual', true);
+                calculateTotal();
+            });
+
+            $('#frmGhiGiam').on('submit', function () {
+                $(this).find('input[type="number"], .txt-amount, .txt-tax-amount').each(function() {
+                    if ($(this).val() === '') {
+                        $(this).val(0);
+                    }
+                });
+            });
+        });
+        
+        function updateAllTaxAmounts() {
+            $('#tblDetails tbody tr:not(.tax-row)').each(function() {
+                let row = $(this);
+                let amount = parseFloat(row.find('.txt-amount').val()) || 0;
+                let index = row.find('input[name$=".Index"]').val();
+                let taxRow = $(`.tax-row[data-ref="${index}"]`);
+                
+                if(taxRow.length > 0 && !taxRow.data('manual')) {
+                    let taxRate = parseFloat(taxRow.find('.txt-tax-rate').val()) || 0;
+                    let taxAmount = amount * (taxRate / 100);
+                    taxRow.find('.txt-tax-amount').val(taxAmount.toFixed(0));
+                }
+            });
+            calculateTotal();
+        }
+
+        function updateRowUI(row) {
+            let type = row.find('.ddl-type').val();
+            let oQty = parseFloat(row.find('.hdn-o-qty').val()) || 0;
+            let oPrice = parseFloat(row.find('.hdn-o-price').val()) || 0;
+
+            let inputs = row.find('.txt-qty, .txt-price, .txt-discount');
+            inputs.prop('readonly', true).removeClass('bg-white').addClass('bg-slate-50 text-slate-400 pointer-events-none');
+
+            if (type === "TraLai") {
+                row.find('.txt-qty').prop('readonly', false).removeClass('bg-slate-50 text-slate-400 pointer-events-none').addClass('bg-white border-indigo-300'); 
+            } else if (type === "GiamGia") {
+                row.find('.txt-price').prop('readonly', false).removeClass('bg-slate-50 text-slate-400 pointer-events-none').addClass('bg-white border-indigo-300'); 
+            } else if (type === "ChietKhau") {
+                row.find('.txt-discount').prop('readonly', false).removeClass('bg-slate-50 text-slate-400 pointer-events-none').addClass('bg-white border-indigo-300'); 
+            }
+
+            calculateRow(row);
+        }
+
+        function calculateRow(row){
+            let type = row.find('.ddl-type').val();
+            if (!type) {
+                row.find('.txt-amount').val(0);
+                updateTaxTab(row, 0);
+                return;
+            }
+
+            let qty = parseFloat(row.find('.txt-qty').val()) || 0;
+            let price = parseFloat(row.find('.txt-price').val()) || 0;
+            let discount = parseFloat(row.find('.txt-discount').val()) || 0;
+
+            let oQty = parseFloat(row.find('.hdn-o-qty').val()) || 0;
+            let oPrice = parseFloat(row.find('.hdn-o-price').val()) || 0;
+            let amount = 0;
+
+            if (type === "TraLai") {
+                if (qty > 0) { qty = -qty; row.find('.txt-qty').val(qty); }
+                if (Math.abs(qty) > oQty) {
+                    alert("Số lượng trả lại không được vượt quá số lượng còn lại (" + oQty + ")!");
+                    qty = -oQty;
+                    row.find('.txt-qty').val(qty);
+                }
+                amount = qty * oPrice; 
+            } 
+            else if (type === "GiamGia") {
+                if (price > 0) { price = -price; row.find('.txt-price').val(price); }
+                if (Math.abs(price) > oPrice) {
+                    alert("Đơn giá giảm không được vượt quá giá trị có thể giảm (" + oPrice + ")!");
+                    price = -oPrice;
+                    row.find('.txt-price').val(price);
+                }
+                amount = oQty * price; 
+            }
+            else if (type === "ChietKhau") {
+                if (discount < 0 || discount > 100) {
+                    alert("Tỷ lệ chiết khấu phải từ 0 đến 100!");
+                    discount = 0;
+                    row.find('.txt-discount').val(discount);
+                }
+                amount = -(oQty * oPrice * (discount / 100)); 
+            }
+
+            row.find('.txt-amount').val(amount.toFixed(0));
+            updateTaxTab(row, amount);
+            calculateTotal();
+        }
+
+        function updateTaxTab(row, amount) {
+            let index = row.find('input[name$=".Index"]').val();
+            let taxRow = $(`.tax-row[data-ref="${index}"]`);
+            if (taxRow.length === 0) return;
+
+            let taxRate = parseFloat(taxRow.find('.txt-tax-rate').val()) || 0;
+
+            if (!taxRow.data('manual')) {
+                let taxAmount = amount * (taxRate / 100);
+                taxRow.find('.txt-tax-amount').val(taxAmount.toFixed(0));
+            }
+        }
+
+        function calculateTotal(){
+            let total = 0;
+            let tax = 0;
+
+            $('#tblDetails tbody tr:not(.tax-row)').each(function(){
+                let amt = parseFloat($(this).find('.txt-amount').val()) || 0;
+                total += amt;
+            });
+
+            $('#tblTaxDetails tbody tr').each(function(){
+                let t = parseFloat($(this).find('.txt-tax-amount').val()) || 0;
+                tax += t;
+            });
+
+            let payment = total + tax;
+
+            $('#lblTotalAmount').text(total.toLocaleString('vi-VN'));
+            $('#lblTotalTax').text(tax.toLocaleString('vi-VN'));
+            $('#lblTotalPayment').text(payment.toLocaleString('vi-VN'));
+
+            $('#hdnTotalAmount').val(total);
+            $('#hdnTotalTax').val(tax);
+            $('#hdnTotalPayment').val(payment);
+        }
+    </script>
+}

@@ -27,27 +27,48 @@ namespace RevenueAccountingMVC.Controllers
         // 1. INDEX - Danh sách
         // =======================
         [Authorize(Roles = "Accountant, Leader")]
-        public async Task<IActionResult> Index(string searchString)
+        public async Task<IActionResult> Index(string searchString, int pageNumber = 1)
         {
-            var vouchers = _context.SalesVouchers
+            var query = _context.SalesVouchers
                 .Include(v => v.Customer)
                 // THÊM DÒNG NÀY: Chỉ hiển thị các chứng từ có Status là Posted
                 .Where(v => v.Status == VoucherStatus.Posted)
                 .AsQueryable();
 
+            // 1. Lọc theo từ khóa tìm kiếm
             if (!string.IsNullOrEmpty(searchString))
             {
-                vouchers = vouchers.Where(v =>
+                query = query.Where(v =>
                     v.VoucherCode.Contains(searchString) ||
                     (v.CustomerNameSnapshot != null && v.CustomerNameSnapshot.Contains(searchString)));
             }
 
-            ViewData["CurrentSearch"] = searchString;
+            // 2. Tính tổng thanh toán của TẤT CẢ bản ghi (đã lọc) trước khi phân trang
+            decimal totalAmount = await query.SumAsync(v => v.TotalPayment);
 
-            return View(await vouchers
+            // 3. Tính toán phân trang
+            int pageSize = 10;
+            int totalItems = await query.CountAsync();
+            int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageNumber > totalPages && totalPages > 0) pageNumber = totalPages;
+
+            var paginatedData = await query
                 .OrderByDescending(v => v.AccountingDate)
                 .ThenByDescending(v => v.Id)
-                .ToListAsync());
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            // 4. Lưu lại trạng thái filter, tổng tiền và phân trang
+            ViewData["CurrentSearch"] = searchString;
+            ViewData["CurrentPage"] = pageNumber;
+            ViewData["TotalPages"] = totalPages;
+            ViewData["TotalItems"] = totalItems;
+            ViewData["TotalAmount"] = totalAmount;
+
+            return View(paginatedData);
         }
 
         // =======================
@@ -215,6 +236,12 @@ namespace RevenueAccountingMVC.Controllers
                 .Include(v => v.Customer)
                 .Include(v => v.Details)
                 .ThenInclude(d => d.Product)
+                .Include(s => s.Details)
+                    .ThenInclude(d => d.DebitAccount)    // Dòng này load TK Nợ
+                .Include(s => s.Details)
+                    .ThenInclude(d => d.CreditAccount)   // Dòng này load TK Có
+                .Include(s => s.Details)
+                    .ThenInclude(d => d.TaxAccount)
                 .FirstOrDefaultAsync(v => v.Id == id);
 
             if (voucher == null) return NotFound();

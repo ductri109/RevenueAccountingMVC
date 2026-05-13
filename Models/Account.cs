@@ -20,7 +20,10 @@ namespace RevenueAccountingMVC.Models
         Income = 4,
 
         [Display(Name = "Chi phí khác")] // Bao gồm cả chi phí hoạt động
-        Expense = 5
+        Expense = 5,
+
+        [Display(Name = "TK xác định kết quả kinh doanh")] 
+        IncomeSummary = 6
     }
 
     public enum AccountNature

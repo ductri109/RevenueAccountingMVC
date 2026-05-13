@@ -20,7 +20,7 @@ namespace RevenueAccountingMVC.Controllers
         // INDEX
         // =======================
         [Authorize(Roles = "Accountant, Leader")] // CHỈ KẾ TOÁN VÀ LÃNH ĐẠO MỚI ĐƯỢC XEM DANH SÁCH SẢN PHẨM
-        public async Task<IActionResult> Index(string searchString, string productType)
+        public async Task<IActionResult> Index(string searchString, string productType, int pageNumber = 1)
         {
             // 1. Khởi tạo truy vấn
             var products = _context.Products
@@ -37,7 +37,7 @@ namespace RevenueAccountingMVC.Controllers
                     (p.ProductName ?? "").Contains(searchString));
             }
 
-            // 3. LỌC THEO LOẠI SẢN PHẨM (Đây là phần bạn cần thêm)
+            // 3. LỌC THEO LOẠI SẢN PHẨM
             if (!string.IsNullOrEmpty(productType))
             {
                 // Giả sử: 1 = Goods, 2 = Services (Dựa theo Enum của bạn)
@@ -48,11 +48,25 @@ namespace RevenueAccountingMVC.Controllers
                 }
             }
 
-            // 4. Lưu lại giá trị lọc để hiển thị trên View
+            // 4. Xử lý phân trang (10 item / trang)
+            int pageSize = 10;
+            int totalItems = await products.CountAsync();
+            int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+            // Lấy dữ liệu của trang hiện tại
+            var paginatedProducts = await products
+                .OrderByDescending(p => p.Id)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            // 5. Lưu lại giá trị lọc và phân trang để hiển thị trên View
             ViewData["CurrentSearch"] = searchString;
             ViewData["CurrentProductType"] = productType;
+            ViewData["CurrentPage"] = pageNumber;
+            ViewData["TotalPages"] = totalPages;
 
-            return View(await products.OrderByDescending(p => p.Id).ToListAsync());
+            return View(paginatedProducts);
         }
 
         // =======================

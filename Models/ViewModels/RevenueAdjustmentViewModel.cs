@@ -6,6 +6,7 @@ namespace RevenueAccountingMVC.ViewModels
 {
     public class RevenueAdjustmentViewModel
     {
+        public int Id { get; set; }
         public string? AdjustmentCode { get; set; }
 
         [Required(ErrorMessage = "Vui lòng chọn ngày chứng từ")]
@@ -31,6 +32,9 @@ namespace RevenueAccountingMVC.ViewModels
         public decimal OriginalTotalTax { get; set; }
         public decimal OriginalTotalPayment { get; set; }
 
+        // 🔥 THÊM TRẠNG THÁI ĐỂ HIỂN THỊ TRÊN VIEW
+        public string? Status { get; set; }
+
         public List<RevenueAdjustmentDetailVM> Details { get; set; } = new List<RevenueAdjustmentDetailVM>();
         public List<RevenueAdjustmentTaxVM> TaxDetails { get; set; } = new List<RevenueAdjustmentTaxVM>();
 
@@ -42,6 +46,7 @@ namespace RevenueAccountingMVC.ViewModels
     public class RevenueAdjustmentDetailVM
     {
         public int ProductId { get; set; }
+        public string? ProductCode { get; set; }
         public string? ProductName { get; set; }
 
         public decimal Quantity { get; set; }
@@ -52,7 +57,10 @@ namespace RevenueAccountingMVC.ViewModels
         public string? AdjustmentType { get; set; } // GiamGia, TraLai, ChietKhau
 
         public int? DebitAccountId { get; set; }
+        public string? DebitAccountNumber { get; set; }
+
         public int? CreditAccountId { get; set; }
+        public string? CreditAccountNumber { get; set; }
 
         // Dữ liệu ẩn để JS Validate và Postback
         public decimal OriginalQty { get; set; }

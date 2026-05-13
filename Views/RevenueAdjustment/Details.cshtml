@@ -1,0 +1,120 @@
+@model RevenueAccountingMVC.ViewModels.RevenueAdjustmentViewModel
+@{
+    ViewData["Title"] = "Chi tiết chứng từ điều chỉnh";
+}
+
+<div class="min-h-screen font-['Inter'] antialiased text-slate-900 bg-slate-50/30 pb-20">
+    <div class="w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8 max-w-7xl mx-auto">
+        
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 gap-4">
+            <div>
+                <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">Chi tiết Ghi giảm - <span class="text-indigo-600">@Model.AdjustmentCode</span></h1>
+                <p class="text-sm text-slate-500 mt-1">Xem thông tin chi tiết và định khoản của chứng từ</p>
+            </div>
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+                <a asp-action="Index" class="flex-1 sm:flex-none justify-center flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-50 transition-all shadow-sm">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i> Quay lại
+                </a>
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="flex-1 sm:flex-none justify-center flex items-center gap-2 px-4 py-2 bg-slate-900 text-white text-sm font-semibold rounded-lg hover:bg-slate-800 transition-all shadow-sm">
+                    <i data-lucide="edit-3" class="w-4 h-4"></i> Chỉnh sửa
+                </a>
+            </div>
+        </div>
+
+        <div class="space-y-6">
+            <div class="bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-slate-200">
+                <h2 class="font-bold text-base text-slate-900 mb-5 border-b border-slate-100 pb-3">Thông tin chung</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-sm">
+                    <div>
+                        <p class="text-slate-500 font-medium mb-1">Mã điều chỉnh:</p>
+                        <p class="font-semibold text-slate-900">@Model.AdjustmentCode</p>
+                    </div>
+                    <div>
+                        <p class="text-slate-500 font-medium mb-1">Ngày chứng từ:</p>
+                        <p class="font-semibold text-slate-900">@Model.AdjustmentDate.ToString("dd/MM/yyyy")</p>
+                    </div>
+                    <div>
+                        <p class="text-slate-500 font-medium mb-1">Ngày hạch toán:</p>
+                        <p class="font-bold text-emerald-600">@Model.AccountingDate.ToString("dd/MM/yyyy")</p>
+                    </div>
+                    <div>
+                        <p class="text-slate-500 font-medium mb-1">Chứng từ gốc:</p>
+                        <p class="font-bold text-indigo-600 cursor-pointer hover:underline">CT@Model.OriginalSalesVoucherId</p>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <p class="text-slate-500 font-medium mb-1">Khách hàng:</p>
+                        <p class="font-semibold text-slate-900">[@Model.CustomerCode] @Model.CustomerName</p>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <p class="text-slate-500 font-medium mb-1">Diễn giải:</p>
+                        <p class="text-slate-700">@(string.IsNullOrEmpty(Model.Description) ? "(Không có)" : Model.Description)</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <h2 class="font-bold text-base text-slate-900 p-6 sm:p-8 pb-4 border-b border-slate-100">Chi tiết định khoản</h2>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-[13px] whitespace-nowrap">
+                        <thead class="bg-slate-50/50 text-[11px] font-bold text-slate-500 uppercase tracking-widest border-b border-slate-100">
+                            <tr>
+                                <th class="py-4 px-6">Sản phẩm</th>
+                                <th class="py-4 px-4 text-center">Loại giảm</th>
+                                <th class="py-4 px-4 text-right">Số lượng</th>
+                                <th class="py-4 px-4 text-right">Đơn giá</th>
+                                <th class="py-4 px-4 text-right">Thành tiền</th>
+                                <th class="py-4 px-4 text-center">TK Nợ</th>
+                                <th class="py-4 px-6 text-center">TK Có</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            @foreach (var d in Model.Details)
+                            {
+                                <tr class="hover:bg-slate-50/50 transition-colors">
+                                    <td class="py-4 px-6 font-semibold text-slate-800">
+                                        <div class="flex flex-col">
+                                            <span>@d.ProductCode</span>
+                                            <span class="text-xs text-slate-500 font-normal">@d.ProductName</span>
+                                        </div>
+                                    </td>
+                                    <td class="py-4 px-4 text-center">
+                                        @if(d.AdjustmentType == "GiamGia") { <span class="bg-amber-50 border border-amber-200 text-amber-700 px-2.5 py-1 rounded-md text-[11px] font-semibold">Giảm giá</span> }
+                                        else if(d.AdjustmentType == "TraLai") { <span class="bg-rose-50 border border-rose-200 text-rose-700 px-2.5 py-1 rounded-md text-[11px] font-semibold">Trả lại</span> }
+                                        else { <span class="bg-indigo-50 border border-indigo-200 text-indigo-700 px-2.5 py-1 rounded-md text-[11px] font-semibold">Chiết khấu</span> }
+                                    </td>
+                                    <td class="py-4 px-4 text-right font-medium text-slate-700">@d.Quantity</td>
+                                    <td class="py-4 px-4 text-right text-slate-600">@d.UnitPrice.ToString("N0")</td>
+                                    <td class="py-4 px-4 text-right font-bold text-slate-900">@d.Amount.ToString("N0")</td>
+                                    <td class="py-4 px-4 text-center text-slate-600 font-medium">@d.DebitAccountNumber</td>
+                                    <td class="py-4 px-6 text-center text-slate-600 font-medium">@d.CreditAccountNumber</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="bg-slate-50/80 p-6 sm:p-8 flex flex-col items-end gap-3 text-sm">
+                    <div class="flex justify-between w-[300px]">
+                        <span class="text-slate-500 font-medium">Cộng tiền hàng (Giảm):</span>
+                        <span class="font-bold text-slate-900">@Model.TotalDiscountAmount.ToString("N0") đ</span>
+                    </div>
+                    <div class="flex justify-between w-[300px]">
+                        <span class="text-slate-500 font-medium">Cộng tiền thuế (Giảm):</span>
+                        <span class="font-bold text-slate-900">@Model.TotalTaxAmount.ToString("N0") đ</span>
+                    </div>
+                    <div class="flex justify-between w-[300px] border-t border-slate-200 mt-1 pt-3 text-base">
+                        <span class="font-bold text-slate-900">Tổng thanh toán:</span>
+                        <span class="font-bold text-rose-600">@Model.TotalPayment.ToString("N0") đ</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    </script>
+}

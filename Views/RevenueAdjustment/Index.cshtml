@@ -1,10 +1,16 @@
 @model IEnumerable<RevenueAccountingMVC.Models.RevenueAdjustment>
 @{
     ViewData["Title"] = "Quản lý điều chỉnh doanh thu";
+
+    int currentPage = ViewData["CurrentPage"] != null ? (int)ViewData["CurrentPage"] : 1;
+    int totalPages = ViewData["TotalPages"] != null ? (int)ViewData["TotalPages"] : 1;
+    int totalItems = ViewData["TotalItems"] != null ? (int)ViewData["TotalItems"] : 0;
+    string currentSearch = ViewData["CurrentSearch"]?.ToString();
+    
+    decimal totalAmount = ViewData["TotalAmount"] != null ? (decimal)ViewData["TotalAmount"] : 0;
 }
 
 <div class="min-h-screen font-['Inter'] antialiased text-slate-900 bg-slate-50/30">
-    @* Thay đổi container từ max-w-7xl sang w-full và tinh chỉnh padding *@
     <div class="w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         
         <div class="mb-6 sm:mb-8">
@@ -13,24 +19,33 @@
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="relative w-full md:w-96">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
-                </div>
-                <input type="text" placeholder="Tìm số chứng từ, khách hàng..." 
-                       class="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all">
-            </div>
             
-            <div class="flex items-center gap-3 w-full md:w-auto">
-                <a asp-action="Create" class="flex items-center justify-center gap-2 px-5 py-2.5 bg-slate-900 text-white text-sm font-semibold rounded-lg hover:bg-slate-800 shadow-sm transition-all w-full md:w-auto whitespace-nowrap">
-                    <i data-lucide="plus" class="w-4 h-4"></i> Ghi giảm
-                </a>
-            </div>
+            <a asp-action="Create" class="flex items-center justify-center gap-2 px-5 py-2.5 bg-slate-900 text-white text-sm font-semibold rounded-lg hover:bg-slate-800 shadow-sm transition-all w-full md:w-auto whitespace-nowrap">
+                <i data-lucide="plus" class="w-4 h-4"></i> Ghi giảm
+            </a>
+
+            <form asp-action="Index" method="get" class="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto flex-1 md:justify-end">
+                <div class="relative w-full md:w-96">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
+                    </div>
+                    <input type="text" name="searchString" value="@currentSearch" placeholder="Tìm số chứng từ, khách hàng..." 
+                           class="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all">
+                </div>
+                
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <button type="submit" class="flex-1 sm:flex-none px-4 py-2 bg-white border border-slate-200 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-50 transition-all shadow-sm text-center">
+                        Tìm kiếm
+                    </button>
+                    <a asp-action="Index" class="flex-1 sm:flex-none px-4 py-2 bg-white border border-slate-200 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-50 transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer">
+                        <i data-lucide="refresh-cw" class="w-4 h-4 text-slate-500"></i> Làm mới
+                    </a>
+                </div>
+            </form>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden w-full">
             <div class="overflow-x-auto">
-                @* Thêm min-w-[1000px] để bảng không bị bóp méo trên màn hình nhỏ *@
                 <table class="w-full min-w-[1000px] text-left border-collapse">
                     <thead>
                         <tr class="bg-slate-50/50 text-[11px] font-bold text-slate-500 uppercase tracking-widest border-b border-slate-100">
@@ -45,47 +60,52 @@
                     </thead>
                     <tbody class="divide-y divide-slate-100">
                         <tr class="bg-slate-50/30 font-semibold text-slate-900">
-                            <td colspan="5" class="px-6 py-3 text-sm">Tổng</td>
+                            <td colspan="5" class="px-6 py-3 text-sm">Tổng cộng toàn bộ dữ liệu</td>
                             <td class="px-4 py-3 text-right text-sm">
-                                @Model.Sum(x => x.TotalPayment).ToString("N0") đ
+                                @totalAmount.ToString("N0") đ
                             </td>
                             <td></td>
                         </tr>
 
-                        @if (!Model.Any())
+                        @if (Model != null && Model.Any())
+                        {
+                            @foreach (var item in Model)
+                            {
+                                <tr class="group hover:bg-slate-50/80 transition-colors">
+                                    <td class="px-6 py-4 text-sm font-bold text-indigo-600 whitespace-nowrap">@item.AdjustmentCode</td>
+                                    <td class="px-4 py-4 text-sm text-slate-600 whitespace-nowrap">@item.AccountingDate.ToString("dd/MM/yyyy")</td>
+                                    <td class="px-4 py-4 text-sm text-slate-500">@item.Customer?.CustomerCode</td>
+                                    <td class="px-4 py-4 text-sm font-medium text-slate-700">@item.Customer?.CustomerName</td>
+                                    <td class="px-4 py-4 text-sm text-slate-500 truncate max-w-[200px]" title="@item.Description">
+                                        @item.Description
+                                    </td>
+                                    <td class="px-4 py-4 text-sm text-right font-bold text-slate-900 whitespace-nowrap">
+                                        @item.TotalPayment.ToString("N0") đ
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center justify-center gap-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                                            <a asp-action="Details" asp-route-id="@item.Id" class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-all" title="Xem chi tiết">
+                                                <i data-lucide="eye" class="w-4 h-4"></i>
+                                            </a>
+                                            <a asp-action="Edit" asp-route-id="@item.Id" class="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-md transition-all" title="Chỉnh sửa">
+                                                <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                            </a>
+                                            <!-- CẬP NHẬT NÚT XÓA Ở ĐÂY -->
+                                            <button type="button" onclick="deleteAdjustment(@item.Id)" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-all" title="Xóa">
+                                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
                         {
                             <tr>
                                 <td colspan="7" class="px-6 py-12 text-center text-slate-400 text-sm">
-                                    Không tìm thấy dữ liệu chứng từ phù hợp.
-                                </td>
-                            </tr>
-                        }
-
-                        @foreach (var item in Model)
-                        {
-                            <tr class="group hover:bg-slate-50/80 transition-colors">
-                                <td class="px-6 py-4 text-sm font-bold text-indigo-600 whitespace-nowrap">@item.AdjustmentCode</td>
-                                <td class="px-4 py-4 text-sm text-slate-600 whitespace-nowrap">@item.AccountingDate.ToString("dd/MM/yyyy")</td>
-                                <td class="px-4 py-4 text-sm text-slate-500">@item.Customer?.CustomerCode</td>
-                                <td class="px-4 py-4 text-sm font-medium text-slate-700">@item.Customer?.CustomerName</td>
-                                <td class="px-4 py-4 text-sm text-slate-500 truncate max-w-[200px]" title="@item.Description">
-                                    @item.Description
-                                </td>
-                                <td class="px-4 py-4 text-sm text-right font-bold text-slate-900 whitespace-nowrap">
-                                    @item.TotalPayment.ToString("N0") đ
-                                </td>
-                                <td class="px-6 py-4">
-                                    @* Trên mobile thì luôn hiện action (xl:opacity-100), trên desktop thì hover mới hiện *@
-                                    <div class="flex items-center justify-center gap-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
-                                        <a href="#" class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-all" title="Xem chi tiết">
-                                            <i data-lucide="eye" class="w-4 h-4"></i>
-                                        </a>
-                                        <a href="#" class="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-md transition-all" title="Chỉnh sửa">
-                                            <i data-lucide="edit-3" class="w-4 h-4"></i>
-                                        </a>
-                                        <button type="button" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-all" title="Xóa">
-                                            <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                        </button>
+                                    <div class="flex flex-col items-center justify-center">
+                                        <i data-lucide="file-text" class="w-12 h-12 mb-3 text-slate-300"></i>
+                                        <p>Không tìm thấy dữ liệu chứng từ phù hợp.</p>
                                     </div>
                                 </td>
                             </tr>
@@ -94,25 +114,79 @@
                 </table>
             </div>
             
-            <div class="px-6 py-4 bg-slate-50/50 border-t border-slate-100 flex justify-between items-center text-xs text-slate-500">
-                <div>
-                    Hiển thị <span class="font-bold text-slate-700">@Model.Count()</span> chứng từ
+            @if (totalPages > 1)
+            {
+                <div class="px-6 py-4 bg-slate-50/50 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="text-sm text-slate-500">
+                        Hiển thị <span class="font-bold text-slate-700">@((currentPage - 1) * 10 + 1)</span> đến 
+                        <span class="font-bold text-slate-700">@(Math.Min(currentPage * 10, totalItems))</span> 
+                        trong tổng số <span class="font-bold text-slate-700">@totalItems</span> chứng từ
+                    </div>
+                    <div>
+                        <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                            <a asp-action="Index" 
+                               asp-route-pageNumber="@(currentPage - 1)" 
+                               asp-route-searchString="@currentSearch" 
+                               class="relative inline-flex items-center rounded-l-md px-2 py-2 text-slate-400 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 focus:z-20 focus:outline-offset-0 @(currentPage == 1 ? "pointer-events-none opacity-50 bg-slate-100" : "cursor-pointer")">
+                                <span class="sr-only">Previous</span>
+                                <i data-lucide="chevron-left" class="h-4 w-4"></i>
+                            </a>
+                            
+                            @for (int i = 1; i <= totalPages; i++)
+                            {
+                                <a asp-action="Index" 
+                                   asp-route-pageNumber="@i" 
+                                   asp-route-searchString="@currentSearch" 
+                                   class="relative inline-flex items-center px-4 py-2 text-sm font-semibold @(i == currentPage ? "z-10 bg-slate-900 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900" : "text-slate-900 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 focus:z-20 focus:outline-offset-0 cursor-pointer")">
+                                    @i
+                                </a>
+                            }
+
+                            <a asp-action="Index" 
+                               asp-route-pageNumber="@(currentPage + 1)" 
+                               asp-route-searchString="@currentSearch" 
+                               class="relative inline-flex items-center rounded-r-md px-2 py-2 text-slate-400 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 focus:z-20 focus:outline-offset-0 @(currentPage == totalPages ? "pointer-events-none opacity-50 bg-slate-100" : "cursor-pointer")">
+                                <span class="sr-only">Next</span>
+                                <i data-lucide="chevron-right" class="h-4 w-4"></i>
+                            </a>
+                        </nav>
+                    </div>
                 </div>
-                <div class="flex gap-2">
-                    @* Khu vực phân trang (nếu có) *@
+            }
+            else if (totalItems > 0)
+            {
+                <div class="px-6 py-4 bg-slate-50/50 border-t border-slate-100 text-sm text-slate-500">
+                    Hiển thị tổng số <span class="font-bold text-slate-700">@totalItems</span> chứng từ
                 </div>
-            </div>
+            }
         </div>
     </div>
 </div>
 
+@Html.AntiForgeryToken()
+
 @section Scripts {
     <script>
         $(document).ready(function () {
-            // Khởi tạo Lucide Icons
             if (typeof lucide !== 'undefined') {
                 lucide.createIcons();
             }
         });
+
+        // Hàm xử lý Xóa
+        function deleteAdjustment(id) {
+            if (confirm('Bạn có chắc chắn muốn xóa chứng từ này? Bút toán liên quan sẽ bị hủy bỏ.')) {
+                let token = $('input[name="__RequestVerificationToken"]').val();
+
+                $.post(`/RevenueAdjustment/Delete/${id}`, { 
+                    __RequestVerificationToken: token 
+                }, function (res) {
+                    // Nếu controller trả về redirect (MVC chuẩn)
+                    location.reload();
+                }).fail(function() {
+                    alert("Lỗi bảo mật hoặc không thể kết nối đến server.");
+                });
+            }
+        }
     </script>
 }
