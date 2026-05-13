@@ -21,24 +21,41 @@ namespace RevenueAccountingMVC.Controllers
         // INDEX
         // =======================
         [Authorize(Roles = "Accountant, Leader")] // CHỈ KẾ TOÁN VÀ LÃNH ĐẠO MỚI ĐƯỢC XEM DANH SÁCH THUẾ
-        public async Task<IActionResult> Index(string searchString)
+        public async Task<IActionResult> Index(string searchString, int pageNumber = 1)
         {
-            var taxes = _context.Taxes
+            var query = _context.Taxes
                 .Include(t => t.TaxAccount)
                 .AsQueryable();
 
+            // 1. Lọc theo từ khóa tìm kiếm
             if (!string.IsNullOrEmpty(searchString))
             {
-                taxes = taxes.Where(t =>
+                query = query.Where(t =>
                     (t.TaxCode ?? "").Contains(searchString) ||
                     (t.TaxName ?? "").Contains(searchString));
             }
 
-            ViewData["CurrentSearch"] = searchString;
+            // 2. Tính toán phân trang
+            int pageSize = 10;
+            int totalItems = await query.CountAsync();
+            int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
 
-            return View(await taxes
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageNumber > totalPages && totalPages > 0) pageNumber = totalPages;
+
+            var paginatedData = await query
                 .OrderByDescending(t => t.Id)
-                .ToListAsync());
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            // 3. Lưu lại trạng thái filter và phân trang
+            ViewData["CurrentSearch"] = searchString;
+            ViewData["CurrentPage"] = pageNumber;
+            ViewData["TotalPages"] = totalPages;
+            ViewData["TotalItems"] = totalItems;
+
+            return View(paginatedData);
         }
 
         // =======================

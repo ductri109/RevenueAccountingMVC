@@ -16,30 +16,56 @@ namespace RevenueAccountingMVC.Controllers
             _context = context;
         }
 
-        // =======================
+       // =======================
         // INDEX
         // =======================
-        [Authorize(Roles = "Accountant, Leader")] // CHỈ KẾ TOÁN VÀ LÃNH ĐẠO MỚI ĐƯỢC XEM DANH SÁCH KHÁCH HÀNG
-        public async Task<IActionResult> Index(string searchString)
+        [Authorize(Roles = "Accountant, Leader")]
+        public async Task<IActionResult> Index(string searchString, int? customerType, int pageNumber = 1)
         {
-            var customers = _context.Customers
-                .Include(c => c.ReceivableAccount) // 🔥 FIX: load account
+            var query = _context.Customers
+                .Include(c => c.ReceivableAccount)
                 .AsQueryable();
 
+            // 1. Lọc theo từ khóa (Mã, Tên, SĐT, Email)
             if (!string.IsNullOrEmpty(searchString))
             {
-                customers = customers.Where(c =>
+                query = query.Where(c =>
                     (c.CustomerCode ?? "").Contains(searchString) ||
                     (c.CustomerName ?? "").Contains(searchString) ||
                     (c.PhoneNumber ?? "").Contains(searchString) ||
                     (c.Email ?? "").Contains(searchString));
             }
 
-            ViewData["CurrentSearch"] = searchString;
+            // 2. Lọc theo loại hình khách hàng
+            if (customerType.HasValue)
+            {
+                query = query.Where(c => (int)c.CustomerType == customerType.Value);
+            }
 
-            return View(await customers
+            // 3. Tính toán phân trang
+            int pageSize = 10;
+            int totalItems = await query.CountAsync();
+            int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageNumber > totalPages && totalPages > 0) pageNumber = totalPages;
+
+            var paginatedData = await query
                 .OrderByDescending(c => c.Id)
-                .ToListAsync());
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            // 4. Lưu lại filter state
+            ViewData["CurrentSearch"] = searchString;
+            ViewData["CurrentCustomerType"] = customerType;
+            
+            // 5. Lưu lại phân trang
+            ViewData["CurrentPage"] = pageNumber;
+            ViewData["TotalPages"] = totalPages;
+            ViewData["TotalItems"] = totalItems;
+
+            return View(paginatedData);
         }
 
         // =======================
