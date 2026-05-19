@@ -169,26 +169,22 @@ namespace RevenueAccountingMVC.Services
                 _context.JournalEntries.RemoveRange(oldEntries);
 
             // 🔥 TÌM ID THỰC SỰ CỦA CÁC TÀI KHOẢN MẶC ĐỊNH 🔥
-            // 🔥 TÌM ID THỰC SỰ CỦA CÁC TÀI KHOẢN MẶC ĐỊNH 🔥
-            int defaultDebitId = await GetAccountIdAsync("131");
-            int defaultCreditId = await GetAccountIdAsync("511");
             int defaultTaxParentId = await GetAccountIdAsync("333");
-
-            // ĐÃ SỬA: Thay "3333" thành "33311" cho khớp với Seed DB của bạn
             int defaultTaxChildId = await GetAccountIdAsync("33311");
 
             foreach (var detail in adjustment.Details)
             {
                 var absAmount = Math.Abs(detail.Amount);
 
+                // 🔥 FIX: EntryType phải khớp với vị trí chọn của tài khoản, không đảo!
                 await CreateEntryAsync(new JournalEntry
                 {
                     VoucherType = "RevenueAdjustment",
                     VoucherId = adjustment.Id,
                     VoucherCode = adjustment.AdjustmentCode,
                     VoucherDate = adjustment.AdjustmentDate,
-                    AccountId = detail.CreditAccountId ?? defaultCreditId, // Doanh thu (bây giờ là nợ)
-                    EntryType = "Debit",
+                    AccountId = detail.DebitAccountId.Value,
+                    EntryType = "Debit",  // TK chọn ở vị trí Debit → EntryType = Debit
                     Amount = absAmount,
                     CustomerId = adjustment.CustomerId,
                     CustomerName = adjustment.Customer?.CustomerName,
@@ -207,8 +203,8 @@ namespace RevenueAccountingMVC.Services
                     VoucherId = adjustment.Id,
                     VoucherCode = adjustment.AdjustmentCode,
                     VoucherDate = adjustment.AdjustmentDate,
-                    AccountId = detail.DebitAccountId ?? defaultDebitId, // Hàng (bây giờ là có)
-                    EntryType = "Credit",
+                    AccountId = detail.CreditAccountId.Value,
+                    EntryType = "Credit",  // TK chọn ở vị trí Credit → EntryType = Credit
                     Amount = absAmount,
                     CustomerId = adjustment.CustomerId,
                     CustomerName = adjustment.Customer?.CustomerName,
@@ -221,7 +217,7 @@ namespace RevenueAccountingMVC.Services
                     CreatedBy = "System"
                 });
 
-                if (detail.TaxAmount < 0 || detail.TaxAmount > 0) // Hỗ trợ cả số âm lẫn số dương
+                if (detail.TaxAmount < 0 || detail.TaxAmount > 0)
                 {
                     var absTax = Math.Abs(detail.TaxAmount);
 
@@ -248,7 +244,7 @@ namespace RevenueAccountingMVC.Services
                         VoucherId = adjustment.Id,
                         VoucherCode = adjustment.AdjustmentCode,
                         VoucherDate = adjustment.AdjustmentDate,
-                        AccountId = defaultTaxParentId, // Thuế phải nộp
+                        AccountId = defaultTaxParentId,
                         EntryType = "Credit",
                         Amount = absTax,
                         CustomerId = adjustment.CustomerId,

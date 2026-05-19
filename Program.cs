@@ -60,21 +60,21 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// using (var scope = app.Services.CreateScope())
-// {
-//     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-//     try
-//     {
-//         // Chỉ seed nếu database đã được tạo
-//         context.Database.EnsureCreated();
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    try
+    {
+        // Chỉ seed nếu database đã được tạo
+        context.Database.EnsureCreated();
 
-//         // Gọi hàm seed dữ liệu
-//         context.SeedSalesAndRevenueAdjustmentDataAsync().GetAwaiter().GetResult();
-//     }
-//     catch (Exception ex)
-//     {
-//         System.Diagnostics.Debug.WriteLine($"Lỗi seed: {ex.Message}");
-//     }
-// }
+        // Gọi hàm seed dữ liệu
+        context.SeedSalesAndRevenueAdjustmentDataAsync().GetAwaiter().GetResult();
+    }
+    catch (Exception ex)
+    {
+        System.Diagnostics.Debug.WriteLine($"Lỗi seed: {ex.Message}");
+    }
+}
 
 app.Run();
