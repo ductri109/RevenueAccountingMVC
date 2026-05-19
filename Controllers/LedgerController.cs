@@ -158,23 +158,14 @@ namespace RevenueAccountingMVC.Controllers
                 return View(model);
             }
 
+            // Lấy tất cả entries của các chứng từ trong kỳ để tìm corresponding account
             var voucherIds = periodEntries.Select(x => x.VoucherId).Distinct().ToList();
             var voucherTypes = periodEntries.Select(x => x.VoucherType).Distinct().ToList();
 
-            var rawVoucherEntries = await _context.JournalEntries
+            var allVoucherEntries = await _context.JournalEntries
                 .Include(x => x.Account)
                 .Where(x => voucherIds.Contains(x.VoucherId) && voucherTypes.Contains(x.VoucherType))
                 .ToListAsync();
-
-            var voucherKeys = periodEntries.Select(x => $"{x.VoucherType}:{x.VoucherId}").Distinct().ToList();
-
-            var voucherEntries = rawVoucherEntries
-                .Where(x => voucherKeys.Contains($"{x.VoucherType}:{x.VoucherId}"))
-                .ToList();
-
-            // 🔥 XÁC ĐỊNH TÍNH CHẤT TÀI KHOẢN (Đầu 3, 4, 5, 7, 9 tăng bên Có)
-            string firstChar = account.AccountNumber.Trim().Substring(0, 1);
-            bool isCreditNature = firstChar == "3" || firstChar == "4" || firstChar == "5" || firstChar == "7" || firstChar == "9";
 
             decimal runningBalance = model.OpeningBalance;
 
@@ -187,13 +178,11 @@ namespace RevenueAccountingMVC.Controllers
                 var debit = isDebit ? entry.Amount : 0;
                 var credit = isCredit ? entry.Amount : 0;
 
-                // Tính số dư lũy kế dựa theo tính chất tài khoản kế toán Việt Nam
-                if (isCreditNature)
-                    runningBalance += (credit - debit);
-                else
-                    runningBalance += (debit - credit);
+                // Tính số dư lũy kế: luôn tính theo Debit - Credit (thể hiện lợi thế nợ)
+                runningBalance += (debit - credit);
 
-                var correspondingEntry = voucherEntries
+                // 🔥 Tìm tài khoản đối ứng (phía bên còn lại của bút toán)
+                var correspondingEntry = allVoucherEntries
                     .Where(x => x.VoucherId == entry.VoucherId
                             && x.VoucherType == entry.VoucherType
                             && !string.Equals(x.EntryType, entry.EntryType, StringComparison.OrdinalIgnoreCase)
@@ -201,26 +190,16 @@ namespace RevenueAccountingMVC.Controllers
                     .OrderBy(x => x.Id)
                     .FirstOrDefault();
 
-                // 🔥 FIX: Đảo cột Nợ/Có cho tài khoản tính chất "Có" (Credit Nature)
-                decimal displayDebit = debit;
-                decimal displayCredit = credit;
-
-                if (isCreditNature)
-                {
-                    displayDebit = credit;
-                    displayCredit = debit;
-                }
-
                 model.Rows.Add(new ReportRowViewModel
                 {
                     Date = entry.PostingDate,
                     Description = entry.Description ?? entry.VoucherCode,
-                    VoucherCode = entry.VoucherCode, // Gán thêm để View hiển thị mã chứng từ
+                    VoucherCode = entry.VoucherCode,
                     CorrespondingAccount = correspondingEntry != null
                         ? $"{correspondingEntry.Account?.AccountNumber} - {correspondingEntry.Account?.AccountName}"
                         : "-",
-                    Debit = displayDebit,
-                    Credit = displayCredit,
+                    Debit = debit,
+                    Credit = credit,
                     Balance = runningBalance
                 });
             }

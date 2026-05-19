@@ -64,13 +64,24 @@
 
             <!-- ĐÃ XÓA TẠM "Quản lý chứng từ" NẾU BẠN KHÔNG DÙNG ĐẾN HOẶC CÓ THỂ GIỮ LẠI NẾU CẦN -->
 
-            <!-- ĐÂY LÀ MENU "BÁO CÁO & SỔ SÁCH" GỘP CHUNG -->
-            <!-- Mặc định khi bấm vào sẽ dẫn đến màn hình AccountLedger (Sổ cái) -->
-            <a asp-controller="Ledger" asp-action="AccountLedger" 
+            @if (User.Identity != null && User.Identity.IsAuthenticated && User.IsInRole("Leader"))
+            {
+                <!-- Nếu là Leader: Nhảy sang trang Doanh thu theo khách hàng (RevenueByCustomer) -->
+                <a asp-controller="Ledger" asp-action="RevenueByCustomer" 
                 class="menu-item flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors @GetActiveClass("Ledger")">
-                <i data-lucide="bar-chart-2" class="w-5 h-5"></i>
-                <span class="text-[14px] font-medium">Báo cáo & sổ sách</span>
-            </a>
+                    <i data-lucide="bar-chart-2" class="w-5 h-5"></i>
+                    <span class="text-[14px] font-medium">Báo cáo & sổ sách</span>
+                </a>
+            }
+            else
+            {
+                <!-- Mặc định (hoặc vai trò khác): Dẫn đến màn hình AccountLedger (Sổ cái) -->
+                <a asp-controller="Ledger" asp-action="AccountLedger" 
+                class="menu-item flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors @GetActiveClass("Ledger")">
+                    <i data-lucide="bar-chart-2" class="w-5 h-5"></i>
+                    <span class="text-[14px] font-medium">Báo cáo & sổ sách</span>
+                </a>
+            }
 
             <a asp-controller="User" asp-action="Index" 
                 class="menu-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">
