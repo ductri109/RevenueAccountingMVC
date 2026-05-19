@@ -79,8 +79,9 @@ namespace RevenueAccountingMVC.Controllers
         {
             ViewBag.Customers = new SelectList(_context.Customers, "Id", "CustomerCode");
             ViewBag.Vouchers = new SelectList(Enumerable.Empty<SelectListItem>());
+            // Bỏ Where(a => a.IsDetail) và sắp xếp theo số tài khoản
             ViewBag.Accounts = new SelectList(
-                _context.Accounts.Where(a => a.IsDetail).ToList(),
+                _context.Accounts.OrderBy(a => a.AccountNumber).ToList(),
                 "Id",
                 "AccountNumber"
             );
@@ -264,7 +265,7 @@ namespace RevenueAccountingMVC.Controllers
         {
             ViewBag.Customers = new SelectList(_context.Customers, "Id", "CustomerCode", model.CustomerId);
             ViewBag.Vouchers = new SelectList(_context.SalesVouchers.Where(x => x.CustomerId == model.CustomerId), "Id", "VoucherCode", model.OriginalSalesVoucherId);
-            ViewBag.Accounts = new SelectList(_context.Accounts.Where(a => a.IsDetail).ToList(), "Id", "AccountNumber");
+            ViewBag.Accounts = new SelectList(_context.Accounts.OrderBy(a => a.AccountNumber).ToList(), "Id", "AccountNumber");        
         }
 
         // ===================== API =====================
@@ -704,8 +705,5 @@ namespace RevenueAccountingMVC.Controllers
                 return RedirectToAction(nameof(Index));
             }
         }
-
-
-
     }
 }

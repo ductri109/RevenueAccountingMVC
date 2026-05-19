@@ -94,10 +94,6 @@ namespace RevenueAccountingMVC.Controllers
         }
 
         // ========== 3. CHI TIẾT 1 TÀI KHOẢN THEO KỲ (SỔ CHI TIẾT TK CÁI) ==========
-        /// <summary>
-        /// Sổ chi tiết của 1 tài khoản theo khoảng thời gian
-        /// Hiển thị: Số dư đầu kỳ, Phát sinh Nợ, Phát sinh Có, Số dư cuối kỳ
-        /// </summary>
         [Authorize(Roles = "Accountant")]
         public async Task<IActionResult> AccountLedger(
             string? accountNumber,
@@ -144,15 +140,14 @@ namespace RevenueAccountingMVC.Controllers
                 .ToListAsync();
 
             model.OpeningBalance = openingEntries
-                .Sum(x => x.EntryType == "Debit" ? x.Amount : -x.Amount);
+                .Sum(x => string.Equals(x.EntryType, "Debit", StringComparison.OrdinalIgnoreCase) ? x.Amount : -x.Amount);
 
-            // Xử lý lấy hết dữ liệu đến giây cuối cùng của ngày ToDate
             var endOfDay = model.ToDate.Date.AddDays(1).AddTicks(-1);
 
             var periodEntries = await _context.JournalEntries
                 .Where(x => x.AccountId == account.Id
-                         && x.PostingDate >= model.FromDate.Date
-                         && x.PostingDate <= endOfDay)
+                        && x.PostingDate >= model.FromDate.Date
+                        && x.PostingDate <= endOfDay)
                 .OrderBy(x => x.PostingDate)
                 .ThenBy(x => x.Id)
                 .ToListAsync();
@@ -163,7 +158,6 @@ namespace RevenueAccountingMVC.Controllers
                 return View(model);
             }
 
-            // --- BẮT ĐẦU FIX LỖI EF CORE TRANSLATION ---
             var voucherIds = periodEntries.Select(x => x.VoucherId).Distinct().ToList();
             var voucherTypes = periodEntries.Select(x => x.VoucherType).Distinct().ToList();
 
@@ -177,33 +171,56 @@ namespace RevenueAccountingMVC.Controllers
             var voucherEntries = rawVoucherEntries
                 .Where(x => voucherKeys.Contains($"{x.VoucherType}:{x.VoucherId}"))
                 .ToList();
-            // --- KẾT THÚC FIX LỖI EF CORE TRANSLATION ---
+
+            // 🔥 XÁC ĐỊNH TÍNH CHẤT TÀI KHOẢN (Đầu 3, 4, 5, 7, 9 tăng bên Có)
+            string firstChar = account.AccountNumber.Trim().Substring(0, 1);
+            bool isCreditNature = firstChar == "3" || firstChar == "4" || firstChar == "5" || firstChar == "7" || firstChar == "9";
 
             decimal runningBalance = model.OpeningBalance;
 
             foreach (var entry in periodEntries)
             {
-                var debit = entry.EntryType == "Debit" ? entry.Amount : 0;
-                var credit = entry.EntryType == "Credit" ? entry.Amount : 0;
-                runningBalance += debit - credit;
+                // 🔥 FIX: Sử dụng StringComparison.OrdinalIgnoreCase để check Nợ/Có an toàn tuyệt đối
+                bool isDebit = string.Equals(entry.EntryType, "Debit", StringComparison.OrdinalIgnoreCase);
+                bool isCredit = string.Equals(entry.EntryType, "Credit", StringComparison.OrdinalIgnoreCase);
+
+                var debit = isDebit ? entry.Amount : 0;
+                var credit = isCredit ? entry.Amount : 0;
+
+                // Tính số dư lũy kế dựa theo tính chất tài khoản kế toán Việt Nam
+                if (isCreditNature)
+                    runningBalance += (credit - debit);
+                else
+                    runningBalance += (debit - credit);
 
                 var correspondingEntry = voucherEntries
                     .Where(x => x.VoucherId == entry.VoucherId
-                             && x.VoucherType == entry.VoucherType
-                             && x.EntryType != entry.EntryType
-                             && x.AccountId != entry.AccountId)
+                            && x.VoucherType == entry.VoucherType
+                            && !string.Equals(x.EntryType, entry.EntryType, StringComparison.OrdinalIgnoreCase)
+                            && x.AccountId != entry.AccountId)
                     .OrderBy(x => x.Id)
                     .FirstOrDefault();
+
+                // 🔥 FIX: Đảo cột Nợ/Có cho tài khoản tính chất "Có" (Credit Nature)
+                decimal displayDebit = debit;
+                decimal displayCredit = credit;
+
+                if (isCreditNature)
+                {
+                    displayDebit = credit;
+                    displayCredit = debit;
+                }
 
                 model.Rows.Add(new ReportRowViewModel
                 {
                     Date = entry.PostingDate,
                     Description = entry.Description ?? entry.VoucherCode,
+                    VoucherCode = entry.VoucherCode, // Gán thêm để View hiển thị mã chứng từ
                     CorrespondingAccount = correspondingEntry != null
                         ? $"{correspondingEntry.Account?.AccountNumber} - {correspondingEntry.Account?.AccountName}"
                         : "-",
-                    Debit = debit,
-                    Credit = credit,
+                    Debit = displayDebit,
+                    Credit = displayCredit,
                     Balance = runningBalance
                 });
             }
@@ -332,7 +349,8 @@ namespace RevenueAccountingMVC.Controllers
                 .Where(x => x.AccountId == account.Id && x.PostingDate < model.FromDate.Date)
                 .ToListAsync();
 
-            model.OpeningBalance = openingEntries.Sum(x => x.EntryType == "Debit" ? x.Amount : -x.Amount);
+            model.OpeningBalance = openingEntries
+                .Sum(x => string.Equals(x.EntryType, "Debit", StringComparison.OrdinalIgnoreCase) ? x.Amount : -x.Amount);
 
             var endOfDay = model.ToDate.Date.AddDays(1).AddTicks(-1);
 
@@ -357,18 +375,31 @@ namespace RevenueAccountingMVC.Controllers
                 .Where(x => voucherKeys.Contains($"{x.VoucherType}:{x.VoucherId}"))
                 .ToList();
 
+            // 🔥 XÁC ĐỊNH TÍNH CHẤT TÀI KHOẢN (Đầu 3, 4, 5, 7, 9 tăng bên Có)
+            string firstChar = account.AccountNumber.Trim().Substring(0, 1);
+            bool isCreditNature = firstChar == "3" || firstChar == "4" || firstChar == "5" || firstChar == "7" || firstChar == "9";
+
             decimal runningBalance = model.OpeningBalance;
 
             foreach (var entry in periodEntries)
             {
-                var debit = entry.EntryType == "Debit" ? entry.Amount : 0;
-                var credit = entry.EntryType == "Credit" ? entry.Amount : 0;
-                runningBalance += debit - credit;
+                // 🔥 FIX: Sử dụng StringComparison.OrdinalIgnoreCase để check Nợ/Có an toàn tuyệt đối
+                bool isDebit = string.Equals(entry.EntryType, "Debit", StringComparison.OrdinalIgnoreCase);
+                bool isCredit = string.Equals(entry.EntryType, "Credit", StringComparison.OrdinalIgnoreCase);
+
+                var debit = isDebit ? entry.Amount : 0;
+                var credit = isCredit ? entry.Amount : 0;
+
+                // Tính số dư lũy kế dựa theo tính chất tài khoản kế toán Việt Nam
+                if (isCreditNature)
+                    runningBalance += (credit - debit);
+                else
+                    runningBalance += (debit - credit);
 
                 var correspondingEntry = voucherEntries
                     .Where(x => x.VoucherId == entry.VoucherId
                             && x.VoucherType == entry.VoucherType
-                            && x.EntryType != entry.EntryType
+                            && !string.Equals(x.EntryType, entry.EntryType, StringComparison.OrdinalIgnoreCase)
                             && x.AccountId != entry.AccountId)
                     .OrderBy(x => x.Id).FirstOrDefault();
 
@@ -384,9 +415,7 @@ namespace RevenueAccountingMVC.Controllers
                 });
             }
 
-            // Truyền cờ autoPrint sang View
             ViewBag.AutoPrint = autoPrint;
-
             return View(model);
         }
 
@@ -567,7 +596,7 @@ namespace RevenueAccountingMVC.Controllers
 
             // Truy xuất dữ liệu từ Service (Đã group by theo mặt hàng)
             var reportLines = await _reportService.GenerateRevenueByProductReportAsync(
-                fromDate.Value, 
+                fromDate.Value,
                 toDate.Value);
 
             // Lọc thêm theo mã sản phẩm nếu người dùng có chọn
@@ -600,7 +629,7 @@ namespace RevenueAccountingMVC.Controllers
 
             ViewBag.FromDate = fromDate;
             ViewBag.ToDate = toDate;
-            
+
             // Truyền cờ in sang View
             ViewBag.AutoPrint = autoPrint;
 
@@ -668,7 +697,7 @@ namespace RevenueAccountingMVC.Controllers
 
             ViewBag.FromDate = fromDate;
             ViewBag.ToDate = toDate;
-            
+
             // Truyền cờ in sang View
             ViewBag.AutoPrint = autoPrint;
 
@@ -683,9 +712,9 @@ namespace RevenueAccountingMVC.Controllers
         [Authorize(Roles = "Accountant")]
         public async Task<IActionResult> PrintJournal(DateTime? fromDate, DateTime? toDate, int? accountId, string sortBy = "date", bool autoPrint = false)
         {
-            if (!fromDate.HasValue) 
+            if (!fromDate.HasValue)
                 fromDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
-            if (!toDate.HasValue) 
+            if (!toDate.HasValue)
                 toDate = DateTime.Now.Date;
 
             // Tái sử dụng logic lấy dữ liệu giống hàm Index
@@ -700,7 +729,7 @@ namespace RevenueAccountingMVC.Controllers
 
             ViewBag.FromDate = fromDate;
             ViewBag.ToDate = toDate;
-            
+
             // Truyền cờ in sang View
             ViewBag.AutoPrint = autoPrint;
 
@@ -720,7 +749,7 @@ namespace RevenueAccountingMVC.Controllers
 
             ViewBag.FromDate = fromDate;
             ViewBag.ToDate = toDate;
-            
+
             // Truyền cờ in sang View
             ViewBag.AutoPrint = autoPrint;
 

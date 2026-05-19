@@ -435,8 +435,9 @@ namespace RevenueAccountingMVC.Controllers
                 }
             );
 
+            // Bỏ Where(a => a.IsDetail) để lấy tất cả tài khoản, thêm OrderBy để cha con đứng gần nhau
             ViewBag.Accounts = new SelectList(
-                await _context.Accounts.Where(a => a.IsDetail).ToListAsync(),
+                await _context.Accounts.OrderBy(a => a.AccountNumber).ToListAsync(),
                 "Id",
                 "AccountNumber"
             );
