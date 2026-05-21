@@ -24,26 +24,43 @@
     </div>
 
     <div class="bg-white border border-gray-200 rounded-xl p-4 flex items-center gap-3 shadow-sm mb-6">
-        <a asp-action="Create" class="bg-[#0f172a] hover:bg-gray-800 text-white px-5 py-2.5 rounded-lg text-[14px] font-medium inline-flex items-center gap-2 transition-colors active:scale-95 shadow-md">
-            <i data-lucide="plus-circle" class="w-4 h-4"></i> Ghi nhận mới
-        </a>
+      <a asp-action="Create" class="whitespace-nowrap bg-[#0f172a] hover:bg-gray-800 text-white px-5 py-2.5 rounded-lg text-[14px] font-medium inline-flex items-center gap-2 transition-colors active:scale-95 shadow-md">
+    <i data-lucide="plus-circle" class="w-4 h-4"></i> Ghi nhận mới
+</a>
+       <form asp-action="Index" method="get" class="flex justify-end items-center gap-3 w-full">
 
-        <form asp-action="Index" method="get" class="flex items-center gap-3 flex-1 ml-4">
-            <div class="relative w-[350px]">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <i data-lucide="search" class="w-4 h-4 text-gray-400"></i>
-                </div>
-                <input type="text" name="searchString" value="@currentSearch" class="w-full bg-gray-50 border border-gray-300 focus:border-black rounded-lg pl-9 pr-4 py-2.5 text-[14px] outline-none transition-all" placeholder="Tìm số chứng từ, khách hàng...">
-            </div>
-            <button type="submit" class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2.5 rounded-lg text-[14px] font-medium flex items-center gap-2 shadow-sm">
-                Tìm kiếm
-            </button>
-            <a asp-action="Index" class="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-4 py-2.5 rounded-lg text-[14px] font-medium flex items-center gap-2 transition-colors cursor-pointer shadow-sm ml-auto">
-                <i data-lucide="refresh-cw" class="w-4 h-4 text-gray-600"></i> Làm mới
-            </a>
-        </form>
+    <div class="relative w-[350px]">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <i data-lucide="search" class="w-4 h-4 text-gray-400"></i>
+        </div>
+
+        <input type="text"
+               name="searchString"
+               value="@currentSearch"
+               class="w-full bg-gray-50 border border-gray-300 focus:border-black rounded-lg pl-9 pr-4 py-2.5 text-[14px] outline-none transition-all"
+               placeholder="Tìm số chứng từ, khách hàng...">
     </div>
 
+    <button type="submit"
+            class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2.5 rounded-lg text-[14px] font-medium flex items-center gap-2 shadow-sm">
+        Tìm kiếm
+    </button>
+
+    <a asp-action="Index"
+       class="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-4 py-2.5 rounded-lg text-[14px] font-medium flex items-center gap-2 transition-colors cursor-pointer shadow-sm">
+        <i data-lucide="refresh-cw" class="w-4 h-4 text-gray-600"></i>
+        Làm mới
+    </a>
+
+</form>
+    </div>
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="mb-5 p-3 bg-green-50 text-green-700 text-[14px] font-medium rounded-lg border border-green-200 flex items-center gap-2">
+            <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+            @TempData["SuccessMessage"]
+        </div>
+    }
     <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
         <table class="w-full text-left text-[14px]">
             <thead class="border-b border-gray-200 bg-gray-50">
@@ -203,6 +220,18 @@
                     alert("Lỗi bảo mật hoặc không thể kết nối đến server.");
                 });
             }
+        }
+                @if (TempData["SuccessMessage"] != null)
+        {
+            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+            <script>
+                Swal.fire({
+                    title: "Thành công!",
+                    text: "@TempData["SuccessMessage"]",
+                    icon: "success",
+                    timer: 3000
+                });
+            </script>
         }
     </script>
 }

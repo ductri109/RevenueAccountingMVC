@@ -9,13 +9,6 @@
 
 <div class="min-h-screen bg-slate-50 font-['Inter'] antialiased text-slate-900 pb-20">
     <form asp-action="Create" method="post" id="frmGhiGiam">
-        
-        <!-- 1. SỬA LỖI HIỂN THỊ KHUNG ĐỎ: Chỉ hiển thị khi có lỗi thật -->
-        @if (!ViewData.ModelState.IsValid)
-        {
-            <div asp-validation-summary="All" class="text-red-700 bg-red-100 border border-red-400 p-4 mb-4 rounded-lg font-medium"></div>
-        }
-
         <div class="sticky top-0 z-30 bg-white border-b px-6 py-4 mb-8">
             <div class="flex justify-between items-center">
                 <h1 class="text-xl font-bold">Ghi giảm doanh thu</h1>
@@ -27,8 +20,19 @@
         </div>
 
         <div class="px-6 space-y-6">
-
             <div class="bg-white p-6 rounded shadow-sm">
+                <!-- 1. SỬA LỖI HIỂN THỊ KHUNG ĐỎ: Chỉ hiển thị khi có lỗi thật -->
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div asp-validation-summary="All" class="mb-5 p-3 bg-red-50 text-red-700 text-[14px] font-medium rounded-lg border border-red-200 flex items-center gap-2"></div>
+                }
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div class="mb-5 p-3 bg-green-50 text-green-700 text-[14px] font-medium rounded-lg border border-green-200 flex items-center gap-2">
+                        <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+                        @TempData["SuccessMessage"]
+                    </div>
+                }
                 <h2 class="font-semibold text-lg mb-4">Thông tin chung</h2>
                 <div class="grid grid-cols-4 gap-4">
                     <div>

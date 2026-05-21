@@ -24,17 +24,16 @@
 
     <div class="bg-white border border-gray-100 rounded-xl shadow-sm">
         <form asp-action="Create" method="post" class="p-6">
-            @if (TempData["SuccessMessage"] != null)
-            {
-                <div class="mb-5 p-3 bg-green-50 text-green-700 text-[14px] font-medium rounded-lg border border-green-200 flex items-center gap-2">
-                    <i data-lucide="check-circle-2" class="w-5 h-5"></i>
-                    @TempData["SuccessMessage"]
-                </div>
-            }
-            <div asp-validation-summary="ModelOnly" class="text-red-500 text-sm mb-4"></div>
-
             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div class="mb-5 p-3 bg-green-50 text-green-700 text-[14px] font-medium rounded-lg border border-green-200 flex items-center gap-2">
+                        <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+                        @TempData["SuccessMessage"]
+                    </div>
+                }
+                <div asp-validation-summary="ModelOnly" class="mb-5 p-3 bg-red-50 text-red-700 text-[14px] font-medium rounded-lg border border-red-200 flex items-center gap-2"></div>
+           
                 @* --- THÔNG TIN CHUNG --- *@
                 <div class="md:col-span-2 pb-2 border-b border-gray-100">
                     <h3 class="text-[15px] font-bold text-gray-800 uppercase tracking-wide">Thông tin chung</h3>

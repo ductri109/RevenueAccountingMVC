@@ -59,22 +59,4 @@ using (var scope = app.Services.CreateScope())
         logger.LogError(ex, "Đã xảy ra lỗi trong quá trình khởi tạo dữ liệu mẫu (Seed Data).");
     }
 }
-
-using (var scope = app.Services.CreateScope())
-{
-    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    try
-    {
-        // Chỉ seed nếu database đã được tạo
-        context.Database.EnsureCreated();
-
-        // Gọi hàm seed dữ liệu
-        context.SeedSalesAndRevenueAdjustmentDataAsync().GetAwaiter().GetResult();
-    }
-    catch (Exception ex)
-    {
-        System.Diagnostics.Debug.WriteLine($"Lỗi seed: {ex.Message}");
-    }
-}
-
 app.Run();

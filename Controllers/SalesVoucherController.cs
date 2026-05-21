@@ -74,125 +74,132 @@ namespace RevenueAccountingMVC.Controllers
         // =======================
         // 2. CREATE (GET)
         // =======================
-        [Authorize(Roles = "Accountant")]
-        public async Task<IActionResult> Create()
+        [Authorize(Roles = "Accountant")] // 1. Chỉ người dùng có vai trò "Accountant" (Kế toán) mới được truy cập vào đây.
+        public async Task<IActionResult> Create() // 2. Khai báo phương thức bất đồng bộ (async), trả về một giao diện (View).
         {
-            await LoadDropdownData();
+            await LoadDropdownData(); // 3. Tải danh sách đổ xuống (như khách hàng, kho, tài khoản kế toán...) lên giao diện.
 
-            int next = await _context.SalesVouchers.CountAsync() + 1;
-            ViewBag.NextCode = SalesVoucher.GenerateVoucherCode(next);
+            int next = await _context.SalesVouchers.CountAsync() + 1; // 4. Đếm tổng số chứng từ hiện có trong database và cộng thêm 1 để tính số thứ tự tiếp theo.
+            ViewBag.NextCode = SalesVoucher.GenerateVoucherCode(next); // 5. Gửi số mã chứng từ dự kiến qua ViewBag để hiển thị lên giao diện (ví dụ: HD0004).
 
-            var model = new SalesVoucher();
-            model.VoucherCode = SalesVoucher.GenerateVoucherCode(next); 
-            model.Details.Add(new SalesVoucherDetail());
-            model.AccountingDate = DateTime.Now.Date;
+            var model = new SalesVoucher(); // 6. Khởi tạo một đối tượng chứng từ bán hàng mới hoàn toàn.
+            model.VoucherCode = SalesVoucher.GenerateVoucherCode(next); // 7. Gán mã chứng từ vừa tính được vào model.
+            model.Details.Add(new SalesVoucherDetail()); // 8. Thêm sẵn một dòng chi tiết trống (mặc định mở ra có sẵn 1 dòng để nhập hàng hóa).
+            model.AccountingDate = DateTime.Now.Date; // 9. Lấy ngày hiện tại (bỏ đi phần giờ phút giây) gán làm ngày hạch toán mặc định.
 
-            return View(model);
+            return View(model); // 10. Truyền dữ liệu model này sang giao diện hiển thị cho người dùng nhập.
         }
 
         // =======================
         // 3. CREATE (POST)
         // =======================
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Accountant")]
-        public async Task<IActionResult> Create(SalesVoucher model, string submitAction)
+        [HttpPost] // 11. Đánh dấu phương thức này chỉ nhận dữ liệu gửi lên (Submit form).
+        [ValidateAntiForgeryToken] // 12. Bảo mật chống tấn công giả mạo yêu cầu (CSRF).
+        [Authorize(Roles = "Accountant")] // 13. Tiếp tục phân quyền chỉ kế toán mới được gửi dữ liệu lên.
+        public async Task<IActionResult> Create(SalesVoucher model, string submitAction) // 14. Tiếp nhận dữ liệu từ form (model) và tên của nút bấm (submitAction).
         {
+            // LỌC DÒNG RỖNG
             if (model.Details != null)
             {
-                model.Details.RemoveAll(d => d.ProductId == 0);
+                model.Details.RemoveAll(d => d.ProductId == 0); // 15. Xóa bỏ tất cả các dòng chi tiết mà kế toán bấm thêm nhưng không chọn hàng hóa (ProductId = 0).
             }
 
+            // KIỂM TRA SỐ LƯỢNG DÒNG
             if (model.Details == null || model.Details.Count == 0)
             {
-                ModelState.AddModelError("", "Vui lòng chọn ít nhất 1 hàng hóa hợp lệ.");
+                ModelState.AddModelError("", "Vui lòng chọn ít nhất 1 hàng hóa hợp lệ."); // 16. Nếu không có dòng hàng hóa nào, báo lỗi lên màn hình.
             }
 
-            // KIỂM TRA DỮ LIỆU ĐẦU VÀO
-            for (int i = 0; i < model.Details?.Count; i++)
+            // KIỂM TRA DỮ LIỆU ĐẦU VÀO CỦA TỪNG DÒNG (VALIDATION)
+            for (int i = 0; i < model.Details?.Count; i++) // 17. Chạy vòng lặp kiểm tra qua từng dòng chi tiết hàng hóa.
             {
-                var d = model.Details[i];
+                var d = model.Details[i]; // 18. Lấy ra dòng chi tiết thứ i.
                 
                 if (d.DebitAccountId == null || d.DebitAccountId == 0)
-                    ModelState.AddModelError("", $"Dòng {i + 1}: Vui lòng chọn TK Nợ.");
+                    ModelState.AddModelError("", $"Dòng {i + 1}: Vui lòng chọn TK Nợ."); // 19. Bắt buộc chọn Tài khoản Nợ.
                     
                 if (d.CreditAccountId == null || d.CreditAccountId == 0)
-                    ModelState.AddModelError("", $"Dòng {i + 1}: Vui lòng chọn TK Có.");
+                    ModelState.AddModelError("", $"Dòng {i + 1}: Vui lòng chọn TK Có."); // 20. Bắt buộc chọn Tài khoản Có.
 
-                // Kiểm tra theo TaxRateSnapshot thay vì TaxId sẽ chính xác hơn
+                // Kiểm tra tài khoản thuế nếu có phần trăm thuế
                 if (d.TaxRateSnapshot > 0 && (d.TaxAccountId == null || d.TaxAccountId == 0))
                 {
-                    ModelState.AddModelError("", $"Dòng {i + 1}: Có phát sinh thuế, vui lòng chọn [TK Thuế].");
+                    ModelState.AddModelError("", $"Dòng {i + 1}: Có phát sinh thuế, vui lòng chọn [TK Thuế]."); // 21. Nếu dòng này có thuế (VD: 10%) thì bắt buộc phải nhập Tài khoản thuế.
                 }
             }
 
-            if (!ModelState.IsValid)
+            // XỬ LÝ KHI CÓ LỖI NHẬP LIỆU
+            if (!ModelState.IsValid) // 22. Nếu có bất kỳ lỗi nào ở trên hoặc lỗi từ hệ thống form:
             {
-                await LoadDropdownData();
+                await LoadDropdownData(); // 23. Nạp lại các danh sách đổ xuống để giao diện không bị lỗi hiển thị.
                 if (string.IsNullOrEmpty(model.VoucherCode))
                 {
-                    model.VoucherCode = SalesVoucher.GenerateVoucherCode(await _context.SalesVouchers.CountAsync() + 1);
+                    model.VoucherCode = SalesVoucher.GenerateVoucherCode(await _context.SalesVouchers.CountAsync() + 1); // 24. Nếu mã chứng từ bị mất, tạo lại mã mới.
                 }
-                return View(model);
+                return View(model); // 25. Trả về giao diện kèm theo các thông báo lỗi để người dùng sửa lại.
             }
 
-            model.TotalAmount = 0;
-            model.TotalTaxAmount = 0;
+            // CHUẨN BỊ TÍNH TOÁN VÀ LƯU TRỮ
+            model.TotalAmount = 0; // 26. Đặt tổng tiền hàng trước thuế về 0 để tính toán lại từ đầu.
+            model.TotalTaxAmount = 0; // 27. Đặt tổng tiền thuế về 0.
 
-            var customer = await _context.Customers.FindAsync(model.CustomerId);
+            // LƯU THÔNG TIN KHÁCH HÀNG TẠI THỜI ĐIỂM BÁN (SNAPSHOT)
+            var customer = await _context.Customers.FindAsync(model.CustomerId); // 28. Tìm kiếm thông tin khách hàng trong DB bằng CustomerId.
             if (customer != null)
             {
-                model.CustomerNameSnapshot = customer.CustomerName;
-                model.CustomerAddressSnapshot = customer.Address;
+                model.CustomerNameSnapshot = customer.CustomerName; // 29. Lưu lại tên khách hàng lúc bấy giờ (tránh việc sau này khách đổi tên làm sai lệch hóa đơn cũ).
+                model.CustomerAddressSnapshot = customer.Address; // 30. Lưu lại địa chỉ khách hàng tại thời điểm mua.
             }
 
-            model.DueDate = model.AccountingDate.AddDays(model.DebtDays);
-            model.CreatedAt = DateTime.Now;
-            model.Status = VoucherStatus.Posted;
+            model.DueDate = model.AccountingDate.AddDays(model.DebtDays); // 31. Tính ngày hạn thanh toán = Ngày hạch toán + Số ngày cho nợ.
+            model.CreatedAt = DateTime.Now; // 32. Ghi nhận thời gian tạo chứng từ là thời gian hiện tại của máy chủ.
+            model.Status = VoucherStatus.Posted; // 33. Chuyển trạng thái chứng từ thành "Posted" (Đã ghi sổ).
 
-            foreach (var detail in model.Details)
+            // TÍNH TOÁN CHI TIẾT TỪNG DÒNG HÀNG
+            foreach (var detail in model.Details) // 34. Duyệt qua từng dòng hàng hóa đã nhập hợp lệ.
             {
-                var product = await _context.Products.FindAsync(detail.ProductId);
+                var product = await _context.Products.FindAsync(detail.ProductId); // 35. Tìm thông tin sản phẩm trong DB.
                 if (product != null)
                 {
-                    detail.ProductNameSnapshot = product.ProductName;
-                    detail.UnitSnapshot = product.Unit;
+                    detail.ProductNameSnapshot = product.ProductName; // 36. Lưu tên sản phẩm tại thời điểm bán.
+                    detail.UnitSnapshot = product.Unit; // 37. Lưu đơn vị tính tại thời điểm bán.
                 }
 
-                detail.Amount = detail.Quantity * detail.UnitPrice * (1 - (detail.DiscountRate / 100m));
-                detail.TaxAmount = detail.Amount * (detail.TaxRateSnapshot / 100m);
+                // Công thức tính thành tiền: Số lượng * Đơn giá * (1 - % Chiết khấu)
+                detail.Amount = detail.Quantity * detail.UnitPrice * (1 - (detail.DiscountRate / 100m)); // 38. Tính thành tiền sau khi trừ chiết khấu.
+                detail.TaxAmount = detail.Amount * (detail.TaxRateSnapshot / 100m); // 39. Tính tiền thuế dựa trên số tiền sau chiết khấu.
 
-                // 🔥 BẢO VỆ SERVICE GHI SỔ KHỎI LỖI FOREIGN KEY 🔥
-                // Nếu dòng này không có thuế, TaxAccountId đang là null sẽ khiến Service 
-                // tự động chuyển thành ID = 0 và làm sập Database. 
-                // Ta gán tạm nó bằng CreditAccountId để vượt qua lỗi khóa ngoại.
+                // MẸO TRÁNH LỖI CƠ SỞ DỮ LIỆU
                 if (detail.TaxAccountId == null || detail.TaxAccountId == 0)
                 {
-                    detail.TaxAccountId = detail.CreditAccountId;
+                    detail.TaxAccountId = detail.CreditAccountId; // 40. Nếu dòng này không chịu thuế, gán ID tài khoản thuế bằng tài khoản có để không bị lỗi ràng buộc khóa ngoại (Foreign Key) trong database.
                 }
 
-                model.TotalAmount += detail.Amount;
-                model.TotalTaxAmount += detail.TaxAmount;
+                model.TotalAmount += detail.Amount; // 41. Cộng dồn tiền hàng vào tổng tiền hàng của chứng từ.
+                model.TotalTaxAmount += detail.TaxAmount; // 42. Cộng dồn tiền thuế vào tổng tiền thuế của chứng từ.
             }
 
-            model.TotalPayment = model.TotalAmount + model.TotalTaxAmount;
+            model.TotalPayment = model.TotalAmount + model.TotalTaxAmount; // 43. Tổng thanh toán = Tổng tiền hàng + Tổng tiền thuế.
 
-            _context.SalesVouchers.Add(model);
-            await _context.SaveChangesAsync();
+            // LƯU CHỨNG TỪ VÀO DATABASE
+            _context.SalesVouchers.Add(model); // 44. Thêm chứng từ bán hàng này vào danh sách theo dõi của Entity Framework.
+            await _context.SaveChangesAsync(); // 45. Thực thi lưu chính thức vào Cơ sở dữ liệu và sinh ra `model.Id`.
 
+            // TỰ ĐỘNG SINH BÚT TOÁN NHẬT KÝ CHUNG
             if (model.Status == VoucherStatus.Posted)
             {
-                await _journalService.GenerateEntriesFromSalesVoucherAsync(model.Id);
+                await _journalService.GenerateEntriesFromSalesVoucherAsync(model.Id); // 46. Gọi dịch vụ kế toán để tự động định khoản Nợ/Có vào sổ nhật ký chung dựa trên ID hóa đơn vừa lưu.
             }
 
-            TempData["SuccessMessage"] = $"Ghi nhận doanh thu thành công (Số CT: {model.VoucherCode})";
+            TempData["SuccessMessage"] = $"Ghi nhận doanh thu thành công (Số CT: {model.VoucherCode})"; // 47. Tạo thông báo thành công hiển thị cho người dùng ở trang tiếp theo.
 
+            // ĐIỀU HƯỚNG SAU KHI LƯU
             if (submitAction == "save_and_new")
             {
-                return RedirectToAction(nameof(Create));
+                return RedirectToAction(nameof(Create)); // 48. Nếu bấm "Lưu và Thêm mới", quay lại trang tạo mới trống.
             }
 
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index)); // 49. Nếu bấm "Lưu" thông thường, quay về trang danh sách chứng từ.
         }
 
         // =======================
